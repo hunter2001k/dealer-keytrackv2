@@ -1,0 +1,43 @@
+{
+  "name": "KeyTrack Auto",
+  "short_name": "KeyTrack",
+  "description": "Browse and buy quality used vehicles",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#06080D",
+  "theme_color": "#C9A84C",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Cars",
+      "url": "/listings",
+      "description": "View all available vehicles"
+    },
+    {
+      "name": "AI Search",
+      "url": "/search-ai",
+      "description": "Search in plain English"
+    },
+    {
+      "name": "My Saved Cars",
+      "url": "/buyer/dashboard",
+      "description": "View your saved vehicles"
+    }
+  ],
+  "categories": ["automotive", "shopping"],
+  "screenshots": []
+}

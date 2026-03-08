@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings — KeyTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--panel2:#161B26;--border:rgba(201,168,76,0.18);}
+    *{box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:50;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);}
+    .wrap{max-width:640px;margin:0 auto;padding:28px 16px 80px;}
+    .section{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:16px;margin-bottom:20px;overflow:hidden;}
+    .section-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);}
+    .section-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;display:flex;align-items:center;gap:8px;}
+    .section-body{padding:20px;}
+    .row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+    .row:last-child{border-bottom:none;padding-bottom:0;}
+    .row-label{font-size:.9rem;font-weight:500;}
+    .row-desc{font-size:.75rem;color:rgba(255,255,255,.35);margin-top:2px;}
+    .field-input{background:#161B26;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;padding:8px 12px;font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;min-width:140px;text-align:right;}
+    .field-input:focus{border-color:var(--gold);}
+    select.field-input option{background:#1C2130;}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:9px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;border:none;cursor:pointer;transition:opacity .15s;text-decoration:none;}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;}
+    .btn-ghost{background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);}
+    .btn:hover{opacity:.85;}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--panel);border:1px solid var(--border);color:#fff;padding:10px 20px;border-radius:10px;font-size:.875rem;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    .info-box{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:12px 16px;font-size:.8rem;color:rgba(255,255,255,.5);line-height:1.6;}
+    code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:.85em;color:rgba(255,255,255,.7);}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="max-width:640px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:28px;height:28px;background:#B91C1C;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </div>
+      <span class="brand">SETTINGS</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="/admin" class="btn btn-ghost" style="padding:6px 12px;font-size:.72rem;">← ADMIN</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Operational Settings -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Operations
+      </div>
+    </div>
+    <div class="section-body">
+
+      <div class="row">
+        <div>
+          <div class="row-label">Dealership Name</div>
+          <div class="row-desc">Shown in headers, stickers and shared links</div>
+        </div>
+        <input class="field-input" id="dealership_name" value="{{ settings.dealership_name }}" style="min-width:200px;text-align:left;"/>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="row-label">Key Overdue Threshold</div>
+          <div class="row-desc">Hours before a checked-out key shows as overdue (default: 1h)</div>
+        </div>
+        <select class="field-input" id="key_overdue_hours">
+          {% for h in [1,2,3,4,6,8] %}
+          <option value="{{ h }}" {% if settings.key_overdue_hours == h %}selected{% endif %}>{{ h }} hour{{ 's' if h != 1 }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="row-label">Monthly Sales Target</div>
+          <div class="row-desc">Cars to sell this month — shows as progress bar on dashboard (default: 15)</div>
+        </div>
+        <input class="field-input" id="monthly_target" type="number" min="1" max="200" value="{{ settings.monthly_target }}"/>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Save -->
+  <button class="btn btn-gold" onclick="saveSettings()" style="width:100%;justify-content:center;padding:13px;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    SAVE SETTINGS
+  </button>
+
+  <!-- Key Board Info -->
+  <div class="section" style="margin-top:20px;">
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><path d="m21 2-9 9"/><path d="M8 8a3 3 0 0 0 0 6h4l1 1 1-1 1 1 1-1 3 3 2-2-3-3 1-1V8a3 3 0 0 0-3-3H8z"/></svg>
+        Key Board — Wall Display
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="info-box" style="margin-bottom:14px;">
+        The Key Board (<a href="/keyboard" style="color:var(--gold);">/keyboard</a>) auto-refreshes every 60 seconds and shows all keys out vs available in large tiles. Designed to run on a TV or iPad at your front desk.
+      </div>
+      <div class="row" style="padding-top:0;">
+        <div>
+          <div class="row-label">Token-access URL</div>
+          <div class="row-desc">Share this with your TV/tablet — no login needed</div>
+        </div>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:.72rem;" onclick="copyKeyboardURL()">COPY URL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        About KeyTrack
+      </div>
+    </div>
+    <div class="section-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        {% for label,val in [
+          ('Routes', '57'),('Templates','18'),('Airtable Backend','✓'),
+          ('OpenAI Pitch AI','✓'),('NHTSA VIN Decoder','✓'),('QR Codes','Self-hosted'),
+        ] %}
+        <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:.65rem;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;">{{ label }}</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;color:var(--gold);">{{ val }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  function showToast(msg, color) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.style.borderColor = color||'var(--border)'; t.style.color = color||'#fff';
+    t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 3000);
+  }
+
+  async function saveSettings() {
+    var payload = {
+      dealership_name:   document.getElementById('dealership_name').value.trim(),
+      key_overdue_hours: parseInt(document.getElementById('key_overdue_hours').value),
+      monthly_target:    parseInt(document.getElementById('monthly_target').value),
+    };
+    if (!payload.dealership_name) { showToast('Dealership name cannot be empty', '#EF4444'); return; }
+    if (isNaN(payload.monthly_target) || payload.monthly_target < 1) { showToast('Invalid monthly target', '#EF4444'); return; }
+    try {
+      var r = await fetch('/settings', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+        body: JSON.stringify(payload)
+      });
+      var d = await r.json();
+      if (d.ok) showToast('✓ Settings saved', 'var(--gold)');
+      else showToast('⚠ Save failed', '#EF4444');
+    } catch(e) { showToast('Network error', '#EF4444'); }
+  }
+
+  function copyKeyboardURL() {
+    var url = window.location.origin + '/keyboard';
+    navigator.clipboard.writeText(url)
+      .then(function(){ showToast('✓ Key Board URL copied', 'var(--gold)'); })
+      .catch(function(){
+        var ta = document.createElement('textarea'); ta.value = url;
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        showToast('✓ Key Board URL copied', 'var(--gold)');
+      });
+  }
+</script>
+</body>
+</html>

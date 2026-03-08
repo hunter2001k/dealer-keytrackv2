@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Analytics — {{ dealership }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:rgba(255,255,255,.07);--gold:#C9A84C;--gold2:#e6c97a;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b;--purple:#a855f7;--text:rgba(255,255,255,.87);--muted:rgba(255,255,255,.4);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold);letter-spacing:.06em;}
+.nav-back{color:var(--muted);font-size:.8rem;text-decoration:none;}
+.nav-back:hover{color:var(--gold);}
+.page{max-width:1200px;margin:0 auto;padding:28px 20px;}
+.page-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;letter-spacing:.05em;margin-bottom:4px;}
+.page-sub{color:var(--muted);font-size:.82rem;margin-bottom:24px;}
+.section-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05);}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.kpi.green::before{background:var(--green);}
+.kpi.blue::before{background:var(--blue);}
+.kpi.purple::before{background:var(--purple);}
+.kpi.red::before{background:var(--red);}
+.kpi.amber::before{background:var(--amber);}
+.kpi-label{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.kpi-value{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;line-height:1;margin-bottom:2px;}
+.kpi-sub{font-size:.7rem;color:var(--muted);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+@media(max-width:800px){.grid2{grid-template-columns:1fr;}}
+table{width:100%;border-collapse:collapse;font-size:.78rem;}
+th{background:rgba(255,255,255,.03);padding:8px 12px;text-align:left;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+.mini-bar-wrap{background:rgba(255,255,255,.05);border-radius:99px;height:5px;margin-top:4px;}
+.mini-bar{height:100%;border-radius:99px;}
+canvas{max-height:260px;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-logo">📈 ANALYTICS</span>
+  <span style="color:var(--border)">|</span>
+  <a class="nav-back" href="/dashboard">← Dashboard</a>
+  <span style="margin-left:auto;font-size:.72rem;color:var(--muted);">{{ dealership }}</span>
+</nav>
+<div class="page">
+  <div class="page-title">Advanced Analytics</div>
+  <div class="page-sub">Full KPI dashboard — revenue, profitability, staff activity and inventory health</div>
+
+  <div class="kpi-grid">
+    <div class="kpi gold"><div class="kpi-label">Total Revenue</div><div class="kpi-value">${{ '{:,.0f}'.format(total_revenue) }}</div><div class="kpi-sub">{{ sold_count }} vehicles sold</div></div>
+    <div class="kpi green"><div class="kpi-label">Total Profit</div><div class="kpi-value">${{ '{:,.0f}'.format(total_profit) }}</div><div class="kpi-sub">avg ${{ '{:,.0f}'.format(avg_profit) }} / vehicle</div></div>
+    <div class="kpi blue"><div class="kpi-label">Sold This Month</div><div class="kpi-value">{{ sold_this_month }}</div><div class="kpi-sub">{{ active_v|length }} active vehicles</div></div>
+    <div class="kpi purple"><div class="kpi-label">Avg Days to Sell</div><div class="kpi-value">{{ avg_days_to_sell }}</div><div class="kpi-sub">from add to sold</div></div>
+  </div>
+  <div class="kpi-grid" style="margin-bottom:24px;">
+    <div class="kpi amber"><div class="kpi-label">Test Drive Conversion</div><div class="kpi-value">{{ conversion_rate }}%</div><div class="kpi-sub">{{ test_drive_count }} test drives</div></div>
+    <div class="kpi {% if avg_health >= 70 %}green{% elif avg_health >= 50 %}amber{% else %}red{% endif %}"><div class="kpi-label">Avg Inventory Health</div><div class="kpi-value">{{ avg_health }}/100</div><div class="kpi-sub">{{ slow_movers }} slow movers (60+ days)</div></div>
+    <div class="kpi blue"><div class="kpi-label">Enquiries</div><div class="kpi-value">{{ enquiry_count }}</div><div class="kpi-sub">{{ pipeline_count }} in pipeline</div></div>
+    <div class="kpi gold"><div class="kpi-label">Inventory Value</div><div class="kpi-value">{{ active_v|length }}</div><div class="kpi-sub">active vehicles on lot</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><div class="section-title">Monthly Sales (Last 6 Months)</div><canvas id="monthlySalesChart"></canvas></div>
+    <div class="card"><div class="section-title">Inventory by Status</div><canvas id="statusChart"></canvas></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="section-title">Top Makes in Inventory</div>
+      <canvas id="makeChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="section-title">Profit by Make (Sold)</div>
+      {% if make_profit %}
+      <table>
+        <thead><tr><th>Make</th><th>Avg Profit</th><th>Sold</th><th>Total Profit</th></tr></thead>
+        <tbody>{% for r in make_profit %}
+          <tr>
+            <td style="font-weight:500;">{{ r.make }}</td>
+            <td style="color:var(--green);">${{ '{:,.0f}'.format(r.avg_profit) }}</td>
+            <td style="color:var(--muted);">{{ r.count }}</td>
+            <td style="color:var(--gold);">${{ '{:,.0f}'.format(r.total) }}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div style="color:var(--muted);font-size:.8rem;padding:20px 0;">Add Purchase Price to vehicles to see profit data</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="section-title">Fastest Selling Makes</div>
+      {% if make_velocity %}
+      <table>
+        <thead><tr><th>Make</th><th>Avg Days to Sell</th><th>Count</th></tr></thead>
+        <tbody>{% for r in make_velocity %}
+          <tr>
+            <td style="font-weight:500;">{{ r.make }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="mini-bar-wrap" style="flex:1;"><div class="mini-bar" style="width:{{ [100,(r.avg_days/120*100)|int]|min }}%;background:{% if r.avg_days < 30 %}var(--green){% elif r.avg_days < 60 %}var(--amber){% else %}var(--red){% endif %};"></div></div>
+                <span style="font-weight:600;color:{% if r.avg_days < 30 %}var(--green){% elif r.avg_days < 60 %}var(--amber){% else %}var(--red){% endif %};">{{ r.avg_days }}d</span>
+              </div>
+            </td>
+            <td style="color:var(--muted);">{{ r.count }}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div style="color:var(--muted);font-size:.8rem;padding:20px 0;">Need Date_Added and Sold_Date to calculate velocity</div>{% endif %}
+    </div>
+    <div class="card">
+      <div class="section-title">Staff Activity</div>
+      <table>
+        <thead><tr><th>Staff Member</th><th>Enquiries</th><th>Test Drives</th></tr></thead>
+        <tbody>
+          {% set seen = namespace(names=[]) %}
+          {% for name in staff_enquiries.keys() %}{% if name and name != 'Unknown' %}{% if name not in seen.names %}{% set _ = seen.names.append(name) %}{% endif %}{% endif %}{% endfor %}
+          {% for name in staff_test_drives.keys() %}{% if name and name != 'Unknown' %}{% if name not in seen.names %}{% set _ = seen.names.append(name) %}{% endif %}{% endif %}{% endfor %}
+          {% for name in seen.names %}
+          <tr>
+            <td style="font-weight:500;">{{ name }}</td>
+            <td style="color:var(--blue);">{{ staff_enquiries.get(name, 0) }}</td>
+            <td style="color:var(--purple);">{{ staff_test_drives.get(name, 0) }}</td>
+          </tr>
+          {% endfor %}
+          {% if not seen.names %}<tr><td colspan="3" style="color:var(--muted);font-size:.75rem;">Data shows once staff log enquiries and test drives</td></tr>{% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const baseOpts={responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'rgba(255,255,255,.5)',font:{size:11}}}}};
+
+new Chart(document.getElementById('monthlySalesChart'),{
+  type:'bar',
+  data:{
+    labels:{{ monthly_sales|map(attribute='label')|list|tojson }},
+    datasets:[{label:'Vehicles Sold',data:{{ monthly_sales|map(attribute='count')|list|tojson }},backgroundColor:'rgba(201,168,76,.6)',borderColor:'#C9A84C',borderWidth:1,borderRadius:4}]
+  },
+  options:{...baseOpts,scales:{x:{ticks:{color:'rgba(255,255,255,.4)'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'rgba(255,255,255,.4)',stepSize:1},grid:{color:'rgba(255,255,255,.04)'}}}}
+});
+
+const statusData={{ status_counts|tojson }};
+const statusColors={Available:'#22c55e',Sold:'#C9A84C',Hold:'#f59e0b',Demo:'#3b82f6','In Service':'#a855f7',Pending:'#94a3b8',Archived:'#374151'};
+new Chart(document.getElementById('statusChart'),{
+  type:'doughnut',
+  data:{labels:Object.keys(statusData),datasets:[{data:Object.values(statusData),backgroundColor:Object.keys(statusData).map(k=>statusColors[k]||'#555'),borderColor:'#0a0a0f',borderWidth:2}]},
+  options:{...baseOpts,cutout:'65%',plugins:{legend:{position:'right',labels:{color:'rgba(255,255,255,.5)',font:{size:11},padding:10}}}}
+});
+
+const makeData={{ make_breakdown|tojson }};
+new Chart(document.getElementById('makeChart'),{
+  type:'bar',
+  data:{labels:Object.keys(makeData),datasets:[{label:'Vehicles',data:Object.values(makeData),backgroundColor:'rgba(59,130,246,.6)',borderColor:'#3b82f6',borderWidth:1,borderRadius:4}]},
+  options:{...baseOpts,indexAxis:'y',scales:{x:{ticks:{color:'rgba(255,255,255,.4)'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'rgba(255,255,255,.5)'},grid:{display:false}}}}
+});
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     KEYTRACK GLOBAL — Command Palette · Keyboard Shortcuts · Inline Edit
+     Inject before </body> in dashboard.html, vehicle.html, admin.html
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- CMD PALETTE OVERLAY -->
+<div id="cmdOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;">
+  <div id="cmdBox" style="width:100%;max-width:560px;background:#16161f;border:1px solid rgba(201,168,76,.3);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <span style="font-size:1.1rem;opacity:.5;">⌘</span>
+      <input id="cmdInput" placeholder="Search pages, vehicles, actions…"
+        style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:.95rem;font-family:'Inter',sans-serif;"
+        autocomplete="off" spellcheck="false"/>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">ESC</span>
+    </div>
+    <div id="cmdResults" style="max-height:360px;overflow-y:auto;padding:6px;"></div>
+    <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:16px;font-size:.68rem;color:rgba(255,255,255,.25);">
+      <span>↑↓ navigate</span><span>↵ open</span><span>ESC close</span><span>⌘K / Ctrl+K open</span>
+    </div>
+  </div>
+</div>
+
+<!-- INLINE EDIT POPOVER -->
+<div id="inlinePopover" style="position:fixed;z-index:8000;display:none;background:#1a1a28;border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);min-width:240px;max-width:320px;">
+  <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;" id="inlinePopLabel">Edit Field</div>
+  <div id="inlinePopInput"></div>
+  <div style="display:flex;gap:6px;margin-top:10px;">
+    <button onclick="saveInlineEdit()" style="flex:1;padding:7px;background:linear-gradient(135deg,#C9A84C,#e6c97a);color:#000;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;cursor:pointer;">SAVE</button>
+    <button onclick="closeInlinePop()" style="padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;cursor:pointer;font-size:.8rem;">✕</button>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUT TOAST -->
+<div id="kbToast" style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);background:#1c1c28;border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:8px 20px;font-size:.78rem;color:rgba(255,255,255,.7);opacity:0;transition:all .3s;pointer-events:none;z-index:7000;white-space:nowrap;"></div>
+
+<!-- SHORTCUT HELP OVERLAY -->
+<div id="shortcutHelp" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8500;display:none;align-items:center;justify-content:center;">
+  <div style="background:#16161f;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;max-width:480px;width:100%;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.08em;color:#C9A84C;margin-bottom:16px;">⌨ KEYBOARD SHORTCUTS</div>
+    <div id="shortcutList" style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;"></div>
+    <button onclick="document.getElementById('shortcutHelp').style.display='none'" style="margin-top:18px;padding:8px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;">CLOSE</button>
+  </div>
+</div>
+
+<style>
+.cmd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.cmd-item:hover,.cmd-item.active{background:rgba(201,168,76,.1);}
+.cmd-icon{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.cmd-label{font-size:.85rem;font-weight:500;color:#fff;}
+.cmd-sub{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:1px;}
+.kb-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;font-size:.7rem;font-family:monospace;color:rgba(255,255,255,.6);}
+.ie-enabled{cursor:pointer;transition:background .15s;}
+.ie-enabled:hover{background:rgba(201,168,76,.08);border-radius:4px;}
+.ie-enabled::after{content:' ✏';font-size:.6rem;opacity:0;transition:opacity .15s;}
+.ie-enabled:hover::after{opacity:.5;}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMAND PALETTE
+// ═══════════════════════════════════════════════════════════════════════════
+var _cmdOpen = false;
+var _cmdIdx = -1;
+var _cmdItems = [];
+var _cmdTimer = null;
+
+function openCmd() {
+  document.getElementById('cmdOverlay').style.display = 'flex';
+  document.getElementById('cmdInput').value = '';
+  _cmdOpen = true; _cmdIdx = -1;
+  setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+  loadCmdResults('');
+}
+function closeCmd() {
+  document.getElementById('cmdOverlay').style.display = 'none';
+  _cmdOpen = false;
+}
+document.getElementById('cmdOverlay').addEventListener('click', function(e){
+  if (e.target === this) closeCmd();
+});
+document.getElementById('cmdInput').addEventListener('input', function(){
+  clearTimeout(_cmdTimer);
+  _cmdTimer = setTimeout(() => loadCmdResults(this.value), 180);
+});
+document.getElementById('cmdInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveCmdIdx(1); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); moveCmdIdx(-1); }
+  if (e.key === 'Enter')     { e.preventDefault(); selectCmd(); }
+});
+
+async function loadCmdResults(q) {
+  const r = await fetch('/api/cmd-palette?q=' + encodeURIComponent(q));
+  const data = await r.json();
+  if (!data.ok) return;
+  _cmdItems = data.results;
+  _cmdIdx = -1;
+  renderCmdResults();
+}
+
+function renderCmdResults() {
+  const el = document.getElementById('cmdResults');
+  if (!_cmdItems.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:.8rem;color:rgba(255,255,255,.3);">No results</div>';
+    return;
+  }
+  el.innerHTML = _cmdItems.map((item, i) =>
+    `<div class="cmd-item${i===_cmdIdx?' active':''}" onclick="goCmd(${i})">
+      <div class="cmd-icon">${item.icon||'📄'}</div>
+      <div>
+        <div class="cmd-label">${item.label}</div>
+        ${item.sublabel ? `<div class="cmd-sub">${item.sublabel}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+function moveCmdIdx(dir) {
+  _cmdIdx = Math.max(-1, Math.min(_cmdItems.length-1, _cmdIdx + dir));
+  renderCmdResults();
+  const items = document.querySelectorAll('.cmd-item');
+  if (items[_cmdIdx]) items[_cmdIdx].scrollIntoView({block:'nearest'});
+}
+function selectCmd() {
+  if (_cmdIdx >= 0 && _cmdItems[_cmdIdx]) goCmd(_cmdIdx);
+  else if (_cmdItems[0]) goCmd(0);
+}
+function goCmd(i) {
+  const item = _cmdItems[i];
+  if (item) { closeCmd(); window.location.href = item.url; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════════════
+var SHORTCUTS = [
+  {key:'k', mod:'ctrl/cmd', label:'Command Palette',     action: openCmd},
+  {key:'/', mod:'',         label:'Global Search',       action: () => window.location.href='/search'},
+  {key:'d', mod:'',         label:'Dashboard',            action: () => goShortcut('/dashboard')},
+  {key:'p', mod:'',         label:'Pipeline',             action: () => goShortcut('/pipeline')},
+  {key:'f', mod:'',         label:'Finance Calculator',   action: () => goShortcut('/finance')},
+  {key:'h', mod:'',         label:'Inventory Health',     action: () => goShortcut('/inventory-health')},
+  {key:'a', mod:'',         label:'Analytics',            action: () => goShortcut('/analytics')},
+  {key:'t', mod:'',         label:'Trade-Ins',            action: () => goShortcut('/trade-ins')},
+  {key:'n', mod:'',         label:'New Vehicle (Admin)',  action: () => goShortcut('/admin')},
+  {key:'?', mod:'',         label:'Show shortcuts',       action: showShortcutHelp},
+  {key:'Escape', mod:'',    label:'Close / Back',         action: closeAll},
+];
+
+function goShortcut(url) {
+  showKbToast('→ ' + url);
+  setTimeout(() => window.location.href = url, 300);
+}
+function showKbToast(msg) {
+  const t = document.getElementById('kbToast');
+  t.textContent = msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)';}, 1800);
+}
+function closeAll() {
+  closeCmd();
+  document.getElementById('shortcutHelp').style.display = 'none';
+  closeInlinePop();
+}
+function showShortcutHelp() {
+  const list = document.getElementById('shortcutList');
+  list.innerHTML = SHORTCUTS.map(s =>
+    `<div><kbd class="kb-badge">${s.mod ? s.mod+'+' : ''}${s.key === 'Escape' ? 'ESC' : s.key.toUpperCase()}</kbd></div><div style="color:rgba(255,255,255,.7)">${s.label}</div>`
+  ).join('');
+  document.getElementById('shortcutHelp').style.display = 'flex';
+}
+
+document.addEventListener('keydown', function(e) {
+  // Don't fire if typing in an input
+  const tag = document.activeElement.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+  // CMD/Ctrl+K — always open palette
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if (_cmdOpen) closeCmd(); else openCmd();
+    return;
+  }
+  if (_cmdOpen) return; // let palette handle all keys
+  if (isInput) return;
+
+  // Single-key shortcuts
+  switch(e.key) {
+    case '/': e.preventDefault(); window.location.href='/search'; break;
+    case 'd': case 'D': goShortcut('/dashboard'); break;
+    case 'p': case 'P': goShortcut('/pipeline'); break;
+    case 'f': case 'F': goShortcut('/finance'); break;
+    case 'h': case 'H': goShortcut('/inventory-health'); break;
+    case 'a': case 'A': goShortcut('/analytics'); break;
+    case 't': case 'T': goShortcut('/trade-ins'); break;
+    case 'n': case 'N': goShortcut('/admin'); break;
+    case '?': showShortcutHelp(); break;
+    case 'Escape': closeAll(); break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INLINE EDIT
+// ═══════════════════════════════════════════════════════════════════════════
+var _inlineVid = null;
+var _inlineField = null;
+var _inlineFields = null;
+var _inlineTriggerEl = null;
+
+async function initInlineEdit() {
+  const r = await fetch('/api/inline-editable-fields');
+  const data = await r.json();
+  if (data.ok) _inlineFields = data.fields;
+}
+
+// Safe guard - inline edit only works on pages with VEHICLE_ID
+function openInlineEdit(el, vid, field, currentValue) {
+  if (!_inlineFields) return;
+  if (!vid) return;
+  var meta = _inlineFields[field];
+  if (!meta) return;
+  _inlineVid = vid;
+  _inlineField = field;
+  _inlineTriggerEl = el;
+
+  document.getElementById('inlinePopLabel').textContent = 'Edit: ' + meta.label;
+  var inp = document.getElementById('inlinePopInput');
+
+  if (meta.type === 'select') {
+    inp.innerHTML = '<select id="inlineVal" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;">' +
+      meta.options.map(function(o){ return '<option value="' + o + '"' + (o===currentValue?' selected':'') + '>' + o + '</option>'; }).join('') +
+      '</select>';
+  } else if (meta.type === 'textarea') {
+    inp.innerHTML = '<textarea id="inlineVal" rows="3" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;resize:vertical;outline:none;">' + (currentValue||'') + '</textarea>';
+  } else {
+    inp.innerHTML = '<input id="inlineVal" type="text" value="' + (currentValue||'').replace(/"/g,'&quot;') + '" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;"/>';
+  }
+
+  var rect = el.getBoundingClientRect();
+  var pop = document.getElementById('inlinePopover');
+  pop.style.display = 'block';
+  var top = rect.bottom + window.scrollY + 6;
+  var left = rect.left + window.scrollX;
+  if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+  if (top + 160 > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - 165;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+
+  setTimeout(function(){
+    var v = document.getElementById('inlineVal');
+    if (v) { v.focus(); if (v.select) v.select(); }
+  }, 50);
+
+  document.getElementById('inlineVal').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') saveInlineEdit();
+    if (e.key === 'Escape') closeInlinePop();
+  });
+}
+
+
+async function saveInlineEdit() {
+  const val = document.getElementById('inlineVal')?.value;
+  if (val === undefined) return;
+  const r = await fetch('/api/inline-edit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({vid: _inlineVid, field: _inlineField, value: val})
+  });
+  const data = await r.json();
+  if (data.ok) {
+    showKbToast('✅ ' + _inlineField + ' updated');
+    // Update the element text
+    if (_inlineTriggerEl) {
+      _inlineTriggerEl.textContent = val;
+      _inlineTriggerEl.dataset.val = val;
+    }
+    closeInlinePop();
+  } else {
+    showKbToast('❌ ' + (data.message || 'Error'));
+  }
+}
+function closeInlinePop() {
+  document.getElementById('inlinePopover').style.display = 'none';
+  _inlineVid = null; _inlineField = null;
+}
+// Close on outside click
+document.addEventListener('click', function(e){
+  const pop = document.getElementById('inlinePopover');
+  if (pop.style.display !== 'none' && !pop.contains(e.target)) {
+    if (!e.target.classList.contains('ie-enabled')) closeInlinePop();
+  }
+});
+
+// ── Add ⌘K button to all pages ───────────────────────────────────────────────
+(function(){
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  const btn = document.createElement('button');
+  btn.innerHTML = '⌘K';
+  btn.title = 'Command Palette (Ctrl+K / ⌘K)';
+  btn.onclick = openCmd;
+  btn.style.cssText = 'margin-left:auto;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:4px 10px;color:#C9A84C;font-family:\'Rajdhani\',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;';
+  btn.onmouseenter = () => btn.style.background = 'rgba(201,168,76,.2)';
+  btn.onmouseleave = () => btn.style.background = 'rgba(201,168,76,.1)';
+  // Insert before last nav child (scanner button usually)
+  const existing = nav.querySelector('[style*="margin-left:auto"]');
+  if (existing) {
+    existing.style.marginLeft = '0';
+    nav.insertBefore(btn, existing);
+  } else {
+    nav.appendChild(btn);
+  }
+})();
+
+// Init inline edit on pages that support it
+try { initInlineEdit(); } catch(e) {}
+</script>
+</body>
+</html>

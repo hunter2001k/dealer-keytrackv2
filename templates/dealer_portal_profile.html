@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Profile — {{ dealer.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold2:#F0CB6E;--ink:#06080D;--ink2:#0E1118;--border:rgba(255,255,255,.07);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--ink);color:#fff;min-height:100vh;}
+    .topbar{background:var(--ink2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+    .brand{font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.12em;color:var(--gold);font-size:.9rem;}
+    .wrap{max-width:700px;margin:0 auto;padding:36px 20px;}
+    h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;margin-bottom:6px;}
+    h1 span{color:var(--gold);}
+    .section-card{background:var(--ink2);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+    .section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.14em;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:18px;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media(max-width:500px){.form-grid{grid-template-columns:1fr;}}
+    .field{margin-bottom:14px;}
+    .field:last-child{margin-bottom:0;}
+    label{font-size:.7rem;color:rgba(255,255,255,.35);letter-spacing:.08em;display:block;margin-bottom:5px;text-transform:uppercase;}
+    input,select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:10px 13px;color:#fff;font-size:.88rem;font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+    input:focus,select:focus{outline:none;border-color:var(--gold);}
+    input::placeholder{color:rgba(255,255,255,.2);}
+    select option{background:#0E1118;}
+    .save-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:10px;padding:11px 28px;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;cursor:pointer;transition:opacity .15s;}
+    .save-btn:hover{opacity:.88;}
+    .public-link{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:12px 14px;margin-top:14px;}
+    .public-link code{flex:1;font-size:.8rem;color:rgba(255,255,255,.5);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .copy-btn{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);padding:5px 12px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.08em;cursor:pointer;}
+    .toast{position:fixed;bottom:20px;right:20px;background:var(--ink2);border:1px solid rgba(34,197,94,.3);color:#86EFAC;padding:12px 20px;border-radius:10px;font-size:.85rem;z-index:999;display:none;}
+    .plan-info{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+    .plan-badge{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);padding:4px 12px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;}
+    .upgrade-link{color:var(--gold);text-decoration:none;font-size:.8rem;font-family:'Syne',sans-serif;font-weight:700;}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:7px;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <span class="brand">{{ dealership }}</span>
+  </div>
+  <a href="/dealer-portal/{{ dealer.id }}/dashboard" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;">← Dashboard</a>
+</div>
+<div class="wrap">
+  <h1>Your <span>Profile</span></h1>
+  <p style="color:rgba(255,255,255,.35);margin-bottom:28px;">Manage your dealership details and public page</p>
+
+  <!-- Plan info -->
+  <div class="section-card">
+    <div class="section-title">Current Plan</div>
+    <div class="plan-info">
+      <div>
+        <span class="plan-badge">{{ plans[dealer.plan].name.upper() if dealer.plan in plans else 'FREE' }} — ${{ plans[dealer.plan].price if dealer.plan in plans else 0 }}/mo</span>
+        <span style="font-size:.75rem;color:rgba(255,255,255,.3);margin-left:10px;">{{ plans[dealer.plan].max_listings if dealer.plan in plans else 5 }} listings · Status: {{ dealer.status }}</span>
+      </div>
+      <a href="/dealer-portal/{{ dealer.id }}/upgrade" class="upgrade-link">Upgrade Plan →</a>
+    </div>
+  </div>
+
+  <!-- Business details -->
+  <div class="section-card">
+    <div class="section-title">Business Details</div>
+    <div class="form-grid">
+      <div class="field"><label>Dealership Name</label><input id="f-name" value="{{ dealer.name }}"></div>
+      <div class="field"><label>Phone</label><input id="f-phone" type="tel" value="{{ dealer.phone }}"></div>
+      <div class="field"><label>Address</label><input id="f-address" value="{{ dealer.address }}"></div>
+      <div class="field"><label>Suburb</label><input id="f-suburb" value="{{ dealer.suburb }}"></div>
+      <div class="field"><label>State</label>
+        <select id="f-state">
+          {% for s in ['NSW','VIC','QLD','SA','WA','TAS','NT','ACT'] %}
+          <option {% if dealer.state==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>Email</label><input value="{{ dealer.email }}" disabled style="opacity:.4;cursor:not-allowed;"></div>
+    </div>
+    <div style="margin-top:18px;"><button class="save-btn" onclick="saveProfile()">SAVE CHANGES</button></div>
+  </div>
+
+  <!-- Public page link -->
+  <div class="section-card">
+    <div class="section-title">Your Public Page</div>
+    <p style="font-size:.82rem;color:rgba(255,255,255,.4);margin-bottom:12px;">Share this link with customers. It shows all your available vehicles.</p>
+    <div class="public-link">
+      <code id="pubUrl"></code>
+      <button class="copy-btn" onclick="copyLink()">COPY</button>
+    </div>
+    <a href="/dealer/{{ dealer.slug }}" target="_blank" style="display:inline-block;margin-top:10px;color:var(--gold);font-size:.8rem;text-decoration:none;">Preview public page →</a>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const DEALER_ID='{{ dealer.id }}';
+document.getElementById('pubUrl').textContent=window.location.origin+'/dealer/{{ dealer.slug }}';
+function toast(msg,ok=true){const t=document.getElementById('toast');t.textContent=msg;t.style.borderColor=ok?'rgba(34,197,94,.3)':'rgba(239,68,68,.3)';t.style.color=ok?'#86EFAC':'#FCA5A5';t.style.display='block';setTimeout(()=>t.style.display='none',2500);}
+function copyLink(){navigator.clipboard.writeText(window.location.origin+'/dealer/{{ dealer.slug }}').then(()=>toast('✓ Link copied!'));}
+async function saveProfile(){
+  const r=await fetch(`/dealer-portal/${DEALER_ID}/profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    name:document.getElementById('f-name').value,phone:document.getElementById('f-phone').value,
+    address:document.getElementById('f-address').value,suburb:document.getElementById('f-suburb').value,
+    state:document.getElementById('f-state').value,
+  })});
+  const d=await r.json();
+  if(d.ok)toast('✓ Profile saved!');else toast('Save failed',false);
+}
+</script>
+</body>
+</html>

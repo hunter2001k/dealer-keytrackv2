@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Get Started — {{ dealership }}</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#C9A84C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{ pwa_name }}">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold2:#F0CB6E;--ink:#06080D;--ink2:#0E1118;--ink3:#161C28;--border:rgba(255,255,255,.08);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--ink);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .bg{position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(201,168,76,.1),transparent 70%);pointer-events:none;}
+    .card{background:var(--ink2);border:1px solid rgba(201,168,76,.18);border-radius:22px;width:100%;max-width:460px;overflow:hidden;position:relative;z-index:1;}
+    /* Progress bar */
+    .progress-track{height:3px;background:rgba(255,255,255,.06);}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .4s ease;}
+    /* Steps */
+    .step{padding:36px 32px;display:none;}
+    .step.active{display:block;}
+    .step-tag{font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-bottom:10px;}
+    .step h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.55rem;line-height:1.2;margin-bottom:8px;}
+    .step p{color:rgba(255,255,255,.4);font-size:.88rem;line-height:1.6;margin-bottom:24px;}
+    /* Type selector */
+    .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;}
+    .type-card{border:1.5px solid var(--border);border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center;}
+    .type-card:hover{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.04);}
+    .type-card.selected{border-color:var(--gold);background:rgba(201,168,76,.08);}
+    .type-icon{font-size:2rem;margin-bottom:8px;}
+    .type-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;}
+    .type-desc{font-size:.72rem;color:rgba(255,255,255,.35);margin-top:3px;}
+    /* Fields */
+    .field{margin-bottom:14px;}
+    label{font-size:.72rem;color:rgba(255,255,255,.4);letter-spacing:.08em;display:block;margin-bottom:5px;text-transform:uppercase;}
+    input,select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:.92rem;font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+    input:focus,select:focus{outline:none;border-color:var(--gold);}
+    input::placeholder{color:rgba(255,255,255,.2);}
+    select option{background:var(--ink2);}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    /* Plan cards (dealer) */
+    .plan-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+    .plan-mini{border:1.5px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;}
+    .plan-mini:hover{border-color:rgba(201,168,76,.4);}
+    .plan-mini.selected{border-color:var(--gold);background:rgba(201,168,76,.06);}
+    .plan-mini-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;margin-bottom:2px;}
+    .plan-mini-price{color:var(--gold);font-size:.85rem;font-weight:600;}
+    .plan-mini-listings{font-size:.7rem;color:rgba(255,255,255,.3);margin-top:2px;}
+    /* Buttons */
+    .btn-next{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:12px;padding:14px;font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:.1em;cursor:pointer;transition:opacity .15s;margin-top:6px;}
+    .btn-next:hover{opacity:.88;}
+    .btn-next:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-back{background:transparent;border:none;color:rgba(255,255,255,.35);font-size:.8rem;cursor:pointer;padding:8px 0;margin-top:4px;display:block;text-align:center;width:100%;}
+    .btn-back:hover{color:#fff;}
+    .err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#FCA5A5;border-radius:8px;padding:10px 14px;font-size:.82rem;margin-bottom:14px;display:none;}
+    /* Success */
+    .success{text-align:center;padding:40px 32px;}
+    .success-icon{font-size:3rem;margin-bottom:16px;}
+    .success h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--gold);margin-bottom:10px;}
+    .success p{color:rgba(255,255,255,.4);font-size:.88rem;line-height:1.6;}
+    .success-btn{display:inline-block;margin-top:20px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);padding:12px 28px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;text-decoration:none;}
+    /* Back link */
+    .back-link{text-align:center;padding:12px;border-top:1px solid var(--border);}
+    .back-link a{color:rgba(255,255,255,.25);text-decoration:none;font-size:.78rem;}
+    .back-link a:hover{color:rgba(255,255,255,.5);}
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="card">
+  <div class="progress-track"><div class="progress-fill" id="prog" style="width:25%"></div></div>
+
+  <!-- STEP 1: Choose type -->
+  <div class="step active" id="s1">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--gold);letter-spacing:.15em;font-size:.8rem;">{{ dealership }}</div>
+    </div>
+    <div class="step-tag">Step 1 of 3</div>
+    <h2>Who are you?</h2>
+    <p>We'll set everything up perfectly for you in under 2 minutes.</p>
+    <div class="type-grid">
+      <div class="type-card" id="type-buyer" onclick="selectType('buyer')">
+        <div class="type-icon">🛒</div>
+        <div class="type-name">Buyer</div>
+        <div class="type-desc">I'm looking for a car to buy</div>
+      </div>
+      <div class="type-card" id="type-dealer" onclick="selectType('dealer')">
+        <div class="type-icon">🏢</div>
+        <div class="type-name">Dealer</div>
+        <div class="type-desc">I sell cars and want to list them</div>
+      </div>
+    </div>
+    <button class="btn-next" id="btn1" disabled onclick="goStep2()">CONTINUE →</button>
+  </div>
+
+  <!-- STEP 2: Basic info -->
+  <div class="step" id="s2">
+    <div class="step-tag" id="s2tag">Step 2 of 3</div>
+    <h2 id="s2title">Create your account</h2>
+    <p id="s2sub">Free forever. No credit card needed.</p>
+    <div class="err" id="err2"></div>
+    <div id="s2fields"></div>
+    <button class="btn-next" onclick="goStep3()">CONTINUE →</button>
+    <button class="btn-back" onclick="goStep(1)">← Back</button>
+  </div>
+
+  <!-- STEP 3: Details / plan -->
+  <div class="step" id="s3">
+    <div class="step-tag" id="s3tag">Step 3 of 3</div>
+    <h2 id="s3title">Almost done!</h2>
+    <p id="s3sub">Just a few more details.</p>
+    <div class="err" id="err3"></div>
+    <div id="s3fields"></div>
+    <button class="btn-next" id="btn3" onclick="submitOnboard()">FINISH SETUP →</button>
+    <button class="btn-back" onclick="goStep(2)">← Back</button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="step" id="sDone">
+    <div class="success" id="successContent"></div>
+  </div>
+
+  <div class="back-link"><a href="/home">← Back to {{ dealership }}</a></div>
+</div>
+
+<script>
+let userType='', sid='', selectedPlan='dealer';
+const state={};
+
+function selectType(t){
+  userType=t;
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('type-'+t).classList.add('selected');
+  document.getElementById('btn1').disabled=false;
+}
+
+function setProgress(pct){ document.getElementById('prog').style.width=pct+'%'; }
+
+function goStep(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s'+n).classList.add('active');
+  setProgress(n===1?25:n===2?50:n===3?75:100);
+}
+
+function goStep2(){
+  goStep(2);
+  const isBuyer = userType==='buyer';
+  document.getElementById('s2tag').textContent = isBuyer?'Step 2 of 3':'Step 2 of 4';
+  document.getElementById('s2title').textContent = isBuyer?'Create your buyer account':'About your dealership';
+  document.getElementById('s2sub').textContent = isBuyer?'Free forever. Get alerts, save cars, chat with dealers.':'Tell us about your business.';
+  if(isBuyer){
+    document.getElementById('s2fields').innerHTML=`
+      <div class="field"><label>Your Name</label><input id="f-name" placeholder="e.g. Sarah Johnson" autocomplete="name"></div>
+      <div class="field"><label>Email</label><input id="f-email" type="email" placeholder="you@email.com" autocomplete="email"></div>
+      <div class="field"><label>Phone (for SMS alerts)</label><input id="f-phone" type="tel" placeholder="04xx xxx xxx"></div>
+      <div class="field"><label>Password</label><input id="f-pw" type="password" placeholder="Min 6 characters"></div>`;
+  } else {
+    document.getElementById('s2fields').innerHTML=`
+      <div class="field"><label>Dealership Name</label><input id="f-name" placeholder="e.g. Premier Auto Group"></div>
+      <div class="row2">
+        <div class="field"><label>Your Email</label><input id="f-email" type="email" placeholder="you@dealership.com.au"></div>
+        <div class="field"><label>Phone</label><input id="f-phone" type="tel" placeholder="02 xxxx xxxx"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Suburb</label><input id="f-suburb" placeholder="e.g. Liverpool"></div>
+        <div class="field"><label>State</label>
+          <select id="f-state"><option>NSW</option><option>VIC</option><option>QLD</option><option>SA</option><option>WA</option><option>TAS</option></select>
+        </div>
+      </div>`;
+  }
+}
+
+function goStep3(){
+  const err=document.getElementById('err2'); err.style.display='none';
+  state.name=document.getElementById('f-name')?.value.trim();
+  state.email=document.getElementById('f-email')?.value.trim();
+  state.phone=document.getElementById('f-phone')?.value.trim();
+  if(userType==='buyer') state.password=document.getElementById('f-pw')?.value;
+  state.suburb=document.getElementById('f-suburb')?.value?.trim()||'';
+  state.state=document.getElementById('f-state')?.value||'NSW';
+  if(!state.name||!state.email){err.textContent='Name and email are required';err.style.display='block';return;}
+  if(userType==='buyer'&&(!state.password||state.password.length<6)){err.textContent='Password must be at least 6 characters';err.style.display='block';return;}
+
+  goStep(3);
+  if(userType==='buyer'){
+    document.getElementById('s3tag').textContent='Step 3 of 3';
+    document.getElementById('s3title').textContent='Set up your first alert';
+    document.getElementById('s3sub').textContent='Tell us what you\'re looking for and get notified instantly when it\'s listed.';
+    document.getElementById('s3fields').innerHTML=`
+      <div class="row2">
+        <div class="field"><label>Make (optional)</label><input id="f-almake" placeholder="e.g. Toyota"></div>
+        <div class="field"><label>Max Price (optional)</label><input id="f-alprice" type="number" placeholder="e.g. 30000"></div>
+      </div>
+      <p style="font-size:.75rem;color:rgba(255,255,255,.3);margin-bottom:10px;">You can skip this and add alerts later in your account.</p>`;
+    document.getElementById('btn3').textContent='CREATE ACCOUNT →';
+  } else {
+    document.getElementById('s3tag').textContent='Step 3 of 3';
+    document.getElementById('s3title').textContent='Choose your plan';
+    document.getElementById('s3sub').textContent='Start free. Upgrade anytime.';
+    document.getElementById('s3fields').innerHTML=`
+      <div class="plan-mini-grid">
+        <div class="plan-mini" onclick="selectPlan('free')">
+          <div class="plan-mini-name">FREE</div>
+          <div class="plan-mini-price">$0/mo</div>
+          <div class="plan-mini-listings">5 listings</div>
+        </div>
+        <div class="plan-mini selected" id="pm-dealer" onclick="selectPlan('dealer')">
+          <div class="plan-mini-name">DEALER ⭐</div>
+          <div class="plan-mini-price">$99/mo</div>
+          <div class="plan-mini-listings">50 listings + CRM</div>
+        </div>
+        <div class="plan-mini" id="pm-pro" onclick="selectPlan('pro')">
+          <div class="plan-mini-name">PRO</div>
+          <div class="plan-mini-price">$199/mo</div>
+          <div class="plan-mini-listings">200 listings + AI</div>
+        </div>
+        <div class="plan-mini" id="pm-enterprise" onclick="selectPlan('enterprise')">
+          <div class="plan-mini-name">ENTERPRISE</div>
+          <div class="plan-mini-price">$399/mo</div>
+          <div class="plan-mini-listings">Unlimited + white label</div>
+        </div>
+      </div>
+      <div class="field"><label>Password</label><input id="f-pw" type="password" placeholder="Create a password"></div>
+      <p style="font-size:.72rem;color:rgba(255,255,255,.25);">You'll be charged after we activate your account.</p>`;
+    document.getElementById('btn3').textContent='COMPLETE REGISTRATION →';
+  }
+}
+
+function selectPlan(p){
+  selectedPlan=p;
+  document.querySelectorAll('.plan-mini').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('pm-'+p)?.classList.add('selected');
+}
+
+async function submitOnboard(){
+  const err=document.getElementById('err3'); err.style.display='none';
+  const btn=document.getElementById('btn3');
+  btn.disabled=true; btn.textContent='SETTING UP…';
+
+  if(userType==='buyer'){
+    state.make=document.getElementById('f-almake')?.value.trim();
+    state.max_price=document.getElementById('f-alprice')?.value.trim();
+  } else {
+    state.plan=selectedPlan;
+    state.password=document.getElementById('f-pw')?.value||'';
+    if(!state.password||state.password.length<6){
+      err.textContent='Password must be at least 6 characters'; err.style.display='block';
+      btn.disabled=false; btn.textContent='COMPLETE REGISTRATION →'; return;
+    }
+  }
+
+  try {
+    const r=await fetch('/api/onboard/step',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type:userType,step:userType==='buyer'?2:4,data:state,session_id:sid})});
+    const d=await r.json();
+    if(!d.ok){err.textContent=d.message||'Error';err.style.display='block';btn.disabled=false;btn.textContent='TRY AGAIN';return;}
+
+    if(d.done){
+      goStep('Done');
+      if(d.redirect){
+        document.getElementById('successContent').innerHTML=`
+          <div class="success-icon">🎉</div>
+          <h2>You're all set!</h2>
+          <p>${d.message||'Welcome!'}</p>
+          <a href="${d.redirect}" class="success-btn">GO TO MY ACCOUNT →</a>`;
+        setTimeout(()=>location.href=d.redirect,2000);
+      } else {
+        document.getElementById('successContent').innerHTML=`
+          <div class="success-icon">🎉</div>
+          <h2>Registration Received!</h2>
+          <p>${d.message||'We\'ll be in touch within 24 hours to activate your account.'}</p>
+          <a href="/home" class="success-btn">BROWSE CARS →</a>`;
+      }
+    }
+  } catch(e){
+    err.textContent='Something went wrong. Please try again.'; err.style.display='block';
+    btn.disabled=false; btn.textContent='TRY AGAIN';
+  }
+}
+
+// Auto-redirect if ?q= param (AI search intent)
+const urlQ = new URLSearchParams(location.search).get('q');
+if(urlQ){ setTimeout(()=>location.href='/search-ai?q='+encodeURIComponent(urlQ),100); }
+</script>
+  <!-- PWA Service Worker -->
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js',{scope:'/'})
+        .then(()=>console.log('SW registered'))
+        .catch(e=>console.log('SW error',e));
+    }
+  </script>
+</body>
+</html>

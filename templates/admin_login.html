@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Access — KeyTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --gold: #C9A84C; --gold-light: #F0CB6E; --dark: #0A0C10; --panel: #10141C; --border: rgba(201,168,76,0.25); --red: #EF4444; }
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .grid-bg { position: fixed; inset: 0; z-index: 0; background-image: linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px); background-size: 40px 40px; }
+    .glow-orb { position: fixed; width: 500px; height: 500px; background: radial-gradient(circle, rgba(239,68,68,0.06) 0%, transparent 70%); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; }
+    .card { position: relative; z-index: 1; background: var(--panel); border: 1px solid rgba(239,68,68,0.2); border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 400px; box-shadow: 0 0 60px rgba(239,68,68,0.06), 0 24px 48px rgba(0,0,0,0.6); }
+    h1 { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 2rem; color: #fff; }
+    input[type="password"] { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; padding: 14px 16px; font-size: 1rem; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s, box-shadow 0.2s; letter-spacing: 0.1em; }
+    input[type="password"]:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(239,68,68,0.12); }
+    .btn { width: 100%; background: linear-gradient(135deg, #B91C1C, #EF4444); color: #fff; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.05rem; letter-spacing: 0.12em; padding: 14px; border-radius: 8px; border: none; cursor: pointer; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .error-msg { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #FCA5A5; border-radius: 8px; padding: 10px 14px; font-size: 0.875rem; }
+    .label { display: block; color: rgba(255,255,255,0.4); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+    .brand { font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.15em; color: var(--gold); font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow-orb"></div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;">
+      <div style="width:32px;height:32px;background:#B91C1C;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <span class="brand">KEYTRACK <span style="color:rgba(255,255,255,0.3)">/ ADMIN</span></span>
+    </div>
+    <h1 style="margin-bottom:6px;">Admin <span style="color:#EF4444">Access</span></h1>
+    <p style="color:rgba(255,255,255,0.35);font-size:0.85rem;margin-bottom:28px;">Restricted to dealership management only.</p>
+
+    {% if error %}<div class="error-msg mb-5">🔐 {{ error }}</div>{% endif %}
+
+    <form method="POST" action="{{ url_for('admin_login') }}">
+      <div class="mb-4">
+        <label class="label">Admin Password</label>
+        <input type="password" name="password" placeholder="Enter admin password" autofocus/>
+      </div>
+      <button type="submit" class="btn mt-2">ENTER ADMIN PANEL</button>
+    </form>
+
+    <div style="margin-top:20px;text-align:center;">
+      <a href="{{ url_for('dashboard') }}" style="color:rgba(255,255,255,0.25);font-size:0.8rem;text-decoration:none;">← Back to Staff View</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Audit Trail — KeyTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--dark:#0A0C10;--panel:#10141C;--panel2:#161B26;--border:rgba(201,168,76,.18);}
+    *{box-sizing:border-box;}body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:100;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;}
+    .content{max-width:900px;margin:0 auto;padding:28px 16px 80px;}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:16px;margin-bottom:20px;overflow:hidden;}
+    .card-header{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:8px;}
+    .card-title{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;border:none;cursor:pointer;text-decoration:none;background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;border:none;}
+    .btn:hover{opacity:.8;}
+    .tbl{width:100%;border-collapse:collapse;}
+    .tbl th{text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06);}
+    .tbl td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem;vertical-align:middle;}
+    .tbl tr:last-child td{border-bottom:none;}
+    .field-input{background:var(--panel2);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#fff;padding:8px 12px;font-size:.875rem;font-family:'DM Sans',sans-serif;outline:none;}
+    .field-input:focus{border-color:var(--gold);}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="brand" style="color:var(--gold)">KEYTRACK</span>
+      <span style="background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25);font-family:'Rajdhani',sans-serif;font-size:.65rem;letter-spacing:.15em;padding:3px 10px;border-radius:20px;">AUDIT TRAIL</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input class="field-input" id="filterVeh" placeholder="Filter by vehicle ID…" value="{{ filter_vehicle }}" oninput="filterRows()" style="width:200px;"/>
+      <a href="{{ url_for('admin_panel') }}" class="btn">← ADMIN</a>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="color:rgba(255,255,255,.4);font-size:.85rem;">{{ trail|length }} audit entries</div>
+  </div>
+
+  <div class="card">
+    <div style="overflow-x:auto;">
+      <table class="tbl" id="auditTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Vehicle</th>
+            <th>Action</th>
+            <th>Field</th>
+            <th>Old Value</th>
+            <th>New Value</th>
+            <th>User</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in trail %}
+          <tr data-vid="{{ e.internal_id }}">
+            <td style="color:rgba(255,255,255,.35);white-space:nowrap;font-size:.72rem;">{{ e.timestamp }}</td>
+            <td>
+              {% if e.internal_id and e.internal_id != '—' %}
+              <a href="{{ url_for('scan', internal_id=e.internal_id) }}" style="font-family:'Rajdhani',sans-serif;color:var(--gold);font-weight:700;text-decoration:none;">{{ e.internal_id }}</a>
+              {% else %}—{% endif %}
+            </td>
+            <td style="text-transform:capitalize;">{{ e.action.replace('_',' ') }}</td>
+            <td style="font-family:monospace;font-size:.75rem;color:rgba(255,255,255,.5);">{{ e.field }}</td>
+            <td style="color:#FCA5A5;max-width:160px;word-break:break-all;font-size:.78rem;">{{ e.old[:60] }}</td>
+            <td style="color:#86EFAC;max-width:160px;word-break:break-all;font-size:.78rem;">{{ e.new[:60] }}</td>
+            <td style="color:rgba(255,255,255,.4);">{{ e.user }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,.2);padding:40px;">No audit entries yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function filterRows() {
+    var q = document.getElementById('filterVeh').value.toUpperCase();
+    document.querySelectorAll('#auditTable tbody tr').forEach(function(row) {
+      row.style.display = !q || (row.dataset.vid||'').includes(q) ? '' : 'none';
+    });
+  }
+  filterRows();
+</script>
+</body>
+</html>

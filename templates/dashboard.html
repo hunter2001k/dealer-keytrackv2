@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vehicle Inventory — KeyTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root { --gold: #C9A84C; --gold-light: #F0CB6E; --dark: #0A0C10; --panel: #10141C; --panel2: #161B26; --border: rgba(201,168,76,0.2); }
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #fff; min-height: 100vh; }
+    .header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 16px 20px; position: sticky; top: 0; z-index: 50; }
+    .brand { font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.15em; color: var(--gold); }
+    .status-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.7rem; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase;
+    }
+    .status-available { background: rgba(34,197,94,0.15); color: #86EFAC; border: 1px solid rgba(34,197,94,0.25); }
+    .status-sold { background: rgba(239,68,68,0.15); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.25); }
+    .status-service { background: rgba(251,191,36,0.15); color: #FDE68A; border: 1px solid rgba(251,191,36,0.25); }
+    .status-demo { background: rgba(139,92,246,0.15); color: #C4B5FD; border: 1px solid rgba(139,92,246,0.25); }
+    .vehicle-row {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 10px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    }
+    .vehicle-row:hover {
+      border-color: var(--border);
+      background: var(--panel2);
+      transform: translateX(3px);
+    }
+    .vehicle-id {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700;
+      color: var(--gold); font-size: 1.1rem; min-width: 72px;
+    }
+    .scan-btn {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #0A0C10;
+      font-family: 'Rajdhani', sans-serif; font-weight: 700;
+      font-size: 0.75rem; letter-spacing: 0.1em;
+      padding: 6px 14px; border-radius: 6px;
+      border: none; cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .scan-btn:hover { opacity: 0.85; }
+    .search-input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; color: #fff; padding: 10px 16px;
+      font-size: 0.9rem; font-family: 'DM Sans', sans-serif; outline: none;
+    }
+    .search-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+    .count-pill {
+      background: rgba(201,168,76,0.12); color: var(--gold);
+      font-family: 'Rajdhani', sans-serif; font-weight: 600;
+      font-size: 0.85rem; letter-spacing: 0.08em;
+      padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border);
+    }
+  
+  /* ── Filter select fix: native options inherit the select bg on all browsers ── */
+  .filter-select{
+    flex:1;min-width:120px;
+    background:#161B26 !important;   /* solid dark — options inherit this */
+    border:1px solid var(--border);
+    border-radius:8px;
+    color:#fff !important;
+    padding:8px 12px;
+    font-size:.82rem;
+    font-family:'DM Sans',sans-serif;
+    outline:none;
+    cursor:pointer;
+    -webkit-appearance:none;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 10px center;
+    background-size:10px;
+    padding-right:28px;
+  }
+  .filter-select:focus{border-color:var(--gold);}
+  .filter-select option{
+    background:#161B26 !important;
+    color:#fff !important;
+  }
+  .filter-select option:checked,.filter-select option:hover{
+    background:#C9A84C !important;
+    color:#0A0C10 !important;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div style="max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <div class="flex items-center gap-3">
+      <div style="width:32px;height:32px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="brand">KEYTRACK</span>
+    </div>
+    <nav style="display:flex;gap:5px;flex-wrap:wrap;">
+      <a href="/dashboard" style="background:rgba(201,168,76,.12);color:var(--gold);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">FLEET</a>
+      <a href="/analytics" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">ANALYTICS</a>
+      <a href="/compare" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">COMPARE</a>
+      <a href="/qr-generator" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">QR CODES</a>
+      
+      <a href="/customers" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">CUSTOMERS</a>
+      <a href="/keyboard" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">KEY BOARD</a>
+      <a href="/pipeline" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🎯 PIPELINE</a>
+      <a href="/finance" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">💰 FINANCE</a>
+      <a href="/inventory-health" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🏥 HEALTH</a>
+      <a href="/ai-listings" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🤖 AI ADS</a>
+      <a href="/trade-ins" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🔄 TRADE-INS</a>
+      <a href="/search" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🔍 SEARCH</a>
+      <a href="/documents" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">📄 DOCS</a>
+      <a href="/scanner" style="background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.25);color:var(--gold);padding:5px 13px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">📷 SCAN</a>
+      <a href="/listings" target="_blank" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🌐 LISTINGS</a>
+      <a href="/admin/feeds" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">📡 FEEDS</a>
+      <a href="/scoreboard" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🏆 SCOREBOARD</a>
+      <a href="/search-ai" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🤖 AI SEARCH</a>
+      <a href="/dealers/join" style="color:rgba(255,255,255,.35);padding:5px 11px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">🏢 DEALERS</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <a href="{{ url_for('admin_login') }}" style="background:rgba(239,68,68,0.12);color:#FCA5A5;border:1px solid rgba(239,68,68,0.2);padding:5px 12px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.72rem;letter-spacing:0.1em;text-decoration:none;">ADMIN</a>
+      <a href="{{ url_for('logout') }}" style="color:rgba(255,255,255,0.3);font-size:0.8rem;text-decoration:none;letter-spacing:0.05em;">LOGOUT</a>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:720px;margin:0 auto;padding:24px 16px;">
+
+  <!-- Title row -->
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 style="font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;color:#fff;line-height:1;">Vehicle <span style="color:var(--gold)">Inventory</span></h1>
+      <p style="color:rgba(255,255,255,0.35);font-size:0.8rem;margin-top:2px;">Tap any vehicle to view details & locate keys</p>
+    </div>
+    <span class="count-pill">{{ vehicles|length }} VEHICLES</span>
+  </div>
+
+  <!-- Stats + Monthly Target -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;">
+    {% for label,val,color in [
+      ('Total',        stats.total,     'var(--gold)'),
+      ('Available',    stats.available, '#86EFAC'),
+      ('Sold (all)',   stats.sold,      '#FCA5A5'),
+      ('Aging 30d+',  stats.aging_30,  '#FDE68A' if stats.aging_30 > 0 else '#86EFAC'),
+    ] %}
+    <div style="background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 16px;text-align:center;">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;color:{{ color }};">{{ val }}</div>
+      <div style="color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;margin-top:2px;">{{ label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Monthly Target Bar -->
+  {% set pct = [[((sold_month / monthly_target) * 100)|int, 100]|min, 0]|max %}
+  <div style="background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px 18px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;color:var(--gold);">📈 MONTHLY SALES TARGET</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:{% if pct >= 100 %}#86EFAC{% elif pct >= 60 %}var(--gold){% else %}rgba(255,255,255,.5){% endif %};">
+        {{ sold_month }} / {{ monthly_target }} sold
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,.06);border-radius:20px;height:8px;overflow:hidden;">
+      <div style="height:100%;border-radius:20px;width:{{ pct }}%;background:{% if pct >= 100 %}linear-gradient(90deg,#22C55E,#86EFAC){% elif pct >= 60 %}linear-gradient(90deg,var(--gold),var(--gold-light)){% else %}linear-gradient(90deg,#3B82F6,#93C5FD){% endif %};transition:width .6s ease;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:5px;">
+      <div style="font-size:.68rem;color:rgba(255,255,255,.25);">{{ pct }}% of target</div>
+      <div style="font-size:.68rem;color:rgba(255,255,255,.25);">{{ monthly_target - sold_month }} more to go</div>
+    </div>
+  </div>
+
+  <!-- Overdue Keys Alert -->
+  {% if overdue_keys %}
+  <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:12px 16px;margin-bottom:14px;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;color:#FCA5A5;margin-bottom:8px;">
+      🔑 OVERDUE KEYS — {{ overdue_keys|length }} key{{ 's' if overdue_keys|length != 1 }} out too long
+    </div>
+    {% for co in overdue_keys %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+      <div style="font-size:.83rem;">
+        <span style="font-family:monospace;color:#FCA5A5;">{{ co.tag }}</span>
+        <span style="color:rgba(255,255,255,.4);margin:0 5px;">·</span>
+        <span style="color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;">{{ co.vehicle }}</span>
+        <span style="color:rgba(255,255,255,.4);margin:0 5px;">·</span>
+        <span>{{ co.staff }}</span>
+      </div>
+      <div style="font-size:.73rem;color:#FCA5A5;white-space:nowrap;">{{ co.hours_out }}h out</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Follow-up Reminders -->
+  {% if followups %}
+  <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:12px 16px;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;color:#FCD34D;">
+        📞 FOLLOW-UPS DUE — {{ followups|length }} customer{{ 's' if followups|length != 1 }}
+      </div>
+      <a href="/customers" style="font-size:.7rem;color:var(--gold);text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;">VIEW ALL →</a>
+    </div>
+    {% for e in followups[:4] %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+      <div style="font-size:.83rem;">
+        <span style="font-weight:500;color:#fff;">{{ e.name }}</span>
+        {% if e.phone %}<span style="color:var(--gold);margin-left:7px;font-size:.78rem;">{{ e.phone }}</span>{% endif %}
+        <span style="color:rgba(255,255,255,.35);margin-left:7px;font-size:.75rem;">re: {{ e.internal_id }}</span>
+      </div>
+      <button onclick="markFollowupDone('{{ e.id }}')" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2);color:#86EFAC;border-radius:6px;padding:3px 10px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.68rem;cursor:pointer;letter-spacing:.08em;white-space:nowrap;">✓ DONE</button>
+    </div>
+    {% endfor %}
+    {% if followups|length > 4 %}
+    <div style="font-size:.72rem;color:rgba(255,255,255,.25);margin-top:6px;">+{{ followups|length - 4 }} more — <a href="/customers" style="color:var(--gold);">see all</a></div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Upcoming test drives -->
+  {% if upcoming_drives %}
+  <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:12px 16px;margin-bottom:18px;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;color:#93C5FD;margin-bottom:8px;">📅 UPCOMING TEST DRIVES</div>
+    {% for td in upcoming_drives %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+      <div style="font-size:.82rem;">{{ td.customer_name }} — <span style="color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;">{{ td.internal_id }}</span></div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.35);">{{ td.datetime }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Search + Filters -->
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+    <div style="position:relative;">
+      <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:0.3;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by ID, make, model, colour or VIN…" style="padding-left:42px;" oninput="filterVehicles()"/>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <select id="statusFilter" class="filter-select" onchange="filterVehicles()">
+        <option value="">All Statuses</option>
+        <option value="Available">Available</option>
+        <option value="Sold">Sold</option>
+        <option value="In Service">In Service</option>
+        <option value="Demo">Demo</option>
+        <option value="Hold">Hold</option>
+        <option value="Pending">Pending</option>
+      </select>
+      <select id="colorFilter" class="filter-select" onchange="filterVehicles()">
+        <option value="">All Colours</option>
+        {% for colour in vehicles | map(attribute='Color') | select | unique | sort %}
+        <option value="{{ colour }}">{{ colour }}</option>
+        {% endfor %}
+      </select>
+      <select id="priceFilter" class="filter-select" onchange="filterVehicles()">
+        <option value="">Any Price</option>
+        <option value="0-10000">Under $10k</option>
+        <option value="0-20000">Under $20k</option>
+        <option value="0-30000">Under $30k</option>
+        <option value="0-50000">Under $50k</option>
+        <option value="50000-999999">$50k+</option>
+      </select>
+    </div>
+    <div id="filterCount" style="color:rgba(255,255,255,.25);font-size:.72rem;text-align:right;"></div>
+  </div>
+
+  <!-- Vehicle List -->
+  <div id="vehicleList">
+    {% for v in vehicles %}
+    {% set status = v.get('Status', 'Available') %}
+    {% set status_lower = status.lower().replace(' ', '-') %}
+    <a href="{{ url_for('scan', internal_id=v.get('Internal_ID','')) }}" class="vehicle-row" data-search="{{ v.get('Internal_ID','') }} {{ v.get('Make','') }} {{ v.get('Model','') }} {{ v.get('VIN','') }} {{ v.get('Color','') }}" data-status="{{ v.get('Status','') }}" data-color="{{ v.get('Color','') }}" data-price="{{ v.get('Price','0') | replace('$','') | replace(',','') | replace('k','000') }}">
+      <span class="vehicle-id">{{ v.get('Internal_ID', '—') }}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          {% if v.get('Year') %}{{ v.Year }} {% endif %}{{ v.get('Make','') }} {{ v.get('Model','') }}
+        </div>
+        <div style="color:rgba(255,255,255,0.3);font-size:0.75rem;margin-top:2px;font-family:monospace;letter-spacing:0.05em;">
+          {{ v.get('VIN', 'VIN N/A') }}
+        </div>
+      </div>
+      <div class="flex flex-col items-end gap-2">
+        <span class="status-badge status-{{ status_lower }}">{{ status }}</span>
+        {% if v.get('_days_on_lot') is not none %}
+        <span style="font-size:.65rem;padding:2px 7px;border-radius:10px;
+          {% if v._days_on_lot >= 90 %}background:rgba(239,68,68,.1);color:#FCA5A5;
+          {% elif v._days_on_lot >= 60 %}background:rgba(245,158,11,.1);color:#FCD34D;
+          {% elif v._days_on_lot >= 30 %}background:rgba(251,191,36,.1);color:#FDE68A;
+          {% else %}background:rgba(34,197,94,.06);color:rgba(134,239,172,.5);{% endif %}">
+          {{ v._days_on_lot }}d
+        </span>
+        {% endif %}
+        <span style="color:rgba(255,255,255,0.2);font-size:0.7rem;display:flex;align-items:center;gap:4px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          VIEW
+        </span>
+        <a href="/photos/{{ v.get('Internal_ID','') }}" onclick="event.stopPropagation()" style="color:rgba(201,168,76,.5);font-size:0.65rem;text-decoration:none;margin-top:2px;">📷 PHOTOS</a>
+      </div>
+    </a>
+    {% else %}
+    <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.2);">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;display:block;opacity:0.4;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <p style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;letter-spacing:0.1em;">NO VEHICLES FOUND</p>
+      <p style="font-size:0.8rem;margin-top:4px;opacity:0.6;">Check your Airtable connection settings</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script>
+async function markFollowupDone(id) {
+  try {
+    var r = await fetch('/api/followup-done', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+      body: JSON.stringify({id: id})
+    });
+    var d = await r.json();
+    if(d.ok) { location.reload(); }
+  } catch(e) { alert('Error — try again'); }
+}
+function filterVehicles() {
+  const q       = document.getElementById('searchInput').value.toLowerCase();
+  const status  = document.getElementById('statusFilter').value;
+  const color   = document.getElementById('colorFilter').value;
+  const priceR  = document.getElementById('priceFilter').value;
+  let visible   = 0;
+
+  document.querySelectorAll('#vehicleList .vehicle-row').forEach(row => {
+    const text      = row.getAttribute('data-search').toLowerCase();
+    const rowStatus = row.dataset.status || '';
+    const rowColor  = row.dataset.color  || '';
+    const rawPrice  = (row.dataset.price || '0').replace(/[^0-9.]/g,'');
+    const price     = parseFloat(rawPrice) || 0;
+
+    const matchQ      = !q      || text.includes(q);
+    const matchStatus = !status || rowStatus === status;
+    const matchColor  = !color  || rowColor  === color;
+    let   matchPrice  = true;
+    if (priceR) {
+      const [lo, hi] = priceR.split('-').map(Number);
+      matchPrice = price >= lo && price <= hi;
+    }
+
+    const show = matchQ && matchStatus && matchColor && matchPrice;
+    row.style.display = show ? 'flex' : 'none';
+    if (show) visible++;
+  });
+
+  const fc = document.getElementById('filterCount');
+  if (fc) {
+    const total = document.querySelectorAll('#vehicleList .vehicle-row').length;
+    fc.textContent = visible < total ? visible + ' of ' + total + ' vehicles shown' : '';
+  }
+}
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     KEYTRACK GLOBAL — Command Palette · Keyboard Shortcuts · Inline Edit
+     Inject before </body> in dashboard.html, vehicle.html, admin.html
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- CMD PALETTE OVERLAY -->
+<div id="cmdOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;">
+  <div id="cmdBox" style="width:100%;max-width:560px;background:#16161f;border:1px solid rgba(201,168,76,.3);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <span style="font-size:1.1rem;opacity:.5;">⌘</span>
+      <input id="cmdInput" placeholder="Search pages, vehicles, actions…"
+        style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:.95rem;font-family:'Inter',sans-serif;"
+        autocomplete="off" spellcheck="false"/>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">ESC</span>
+    </div>
+    <div id="cmdResults" style="max-height:360px;overflow-y:auto;padding:6px;"></div>
+    <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:16px;font-size:.68rem;color:rgba(255,255,255,.25);">
+      <span>↑↓ navigate</span><span>↵ open</span><span>ESC close</span><span>⌘K / Ctrl+K open</span>
+    </div>
+  </div>
+</div>
+
+<!-- INLINE EDIT POPOVER -->
+<div id="inlinePopover" style="position:fixed;z-index:8000;display:none;background:#1a1a28;border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);min-width:240px;max-width:320px;">
+  <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;" id="inlinePopLabel">Edit Field</div>
+  <div id="inlinePopInput"></div>
+  <div style="display:flex;gap:6px;margin-top:10px;">
+    <button onclick="saveInlineEdit()" style="flex:1;padding:7px;background:linear-gradient(135deg,#C9A84C,#e6c97a);color:#000;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;cursor:pointer;">SAVE</button>
+    <button onclick="closeInlinePop()" style="padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;cursor:pointer;font-size:.8rem;">✕</button>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUT TOAST -->
+<div id="kbToast" style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);background:#1c1c28;border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:8px 20px;font-size:.78rem;color:rgba(255,255,255,.7);opacity:0;transition:all .3s;pointer-events:none;z-index:7000;white-space:nowrap;"></div>
+
+<!-- SHORTCUT HELP OVERLAY -->
+<div id="shortcutHelp" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8500;display:none;align-items:center;justify-content:center;">
+  <div style="background:#16161f;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;max-width:480px;width:100%;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.08em;color:#C9A84C;margin-bottom:16px;">⌨ KEYBOARD SHORTCUTS</div>
+    <div id="shortcutList" style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;"></div>
+    <button onclick="document.getElementById('shortcutHelp').style.display='none'" style="margin-top:18px;padding:8px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;">CLOSE</button>
+  </div>
+</div>
+
+<style>
+.cmd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.cmd-item:hover,.cmd-item.active{background:rgba(201,168,76,.1);}
+.cmd-icon{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.cmd-label{font-size:.85rem;font-weight:500;color:#fff;}
+.cmd-sub{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:1px;}
+.kb-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;font-size:.7rem;font-family:monospace;color:rgba(255,255,255,.6);}
+.ie-enabled{cursor:pointer;transition:background .15s;}
+.ie-enabled:hover{background:rgba(201,168,76,.08);border-radius:4px;}
+.ie-enabled::after{content:' ✏';font-size:.6rem;opacity:0;transition:opacity .15s;}
+.ie-enabled:hover::after{opacity:.5;}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMAND PALETTE
+// ═══════════════════════════════════════════════════════════════════════════
+var _cmdOpen = false;
+var _cmdIdx = -1;
+var _cmdItems = [];
+var _cmdTimer = null;
+
+function openCmd() {
+  document.getElementById('cmdOverlay').style.display = 'flex';
+  document.getElementById('cmdInput').value = '';
+  _cmdOpen = true; _cmdIdx = -1;
+  setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+  loadCmdResults('');
+}
+function closeCmd() {
+  document.getElementById('cmdOverlay').style.display = 'none';
+  _cmdOpen = false;
+}
+document.getElementById('cmdOverlay').addEventListener('click', function(e){
+  if (e.target === this) closeCmd();
+});
+document.getElementById('cmdInput').addEventListener('input', function(){
+  clearTimeout(_cmdTimer);
+  _cmdTimer = setTimeout(() => loadCmdResults(this.value), 180);
+});
+document.getElementById('cmdInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveCmdIdx(1); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); moveCmdIdx(-1); }
+  if (e.key === 'Enter')     { e.preventDefault(); selectCmd(); }
+});
+
+async function loadCmdResults(q) {
+  const r = await fetch('/api/cmd-palette?q=' + encodeURIComponent(q));
+  const data = await r.json();
+  if (!data.ok) return;
+  _cmdItems = data.results;
+  _cmdIdx = -1;
+  renderCmdResults();
+}
+
+function renderCmdResults() {
+  const el = document.getElementById('cmdResults');
+  if (!_cmdItems.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:.8rem;color:rgba(255,255,255,.3);">No results</div>';
+    return;
+  }
+  el.innerHTML = _cmdItems.map((item, i) =>
+    `<div class="cmd-item${i===_cmdIdx?' active':''}" onclick="goCmd(${i})">
+      <div class="cmd-icon">${item.icon||'📄'}</div>
+      <div>
+        <div class="cmd-label">${item.label}</div>
+        ${item.sublabel ? `<div class="cmd-sub">${item.sublabel}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+function moveCmdIdx(dir) {
+  _cmdIdx = Math.max(-1, Math.min(_cmdItems.length-1, _cmdIdx + dir));
+  renderCmdResults();
+  const items = document.querySelectorAll('.cmd-item');
+  if (items[_cmdIdx]) items[_cmdIdx].scrollIntoView({block:'nearest'});
+}
+function selectCmd() {
+  if (_cmdIdx >= 0 && _cmdItems[_cmdIdx]) goCmd(_cmdIdx);
+  else if (_cmdItems[0]) goCmd(0);
+}
+function goCmd(i) {
+  const item = _cmdItems[i];
+  if (item) { closeCmd(); window.location.href = item.url; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════════════
+var SHORTCUTS = [
+  {key:'k', mod:'ctrl/cmd', label:'Command Palette',     action: openCmd},
+  {key:'/', mod:'',         label:'Global Search',       action: () => window.location.href='/search'},
+  {key:'d', mod:'',         label:'Dashboard',            action: () => goShortcut('/dashboard')},
+  {key:'p', mod:'',         label:'Pipeline',             action: () => goShortcut('/pipeline')},
+  {key:'f', mod:'',         label:'Finance Calculator',   action: () => goShortcut('/finance')},
+  {key:'h', mod:'',         label:'Inventory Health',     action: () => goShortcut('/inventory-health')},
+  {key:'a', mod:'',         label:'Analytics',            action: () => goShortcut('/analytics')},
+  {key:'t', mod:'',         label:'Trade-Ins',            action: () => goShortcut('/trade-ins')},
+  {key:'n', mod:'',         label:'New Vehicle (Admin)',  action: () => goShortcut('/admin')},
+  {key:'?', mod:'',         label:'Show shortcuts',       action: showShortcutHelp},
+  {key:'Escape', mod:'',    label:'Close / Back',         action: closeAll},
+];
+
+function goShortcut(url) {
+  showKbToast('→ ' + url);
+  setTimeout(() => window.location.href = url, 300);
+}
+function showKbToast(msg) {
+  const t = document.getElementById('kbToast');
+  t.textContent = msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)';}, 1800);
+}
+function closeAll() {
+  closeCmd();
+  document.getElementById('shortcutHelp').style.display = 'none';
+  closeInlinePop();
+}
+function showShortcutHelp() {
+  const list = document.getElementById('shortcutList');
+  list.innerHTML = SHORTCUTS.map(s =>
+    `<div><kbd class="kb-badge">${s.mod ? s.mod+'+' : ''}${s.key === 'Escape' ? 'ESC' : s.key.toUpperCase()}</kbd></div><div style="color:rgba(255,255,255,.7)">${s.label}</div>`
+  ).join('');
+  document.getElementById('shortcutHelp').style.display = 'flex';
+}
+
+document.addEventListener('keydown', function(e) {
+  // Don't fire if typing in an input
+  const tag = document.activeElement.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+  // CMD/Ctrl+K — always open palette
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if (_cmdOpen) closeCmd(); else openCmd();
+    return;
+  }
+  if (_cmdOpen) return; // let palette handle all keys
+  if (isInput) return;
+
+  // Single-key shortcuts
+  switch(e.key) {
+    case '/': e.preventDefault(); window.location.href='/search'; break;
+    case 'd': case 'D': goShortcut('/dashboard'); break;
+    case 'p': case 'P': goShortcut('/pipeline'); break;
+    case 'f': case 'F': goShortcut('/finance'); break;
+    case 'h': case 'H': goShortcut('/inventory-health'); break;
+    case 'a': case 'A': goShortcut('/analytics'); break;
+    case 't': case 'T': goShortcut('/trade-ins'); break;
+    case 'n': case 'N': goShortcut('/admin'); break;
+    case '?': showShortcutHelp(); break;
+    case 'Escape': closeAll(); break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INLINE EDIT
+// ═══════════════════════════════════════════════════════════════════════════
+var _inlineVid = null;
+var _inlineField = null;
+var _inlineFields = null;
+var _inlineTriggerEl = null;
+
+async function initInlineEdit() {
+  const r = await fetch('/api/inline-editable-fields');
+  const data = await r.json();
+  if (data.ok) _inlineFields = data.fields;
+}
+
+// Safe guard - inline edit only works on pages with VEHICLE_ID
+function openInlineEdit(el, vid, field, currentValue) {
+  if (!_inlineFields) return;
+  if (!vid) return;
+  var meta = _inlineFields[field];
+  if (!meta) return;
+  _inlineVid = vid;
+  _inlineField = field;
+  _inlineTriggerEl = el;
+
+  document.getElementById('inlinePopLabel').textContent = 'Edit: ' + meta.label;
+  var inp = document.getElementById('inlinePopInput');
+
+  if (meta.type === 'select') {
+    inp.innerHTML = '<select id="inlineVal" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;">' +
+      meta.options.map(function(o){ return '<option value="' + o + '"' + (o===currentValue?' selected':'') + '>' + o + '</option>'; }).join('') +
+      '</select>';
+  } else if (meta.type === 'textarea') {
+    inp.innerHTML = '<textarea id="inlineVal" rows="3" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;resize:vertical;outline:none;">' + (currentValue||'') + '</textarea>';
+  } else {
+    inp.innerHTML = '<input id="inlineVal" type="text" value="' + (currentValue||'').replace(/"/g,'&quot;') + '" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;"/>';
+  }
+
+  var rect = el.getBoundingClientRect();
+  var pop = document.getElementById('inlinePopover');
+  pop.style.display = 'block';
+  var top = rect.bottom + window.scrollY + 6;
+  var left = rect.left + window.scrollX;
+  if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+  if (top + 160 > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - 165;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+
+  setTimeout(function(){
+    var v = document.getElementById('inlineVal');
+    if (v) { v.focus(); if (v.select) v.select(); }
+  }, 50);
+
+  document.getElementById('inlineVal').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') saveInlineEdit();
+    if (e.key === 'Escape') closeInlinePop();
+  });
+}
+
+
+async function saveInlineEdit() {
+  const val = document.getElementById('inlineVal')?.value;
+  if (val === undefined) return;
+  const r = await fetch('/api/inline-edit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({vid: _inlineVid, field: _inlineField, value: val})
+  });
+  const data = await r.json();
+  if (data.ok) {
+    showKbToast('✅ ' + _inlineField + ' updated');
+    // Update the element text
+    if (_inlineTriggerEl) {
+      _inlineTriggerEl.textContent = val;
+      _inlineTriggerEl.dataset.val = val;
+    }
+    closeInlinePop();
+  } else {
+    showKbToast('❌ ' + (data.message || 'Error'));
+  }
+}
+function closeInlinePop() {
+  document.getElementById('inlinePopover').style.display = 'none';
+  _inlineVid = null; _inlineField = null;
+}
+// Close on outside click
+document.addEventListener('click', function(e){
+  const pop = document.getElementById('inlinePopover');
+  if (pop.style.display !== 'none' && !pop.contains(e.target)) {
+    if (!e.target.classList.contains('ie-enabled')) closeInlinePop();
+  }
+});
+
+// ── Add ⌘K button to all pages ───────────────────────────────────────────────
+(function(){
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  const btn = document.createElement('button');
+  btn.innerHTML = '⌘K';
+  btn.title = 'Command Palette (Ctrl+K / ⌘K)';
+  btn.onclick = openCmd;
+  btn.style.cssText = 'margin-left:auto;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:4px 10px;color:#C9A84C;font-family:\'Rajdhani\',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;';
+  btn.onmouseenter = () => btn.style.background = 'rgba(201,168,76,.2)';
+  btn.onmouseleave = () => btn.style.background = 'rgba(201,168,76,.1)';
+  // Insert before last nav child (scanner button usually)
+  const existing = nav.querySelector('[style*="margin-left:auto"]');
+  if (existing) {
+    existing.style.marginLeft = '0';
+    nav.insertBefore(btn, existing);
+  } else {
+    nav.appendChild(btn);
+  }
+})();
+
+// Init inline edit on pages that support it
+try { initInlineEdit(); } catch(e) {}
+</script>
+</body>
+</html>

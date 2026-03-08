@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ dealership }} — Find Your Perfect Car</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#C9A84C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{ pwa_name }}">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <meta name="description" content="Browse {{ total_available }} quality used vehicles. AI-powered search, real prices, trusted dealers."/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold2:#F0CB6E;--ink:#06080D;--ink2:#0E1118;--ink3:#161C28;--muted:rgba(255,255,255,.35);--border:rgba(255,255,255,.07);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'DM Sans',sans-serif;background:var(--ink);color:#fff;overflow-x:hidden;}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(6,8,13,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+    .nav-brand{display:flex;align-items:center;gap:10px;}
+    .nav-logo{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;}
+    .nav-name{font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.12em;font-size:.95rem;color:var(--gold);}
+    .nav-links{display:flex;align-items:center;gap:6px;}
+    .nav-link{color:var(--muted);padding:7px 14px;border-radius:8px;font-size:.82rem;text-decoration:none;transition:color .15s;}
+    .nav-link:hover{color:#fff;}
+    .nav-cta{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);padding:8px 18px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.08em;text-decoration:none;transition:opacity .15s;}
+    .nav-cta:hover{opacity:.88;}
+    .notif-dot{width:8px;height:8px;background:#ef4444;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;}
+
+    /* ── HERO ── */
+    .hero{padding:120px 24px 80px;text-align:center;position:relative;overflow:hidden;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,168,76,.12) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 80% 80%,rgba(201,168,76,.06) 0%,transparent 60%);pointer-events:none;}
+    .hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent);}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);color:var(--gold);padding:6px 16px;border-radius:20px;font-size:.72rem;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.15em;margin-bottom:24px;animation:fadeUp .6s ease both;}
+    .hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.8rem,6vw,5rem);line-height:1.05;letter-spacing:-.02em;margin-bottom:18px;animation:fadeUp .7s .1s ease both;}
+    .hero h1 em{font-style:normal;color:var(--gold);}
+    .hero-sub{font-size:1.05rem;color:var(--muted);max-width:480px;line-height:1.6;margin-bottom:36px;animation:fadeUp .7s .2s ease both;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── SEARCH BAR ── */
+    .hero-search{width:100%;max-width:640px;animation:fadeUp .7s .3s ease both;}
+    .search-pill{display:flex;align-items:center;background:var(--ink3);border:1.5px solid rgba(201,168,76,.3);border-radius:16px;overflow:hidden;transition:border-color .2s;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+    .search-pill:focus-within{border-color:var(--gold);}
+    .search-pill input{flex:1;background:transparent;border:none;padding:16px 20px;color:#fff;font-size:1rem;font-family:'DM Sans',sans-serif;}
+    .search-pill input:focus{outline:none;}
+    .search-pill input::placeholder{color:rgba(255,255,255,.25);}
+    .search-pill button{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;padding:14px 22px;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+    .search-pill button:hover{opacity:.88;}
+    .search-shortcuts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+    .shortcut{color:var(--muted);font-size:.75rem;padding:4px 12px;border-radius:12px;border:1px solid var(--border);cursor:pointer;transition:all .15s;}
+    .shortcut:hover{color:var(--gold);border-color:rgba(201,168,76,.3);}
+    .hero-stats{display:flex;gap:32px;justify-content:center;margin-top:40px;flex-wrap:wrap;animation:fadeUp .7s .4s ease both;}
+    .hero-stat-num{font-family:'Syne',sans-serif;font-weight:700;font-size:1.6rem;color:var(--gold);}
+    .hero-stat-label{font-size:.72rem;color:var(--muted);letter-spacing:.06em;margin-top:2px;}
+
+    /* ── SECTIONS ── */
+    .section{padding:60px 24px;max-width:1100px;margin:0 auto;}
+    .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px;}
+    .section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.4rem;}
+    .section-title span{color:var(--gold);}
+    .section-link{font-size:.8rem;color:var(--muted);text-decoration:none;transition:color .15s;}
+    .section-link:hover{color:var(--gold);}
+
+    /* ── VEHICLE CARDS ── */
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+    .vcard{background:var(--ink3);border:1px solid var(--border);border-radius:14px;overflow:hidden;text-decoration:none;color:inherit;display:block;transition:transform .25s,border-color .2s;position:relative;}
+    .vcard:hover{transform:translateY(-4px);border-color:rgba(201,168,76,.3);}
+    .vcard-img{height:170px;background:var(--ink2);overflow:hidden;position:relative;}
+    .vcard-img img{width:100%;height:100%;object-fit:cover;transition:transform .35s;}
+    .vcard:hover .vcard-img img{transform:scale(1.06);}
+    .vcard-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;color:rgba(255,255,255,.06);}
+    .drop-badge{position:absolute;top:10px;left:10px;background:#ef4444;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.62rem;letter-spacing:.08em;padding:3px 9px;border-radius:5px;}
+    .save-fab{position:absolute;top:10px;right:10px;width:32px;height:32px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:background .15s;z-index:2;}
+    .save-fab:hover,.save-fab.saved{background:rgba(239,68,68,.4);}
+    .vcard-body{padding:14px 16px;}
+    .vcard-yr{font-size:.72rem;color:var(--muted);letter-spacing:.04em;}
+    .vcard-name{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin:3px 0 5px;line-height:1.2;}
+    .vcard-specs{font-size:.75rem;color:rgba(255,255,255,.35);}
+    .vcard-price{font-family:'Syne',sans-serif;font-weight:700;font-size:1.4rem;color:var(--gold);margin-top:10px;}
+
+    /* ── FEATURE STRIP ── */
+    .feature-strip{background:var(--ink2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:40px 24px;}
+    .feature-strip-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;}
+    .feat{display:flex;align-items:flex-start;gap:14px;}
+    .feat-icon{width:44px;height:44px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+    .feat-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:3px;}
+    .feat-desc{font-size:.75rem;color:var(--muted);line-height:1.5;}
+
+    /* ── DEALER STRIP ── */
+    .dealer-strip{background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.02));border:1px solid rgba(201,168,76,.15);border-radius:18px;padding:36px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:0 24px;}
+    .dealer-strip h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;margin-bottom:6px;}
+    .dealer-strip p{color:var(--muted);font-size:.88rem;max-width:420px;}
+    .dealer-btns{display:flex;gap:10px;flex-wrap:wrap;}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);padding:11px 24px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.08em;text-decoration:none;transition:opacity .15s;border:none;cursor:pointer;}
+    .btn-gold:hover{opacity:.88;}
+    .btn-outline{background:transparent;color:var(--gold);border:1px solid rgba(201,168,76,.3);padding:11px 24px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.08em;text-decoration:none;transition:all .15s;cursor:pointer;}
+    .btn-outline:hover{background:rgba(201,168,76,.08);}
+
+    /* ── FOOTER ── */
+    footer{background:var(--ink2);border-top:1px solid var(--border);padding:32px 24px;margin-top:60px;text-align:center;}
+    footer a{color:var(--muted);text-decoration:none;margin:0 10px;font-size:.8rem;transition:color .15s;}
+    footer a:hover{color:var(--gold);}
+
+    @media(max-width:640px){
+      nav .nav-links .nav-link{display:none;}
+      .hero{padding:100px 16px 60px;}
+      .dealer-strip{padding:24px 20px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <span class="nav-name">{{ dealership }}</span>
+  </div>
+  <div class="nav-links">
+    <a href="/listings" class="nav-link">Browse</a>
+    <a href="/search-ai" class="nav-link">🤖 AI Search</a>
+    <a href="/dealers" class="nav-link">Dealers</a>
+    {% if buyer %}
+    <a href="/buyer/dashboard" class="nav-link">
+      My Account {% if unread > 0 %}<span class="notif-dot"></span>{% endif %}
+    </a>
+    {% else %}
+    <a href="/buyer/login" class="nav-link">Sign In</a>
+    <a href="/onboard" class="nav-cta">Get Started</a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-badge">🚗 {{ total_available }} VEHICLES AVAILABLE NOW</div>
+  <h1>Find Your Next Car<br>the <em>Smart Way</em></h1>
+  <p class="hero-sub">Search in plain English. Get matched to real cars. No haggling, no confusion — just the right vehicle at the right price.</p>
+
+  <div class="hero-search">
+    <div class="search-pill">
+      <input id="heroSearch" placeholder="e.g. diesel ute under $30k, automatic, low kms…" autocomplete="off">
+      <button onclick="heroSearch()">SEARCH →</button>
+    </div>
+    <div class="search-shortcuts">
+      {% for make in makes[:6] %}<span class="shortcut" onclick="quickSearch('{{ make }}')">{{ make }}</span>{% endfor %}
+      <span class="shortcut" onclick="quickSearch('under $15k')">Under $15k</span>
+      <span class="shortcut" onclick="quickSearch('ute diesel')">Utes</span>
+      <span class="shortcut" onclick="quickSearch('family SUV')">Family SUV</span>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div><div class="hero-stat-num">{{ total_available }}</div><div class="hero-stat-label">VEHICLES</div></div>
+    <div><div class="hero-stat-num">{{ dealer_count or 1 }}</div><div class="hero-stat-label">DEALERS</div></div>
+    <div><div class="hero-stat-num">100%</div><div class="hero-stat-label">VERIFIED</div></div>
+    <div><div class="hero-stat-num">$0</div><div class="hero-stat-label">TO BROWSE</div></div>
+  </div>
+</section>
+
+<!-- FEATURE STRIP -->
+<div class="feature-strip">
+  <div class="feature-strip-inner">
+    <div class="feat"><div class="feat-icon">🤖</div><div><div class="feat-title">AI-Powered Search</div><div class="feat-desc">Type what you want in plain English. Our AI finds the best match.</div></div></div>
+    <div class="feat"><div class="feat-icon">🔔</div><div><div class="feat-title">Price Drop Alerts</div><div class="feat-desc">Save a car and get SMS when the price drops. Never miss a deal.</div></div></div>
+    <div class="feat"><div class="feat-icon">💬</div><div><div class="feat-title">Live Chat</div><div class="feat-desc">Message dealers directly. Get answers fast, no phone tag.</div></div></div>
+    <div class="feat"><div class="feat-icon">📋</div><div><div class="feat-title">Full Specs + History</div><div class="feat-desc">VIN-decoded specs, service notes and finance estimates on every listing.</div></div></div>
+  </div>
+</div>
+
+<!-- PRICE DROPS -->
+{% if drops %}
+<div class="section">
+  <div class="section-head">
+    <div class="section-title">🔥 <span>Price Drops</span></div>
+    <a href="/listings" class="section-link">View all →</a>
+  </div>
+  <div class="cards-grid">
+    {% for v in drops %}
+    {% set vid = v.get('Internal_ID','') %}
+    <a href="/listing/{{ vid }}" class="vcard">
+      <div class="vcard-img">
+        {% if v._primary_photo %}<img src="{{ v._primary_photo }}" alt="" loading="lazy">
+        {% else %}<div class="vcard-ph">🚗</div>{% endif %}
+        {% if v._drop_amount %}<div class="drop-badge">↓ ${{ "{:,.0f}".format(v._drop_amount) }}</div>{% endif %}
+        <button class="save-fab" onclick="saveCar(event,'{{ vid }}',this)">🤍</button>
+      </div>
+      <div class="vcard-body">
+        <div class="vcard-yr">{{ v.get('Year','') }}</div>
+        <div class="vcard-name">{{ v.get('Make','') }} {{ v.get('Model','') }}</div>
+        <div class="vcard-specs">{{ v.get('Mileage','') }}{% if v.get('Transmission') %} · {{ v.Transmission }}{% endif %}</div>
+        <div class="vcard-price">{{ v.get('Price','') }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- PERSONALISED PICKS -->
+{% if picks %}
+<div class="section">
+  <div class="section-head">
+    <div class="section-title">⭐ <span>Picked for You</span></div>
+    <a href="/buyer/dashboard" class="section-link">My saved cars →</a>
+  </div>
+  <div class="cards-grid">
+    {% for v in picks %}
+    {% set vid = v.get('Internal_ID','') %}
+    <a href="/listing/{{ vid }}" class="vcard">
+      <div class="vcard-img">
+        {% if v._primary_photo %}<img src="{{ v._primary_photo }}" alt="" loading="lazy">
+        {% else %}<div class="vcard-ph">🚗</div>{% endif %}
+        <button class="save-fab" onclick="saveCar(event,'{{ vid }}',this)">🤍</button>
+      </div>
+      <div class="vcard-body">
+        <div class="vcard-yr">{{ v.get('Year','') }}</div>
+        <div class="vcard-name">{{ v.get('Make','') }} {{ v.get('Model','') }}</div>
+        <div class="vcard-specs">{{ v.get('Mileage','') }}</div>
+        <div class="vcard-price">{{ v.get('Price','') }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- FEATURED LISTINGS -->
+<div class="section">
+  <div class="section-head">
+    <div class="section-title">Latest <span>Listings</span></div>
+    <a href="/listings" class="section-link">See all {{ total_available }} →</a>
+  </div>
+  <div class="cards-grid">
+    {% for v in featured %}
+    {% set vid = v.get('Internal_ID','') %}
+    <a href="/listing/{{ vid }}" class="vcard">
+      <div class="vcard-img">
+        {% if v._primary_photo %}<img src="{{ v._primary_photo }}" alt="" loading="lazy">
+        {% else %}<div class="vcard-ph">🚗</div>{% endif %}
+        <button class="save-fab" onclick="saveCar(event,'{{ vid }}',this)">🤍</button>
+      </div>
+      <div class="vcard-body">
+        <div class="vcard-yr">{{ v.get('Year','') }}</div>
+        <div class="vcard-name">{{ v.get('Make','') }} {{ v.get('Model','') }}{% if v.get('Trim') %} {{ v.Trim }}{% endif %}</div>
+        <div class="vcard-specs">{{ v.get('Mileage','') }}{% if v.get('Body') %} · {{ v.Body }}{% endif %}</div>
+        <div class="vcard-price">{{ v.get('Price','Call for Price') }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- DEALER CTA -->
+<div class="dealer-strip">
+  <div>
+    <h2>Are you a dealer?</h2>
+    <p>List your vehicles, manage your inventory, track every key and close more deals. Starting completely free. Replace AutoTrader for 90% less.</p>
+  </div>
+  <div class="dealer-btns">
+    <a href="/onboard" class="btn-gold">LIST YOUR CARS FREE →</a>
+    <a href="/dealers" class="btn-outline">VIEW DEALERS</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--gold);letter-spacing:.15em;margin-bottom:14px;">{{ dealership }}</div>
+  <div>
+    <a href="/listings">Browse Cars</a>
+    <a href="/search-ai">AI Search</a>
+    <a href="/dealers">Dealers</a>
+    <a href="/onboard">Get Started</a>
+    <a href="/dealer-portal/login">Dealer Login</a>
+    <a href="/dashboard">Staff</a>
+  </div>
+  <p style="color:rgba(255,255,255,.15);font-size:.72rem;margin-top:16px;">© {{ dealership }} · Powered by KeyTrack</p>
+</footer>
+
+<script>
+let savedVids = new Set();
+fetch('/api/buyer/saved').then(r=>r.json()).then(d=>{if(d.saved)d.saved.forEach(v=>savedVids.add(v));updateSaveBtns();});
+
+function updateSaveBtns(){
+  document.querySelectorAll('.save-fab').forEach(btn=>{
+    const vid=btn.getAttribute('onclick').match(/'([A-Z0-9]+)'/)?.[1];
+    if(vid&&savedVids.has(vid)){btn.textContent='❤️';btn.classList.add('saved');}
+  });
+}
+
+async function saveCar(e,vid,btn){
+  e.preventDefault();e.stopPropagation();
+  const r=await fetch('/api/buyer/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vid})});
+  const d=await r.json();
+  if(d.login_required){location.href='/onboard';return;}
+  if(d.ok){btn.textContent=d.saved?'❤️':'🤍';d.saved?btn.classList.add('saved'):btn.classList.remove('saved');}
+}
+
+function heroSearch(){
+  const q=document.getElementById('heroSearch').value.trim();
+  if(!q)return;
+  location.href='/search-ai?q='+encodeURIComponent(q);
+}
+function quickSearch(q){
+  document.getElementById('heroSearch').value=q;heroSearch();
+}
+document.getElementById('heroSearch').addEventListener('keydown',e=>{if(e.key==='Enter')heroSearch();});
+</script>
+  <!-- PWA Service Worker -->
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js',{scope:'/'})
+        .then(()=>console.log('SW registered'))
+        .catch(e=>console.log('SW error',e));
+    }
+  </script>
+  <!-- PWA Install prompt -->
+  <div id="pwaInstall" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#161C28;border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:340px;">
+    <div style="font-size:1.3rem;">📱</div>
+    <div style="flex:1;">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;">Install {{ pwa_name }}</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.4);">Add to your home screen for quick access</div>
+    </div>
+    <button onclick="installPWA()" style="background:linear-gradient(135deg,#C9A84C,#F0CB6E);color:#06080D;border:none;border-radius:8px;padding:7px 14px;font-family:'Syne',sans-serif;font-weight:700;font-size:.72rem;cursor:pointer;">INSTALL</button>
+    <button onclick="document.getElementById('pwaInstall').style.display='none'" style="background:transparent;border:none;color:rgba(255,255,255,.3);cursor:pointer;padding:4px;">✕</button>
+  </div>
+  <script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt',e=>{
+      e.preventDefault(); deferredPrompt=e;
+      setTimeout(()=>{ document.getElementById('pwaInstall').style.display='flex'; },3000);
+    });
+    function installPWA(){
+      if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{ document.getElementById('pwaInstall').style.display='none'; deferredPrompt=null; }); }
+    }
+    window.addEventListener('appinstalled',()=>{ document.getElementById('pwaInstall').style.display='none'; });
+  </script>
+</body>
+</html>

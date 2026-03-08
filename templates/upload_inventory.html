@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Upload Inventory — {{ dealership }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:rgba(255,255,255,.07);
+    --gold:#C9A84C;--gold2:#e6c97a;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;
+    --amber:#f59e0b;--text:rgba(255,255,255,.87);--muted:rgba(255,255,255,.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+
+  /* NAV */
+  .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
+  .nav-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold);letter-spacing:.06em;white-space:nowrap;}
+  .nav-sep{color:var(--border);margin:0 4px;}
+  .nav-back{color:var(--muted);font-size:.8rem;text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .2s;}
+  .nav-back:hover{color:var(--gold);}
+
+  /* LAYOUT */
+  .page{max-width:1100px;margin:0 auto;padding:32px 20px;}
+  .page-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;letter-spacing:.05em;margin-bottom:4px;}
+  .page-sub{color:var(--muted);font-size:.82rem;margin-bottom:28px;}
+
+  /* CARDS */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+  .card-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;}
+
+  /* DROP ZONE */
+  .drop-zone{border:2px dashed rgba(201,168,76,.3);border-radius:12px;padding:40px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:rgba(201,168,76,.02);}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--gold);background:rgba(201,168,76,.06);}
+  .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .drop-icon{font-size:2.5rem;margin-bottom:12px;opacity:.5;}
+  .drop-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold);margin-bottom:6px;}
+  .drop-sub{color:var(--muted);font-size:.78rem;}
+  .file-chosen{margin-top:12px;padding:8px 14px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;font-size:.8rem;color:var(--green);display:none;}
+
+  /* COLUMN MAPPING PREVIEW */
+  .col-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:4px;}
+  .col-item{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.75rem;}
+  .col-src{color:var(--muted);font-family:monospace;margin-bottom:2px;}
+  .col-dst{color:var(--text);font-weight:600;}
+  .col-dst.ignored{color:rgba(255,255,255,.2);}
+
+  /* STATS BAR */
+  .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  .stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+  .stat-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;line-height:1;}
+  .stat-lbl{font-size:.68rem;color:var(--muted);margin-top:4px;letter-spacing:.08em;text-transform:uppercase;}
+  .stat-box.s-green .stat-num{color:var(--green);}
+  .stat-box.s-amber .stat-num{color:var(--amber);}
+  .stat-box.s-red   .stat-num{color:var(--red);}
+  .stat-box.s-blue  .stat-num{color:var(--blue);}
+
+  /* RESULTS TABLE */
+  .results-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.78rem;}
+  th{background:rgba(255,255,255,.04);padding:8px 12px;text-align:left;font-weight:600;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+  td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;}
+  tr:hover td{background:rgba(255,255,255,.02);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.68rem;font-weight:700;letter-spacing:.06em;white-space:nowrap;}
+  .badge-green{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25);}
+  .badge-red  {background:rgba(239,68,68,.12); color:var(--red);  border:1px solid rgba(239,68,68,.25);}
+  .badge-amber{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25);}
+  .badge-blue {background:rgba(59,130,246,.12);color:var(--blue); border:1px solid rgba(59,130,246,.25);}
+  .badge-grey {background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border);}
+
+  /* WARNINGS LIST */
+  .warn-list{margin-top:4px;}
+  .warn-item{display:flex;align-items:flex-start;gap:5px;font-size:.7rem;line-height:1.4;margin-bottom:2px;}
+  .warn-item.error{color:var(--red);}
+  .warn-item.warn {color:var(--amber);}
+  .warn-item.info {color:var(--blue);}
+  .warn-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+  .warn-item.error .warn-dot{background:var(--red);}
+  .warn-item.warn  .warn-dot{background:var(--amber);}
+  .warn-item.info  .warn-dot{background:var(--blue);}
+
+  /* BUTTON */
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.08em;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+  .btn-gold{background:linear-gradient(135deg,#C9A84C,#e6c97a);color:#000;}
+  .btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,.35);}
+  .btn-ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border);}
+  .btn-ghost:hover{background:rgba(255,255,255,.1);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+
+  /* PROGRESS */
+  .progress-wrap{background:rgba(255,255,255,.06);border-radius:99px;height:6px;overflow:hidden;margin:12px 0;}
+  .progress-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;transition:width .3s;}
+
+  /* HOW IT WORKS */
+  .how-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+  .how-item{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:14px;}
+  .how-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold);margin-bottom:6px;}
+  .how-text{font-size:.75rem;color:var(--muted);line-height:1.5;}
+
+  /* NOTES BOX */
+  .notes-box{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:14px 16px;font-size:.78rem;color:rgba(255,255,255,.55);line-height:1.6;}
+  .notes-box b{color:rgba(255,255,255,.7);}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:24px;right:24px;background:#1c1c28;border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-size:.82rem;opacity:0;transform:translateY(10px);transition:all .3s;z-index:999;max-width:340px;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateY(0);}
+
+  /* LOADING */
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  #uploadSection{display:none;}
+  #resultsSection{display:none;}
+  #previewSection{display:none;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-logo">⬆ UPLOAD INVENTORY</span>
+  <span class="nav-sep">|</span>
+  <a class="nav-back" href="/admin">← Back to Admin</a>
+  <span style="margin-left:auto;font-size:.75rem;color:var(--muted);">{{ vehicle_count }} vehicles currently in inventory</span>
+</nav>
+
+<div class="page">
+  <div class="page-title">Upload Inventory</div>
+  <div class="page-sub">Import vehicles from your CSV or Excel export — smart column detection, auto-deduplication, data validation</div>
+
+  <!-- HOW IT WORKS -->
+  <div class="card">
+    <div class="card-title">How It Works</div>
+    <div class="how-grid">
+      <div class="how-item"><div class="how-num">01</div><div class="how-text">Drop your CSV or Excel file — any export format from your DMS</div></div>
+      <div class="how-item"><div class="how-num">02</div><div class="how-text">App auto-detects columns and maps them to your inventory fields</div></div>
+      <div class="how-item"><div class="how-num">03</div><div class="how-text">Each row is validated — errors and warnings highlighted before upload</div></div>
+      <div class="how-item"><div class="how-num">04</div><div class="how-text">Duplicate VINs and Stock #s are automatically skipped</div></div>
+      <div class="how-item"><div class="how-num">05</div><div class="how-text">Phone numbers and placeholder text stripped from descriptions automatically</div></div>
+      <div class="how-item"><div class="how-num">06</div><div class="how-text">Only clean, valid records are added to Airtable</div></div>
+    </div>
+  </div>
+
+  <!-- DROP ZONE -->
+  <div class="card">
+    <div class="card-title">Select File</div>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" onchange="fileSelected(this)"/>
+      <div class="drop-icon">📂</div>
+      <div class="drop-title">Drop your inventory file here</div>
+      <div class="drop-sub">Supports .CSV and .XLSX — up to 300 rows per upload</div>
+      <div class="file-chosen" id="fileChosen"></div>
+    </div>
+
+    <!-- COLUMN PREVIEW (shown after file selected) -->
+    <div id="previewSection" style="margin-top:20px;">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;color:var(--muted);margin-bottom:10px;">DETECTED COLUMNS</div>
+      <div class="col-map" id="colMapGrid"></div>
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-gold" onclick="startUpload()" id="uploadBtn">
+          <span>⬆ UPLOAD TO INVENTORY</span>
+        </button>
+        <button class="btn btn-ghost" onclick="resetPage()">✕ Cancel</button>
+        <span id="rowCount" style="color:var(--muted);font-size:.8rem;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD PROGRESS -->
+  <div class="card" id="uploadSection">
+    <div class="card-title">Uploading…</div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+    <div id="uploadStatus" style="color:var(--muted);font-size:.8rem;margin-top:8px;">Analysing file…</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsSection">
+    <div class="stats-bar">
+      <div class="stat-box s-green"><div class="stat-num" id="statCreated">0</div><div class="stat-lbl">✅ Added</div></div>
+      <div class="stat-box s-blue" ><div class="stat-num" id="statSkipped">0</div><div class="stat-lbl">⏭ Skipped (duplicate)</div></div>
+      <div class="stat-box s-amber"><div class="stat-num" id="statWarnings">0</div><div class="stat-lbl">⚠ Warnings</div></div>
+      <div class="stat-box s-red"  ><div class="stat-num" id="statFailed">0</div><div class="stat-lbl">❌ Failed</div></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div class="card-title" style="margin:0;">Upload Results</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" style="padding:7px 14px;font-size:.75rem;" onclick="filterResults('all')" id="fAll">All</button>
+          <button class="btn btn-ghost" style="padding:7px 14px;font-size:.75rem;" onclick="filterResults('ok')"  id="fOk">Added</button>
+          <button class="btn btn-ghost" style="padding:7px 14px;font-size:.75rem;" onclick="filterResults('skip')" id="fSkip">Skipped</button>
+          <button class="btn btn-ghost" style="padding:7px 14px;font-size:.75rem;" onclick="filterResults('fail')" id="fFail">Issues</button>
+        </div>
+      </div>
+      <div class="results-wrap">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th>Stock #</th>
+              <th>Vehicle</th>
+              <th>Status</th>
+              <th>Notes / Warnings</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:10px;">
+        <a class="btn btn-gold" href="/admin">← Back to Admin</a>
+        <button class="btn btn-ghost" onclick="resetPage()">Upload Another File</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="notes-box">
+    <b>Supported column names</b> — the app recognises most DMS export formats automatically.<br>
+    Stock #, VIN, Year, Make, Model, Variant/Trim, Category/Body, Mileage, Price, Status, Description/Notes, Listing Creation Date, Series, Engine, Transmission, Drive, Fuel, Colour/Color.<br><br>
+    <b>Auto-cleaned:</b> Phone numbers stripped from descriptions · Placeholder text removed · Status "active" → Available · Price formatted · Mileage formatted<br><br>
+    <b>Duplicates:</b> Any row matching an existing VIN or Stock # is automatically skipped — no action needed.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Column mapping display ────────────────────────────────────────────────────
+const COL_MAP_DISPLAY = {
+  "stock#":"Internal_ID","stock":"Internal_ID","stockno":"Internal_ID","stocknumber":"Internal_ID",
+  "vin":"VIN","vinnumber":"VIN",
+  "year":"Year","modelyear":"Year",
+  "make":"Make","brand":"Make",
+  "model":"Model",
+  "variant":"Trim","trim":"Trim",
+  "series":"Notes (series prefix)",
+  "category":"Body","body":"Body","bodystyle":"Body",
+  "mileage":"Mileage","odometer":"Mileage","km":"Mileage","kms":"Mileage",
+  "price":"Price","saleprice":"Price","listprice":"Price",
+  "status":"Status",
+  "listingcreationdate":"Date_Added","dateadded":"Date_Added",
+  "description":"Notes","notes":"Notes","comments":"Notes",
+  "engine":"Engine","transmission":"Transmission","drive":"Drive","fuel":"Fuel",
+  "colour":"Color","color":"Color","exteriorcolor":"Color","exteriorcolour":"Color",
+  "title":"_title (parse Year/Make/Model)",
+};
+const IGNORED = ["marketplaceforeignidgt","marketplaceforeignidcg","marketplaceforeignidat",
+  "isdrivewayPrice","isdriveawayprice","age","views","adhealth","imagecount",
+  "marketplaceerrorgt","marketplaceerrorcg","marketplaceerrorat","vehicleclass",
+  "condition","listingdeletiondate"];
+
+function normKey(k){ return k.toLowerCase().replace(/[^a-z0-9]/g,''); }
+
+let selectedFile = null;
+let detectedHeaders = [];
+
+function fileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedFile = file;
+  const fc = document.getElementById('fileChosen');
+  fc.textContent = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+  fc.style.display = 'block';
+
+  // For CSV, parse headers client-side
+  if (file.name.toLowerCase().endsWith('.csv')) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const firstLine = e.target.result.split('\n')[0];
+      const headers = firstLine.split(',').map(h => h.replace(/"/g,'').replace(/^\uFEFF/,'').trim());
+      showColumnPreview(headers, file);
+    };
+    reader.readAsText(file);
+  } else {
+    // For Excel, just show file info without column preview
+    showColumnPreview([], file);
+  }
+}
+
+function showColumnPreview(headers, file) {
+  detectedHeaders = headers;
+  const grid = document.getElementById('colMapGrid');
+  grid.innerHTML = '';
+
+  if (headers.length > 0) {
+    let rowCount = 0;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const lines = e.target.result.split('\n').filter(l => l.trim());
+      rowCount = Math.max(0, lines.length - 1);
+      document.getElementById('rowCount').textContent = `${rowCount} rows detected`;
+    };
+    reader.readAsText(file);
+
+    headers.forEach(h => {
+      const norm = normKey(h);
+      const mapped = COL_MAP_DISPLAY[norm];
+      const isIgnored = IGNORED.includes(norm);
+      const div = document.createElement('div');
+      div.className = 'col-item';
+      div.innerHTML = `<div class="col-src">${h}</div>
+        <div class="col-dst ${isIgnored?'ignored':''}">${isIgnored ? '(ignored)' : (mapped || '(unknown)')}</div>`;
+      grid.appendChild(div);
+    });
+  } else {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:.8rem;">Column preview not available for Excel files — will be detected on upload.</div>';
+    document.getElementById('rowCount').textContent = '';
+  }
+
+  document.getElementById('previewSection').style.display = 'block';
+}
+
+// ── Drag and drop ─────────────────────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const input = document.getElementById('fileInput');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    fileSelected(input);
+  }
+});
+
+// ── Upload ────────────────────────────────────────────────────────────────────
+function startUpload() {
+  if (!selectedFile) { showToast('Please select a file first', 'var(--red)'); return; }
+
+  document.getElementById('uploadSection').style.display = 'block';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('uploadBtn').disabled = true;
+  document.getElementById('uploadBtn').innerHTML = '<span class="spinner"></span> UPLOADING…';
+
+  // Animate progress bar
+  let prog = 0;
+  const progInterval = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 8, 85);
+    document.getElementById('progressBar').style.width = prog + '%';
+  }, 200);
+
+  document.getElementById('uploadStatus').textContent = 'Validating and uploading to Airtable…';
+
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+
+  fetch('/api/upload-inventory', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      clearInterval(progInterval);
+      document.getElementById('progressBar').style.width = '100%';
+      document.getElementById('uploadSection').style.display = 'none';
+
+      if (!data.ok) {
+        showToast(data.message, 'var(--red)');
+        document.getElementById('uploadBtn').disabled = false;
+        document.getElementById('uploadBtn').innerHTML = '<span>⬆ UPLOAD TO INVENTORY</span>';
+        return;
+      }
+
+      renderResults(data);
+    })
+    .catch(err => {
+      clearInterval(progInterval);
+      document.getElementById('uploadSection').style.display = 'none';
+      showToast('Upload failed: ' + err.message, 'var(--red)');
+      document.getElementById('uploadBtn').disabled = false;
+      document.getElementById('uploadBtn').innerHTML = '<span>⬆ UPLOAD TO INVENTORY</span>';
+    });
+}
+
+// ── Render results ────────────────────────────────────────────────────────────
+let allResults = [];
+
+function renderResults(data) {
+  allResults = data.results;
+  document.getElementById('statCreated').textContent  = data.created;
+  document.getElementById('statSkipped').textContent  = data.skipped;
+  document.getElementById('statWarnings').textContent = data.warnings;
+  document.getElementById('statFailed').textContent   = data.failed;
+  document.getElementById('resultsSection').style.display = 'block';
+
+  renderTable(allResults);
+
+  const msg = `Done — ${data.created} added, ${data.skipped} skipped, ${data.failed} failed`;
+  showToast(msg, data.failed > 0 ? 'var(--amber)' : 'var(--green)');
+
+  // Scroll to results
+  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('resultsTbody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.dataset.type = r.ok ? 'ok' : (r.skipped ? 'skip' : 'fail');
+
+    // Badge
+    let badge, bClass;
+    if (r.ok)         { badge = '✅ Added';    bClass = 'badge-green'; }
+    else if (r.skipped){ badge = '⏭ Duplicate'; bClass = 'badge-blue'; }
+    else               { badge = '❌ Failed';   bClass = 'badge-red'; }
+
+    // Warnings HTML
+    let warnHtml = `<div style="color:var(--muted);font-size:.72rem;">${r.message}</div>`;
+    if (r.warnings && r.warnings.length > 0) {
+      warnHtml += '<div class="warn-list">';
+      r.warnings.forEach(w => {
+        warnHtml += `<div class="warn-item ${w.level}"><div class="warn-dot"></div><span>${w.msg}</span></div>`;
+      });
+      warnHtml += '</div>';
+    }
+
+    tr.innerHTML = `
+      <td style="color:var(--muted);font-size:.72rem;">${r.row}</td>
+      <td><span style="font-family:monospace;font-size:.75rem;color:var(--gold);">${r.stock || '—'}</span></td>
+      <td style="font-weight:500;">${r.name || '—'}</td>
+      <td><span class="badge ${bClass}">${badge}</span></td>
+      <td>${warnHtml}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">No rows to display</td></tr>';
+  }
+}
+
+function filterResults(type) {
+  ['fAll','fOk','fSkip','fFail'].forEach(id => document.getElementById(id).style.opacity = '.5');
+  const map = {all:'fAll',ok:'fOk',skip:'fSkip',fail:'fFail'};
+  document.getElementById(map[type]).style.opacity = '1';
+
+  if (type === 'all') { renderTable(allResults); return; }
+  renderTable(allResults.filter(r => r.type === type ||
+    (type==='ok'   && r.ok) ||
+    (type==='skip' && r.skipped) ||
+    (type==='fail' && !r.ok && !r.skipped)
+  ));
+}
+
+function resetPage() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileChosen').style.display = 'none';
+  document.getElementById('previewSection').style.display = 'none';
+  document.getElementById('uploadSection').style.display = 'none';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('uploadBtn').disabled = false;
+  document.getElementById('uploadBtn').innerHTML = '<span>⬆ UPLOAD TO INVENTORY</span>';
+  document.getElementById('colMapGrid').innerHTML = '';
+  document.getElementById('progressBar').style.width = '0%';
+  allResults = [];
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = color || 'var(--border)';
+  t.style.color = color || '#fff';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+</script>
+</body>
+</html>

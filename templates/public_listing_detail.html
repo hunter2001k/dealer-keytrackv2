@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ vehicle.get('Year','') }} {{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }} — {{ dealership }}</title>
+  <meta name="description" content="{{ vehicle.get('Year','') }} {{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }} {{ vehicle.get('Trim','') }} for sale at {{ dealership }}. {{ vehicle.get('Mileage','') }}km · {{ vehicle.get('Price','') }}."/>
+  <meta property="og:title" content="{{ vehicle.get('Year','') }} {{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }} — {{ vehicle.get('Price','') }}"/>
+  <meta property="og:description" content="{{ vehicle.get('Mileage','') }}km · {{ vehicle.get('Engine','') }}. Available at {{ dealership }}."/>
+  {% if primary_photo %}<meta property="og:image" content="{{ primary_photo }}"/>{% endif %}
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#C9A84C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --gold:#C9A84C; --gold2:#F0CB6E;
+      --ink:#09090F; --panel:#111318; --panel2:#181D26;
+      --border:rgba(255,255,255,.07);
+      --muted:rgba(255,255,255,.38);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'DM Sans',sans-serif;background:var(--ink);color:#fff;min-height:100vh;}
+
+    /* ─── TOPBAR ─── */
+    .topbar{
+      position:sticky;top:0;z-index:100;
+      background:rgba(9,9,15,.92);backdrop-filter:blur(14px);
+      border-bottom:1px solid rgba(201,168,76,.12);
+      padding:0 20px;height:58px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .tb-brand{display:flex;align-items:center;gap:9px;text-decoration:none;}
+    .tb-logo{width:30px;height:30px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .tb-name{font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.14em;color:var(--gold);font-size:.82rem;}
+    .tb-nav{display:flex;align-items:center;gap:16px;}
+    .tb-nav a{color:var(--muted);text-decoration:none;font-size:.8rem;transition:color .15s;}
+    .tb-nav a:hover{color:#fff;}
+
+    /* ─── MOBILE STICKY CALL BAR ─── */
+    .call-bar{
+      display:none;
+      position:fixed;bottom:0;left:0;right:0;z-index:200;
+      background:rgba(9,9,15,.97);border-top:1px solid rgba(201,168,76,.25);
+      padding:10px 12px 10px;gap:8px;
+    }
+    @media(max-width:860px){.call-bar{display:flex;}}
+    .cbar-btn{
+      flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+      padding:13px 8px;border-radius:11px;
+      font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.07em;
+      text-decoration:none;border:none;cursor:pointer;transition:opacity .15s;
+    }
+    .cbar-btn:hover{opacity:.88;}
+    .cbar-call{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);}
+    .cbar-wa{background:rgba(37,211,102,.14);color:#25D366;border:1px solid rgba(37,211,102,.28);}
+    .cbar-enq{background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.1);}
+
+    /* ─── PAGE LAYOUT ─── */
+    .wrap{max-width:1160px;margin:0 auto;padding:22px 16px 110px;}
+    @media(min-width:861px){.wrap{padding-bottom:40px;}}
+    .layout{display:grid;grid-template-columns:1fr 370px;gap:28px;align-items:start;margin-top:24px;}
+    @media(max-width:860px){.layout{grid-template-columns:1fr;}}
+
+    /* ─── GALLERY ─── */
+    .gallery-wrap{}
+    .gallery-main{
+      border-radius:14px;overflow:hidden;background:var(--panel);
+      aspect-ratio:16/9;position:relative;
+    }
+    .gallery-main img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;}
+    .gallery-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.06);font-size:6rem;}
+    .sold-badge{
+      position:absolute;top:14px;left:14px;
+      background:rgba(239,68,68,.88);backdrop-filter:blur(8px);
+      color:#fff;font-family:'Syne',sans-serif;font-weight:700;
+      font-size:.72rem;letter-spacing:.12em;padding:5px 14px;border-radius:6px;
+    }
+    .photo-count{
+      position:absolute;bottom:12px;right:14px;
+      background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+      color:rgba(255,255,255,.7);font-size:.72rem;padding:4px 10px;border-radius:6px;
+    }
+    .thumbs{display:flex;gap:8px;margin-top:9px;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.3) transparent;}
+    .thumbs::-webkit-scrollbar{height:3px;}
+    .thumbs::-webkit-scrollbar-thumb{background:rgba(201,168,76,.3);border-radius:2px;}
+    .thumb{width:78px;height:56px;border-radius:7px;object-fit:cover;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:border-color .15s;}
+    .thumb.active,.thumb:hover{border-color:var(--gold);}
+
+    /* ─── VEHICLE HEADER (below gallery on mobile) ─── */
+    .veh-header{margin:20px 0 16px;}
+    .veh-year{font-size:.78rem;color:var(--muted);letter-spacing:.08em;margin-bottom:3px;}
+    .veh-name{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.1;}
+    .veh-trim{color:rgba(255,255,255,.4);font-size:.9rem;margin-top:5px;}
+    .veh-stock{font-size:.7rem;color:rgba(255,255,255,.2);margin-top:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .veh-stock span{display:flex;align-items:center;gap:4px;}
+
+    /* ─── SPEC GRID ─── */
+    .specs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px;}
+    @media(max-width:500px){.specs-grid{grid-template-columns:repeat(2,1fr);}}
+    .spec-box{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 13px;}
+    .spec-label{font-size:.62rem;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
+    .spec-value{font-weight:600;font-size:.88rem;line-height:1.3;}
+
+    /* ─── VIN ROW ─── */
+    .vin-row{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+      background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+      padding:11px 16px;margin-bottom:16px;
+    }
+    .vin-label{font-size:.62rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+    .vin-val{font-family:monospace;font-size:.88rem;color:rgba(255,255,255,.72);letter-spacing:.06em;word-break:break-all;}
+    .icon-btn{
+      background:rgba(201,168,76,.09);border:1px solid rgba(201,168,76,.22);
+      color:var(--gold);padding:7px 15px;border-radius:7px;
+      font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.09em;
+      cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;
+    }
+    .icon-btn:hover{background:rgba(201,168,76,.18);}
+    .icon-btn.ok{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:#86EFAC;}
+
+    /* ─── DESCRIPTION ─── */
+    .section-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+    .section-label{font-family:'Syne',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.16em;color:rgba(255,255,255,.28);text-transform:uppercase;margin-bottom:12px;}
+    .desc-text{font-size:.88rem;line-height:1.8;color:rgba(255,255,255,.62);white-space:pre-line;}
+
+    /* ─── FINANCE TABLE ─── */
+    .ftable{width:100%;border-collapse:collapse;font-size:.82rem;}
+    .ftable th{text-align:left;color:rgba(255,255,255,.3);font-weight:500;padding:6px 8px;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;}
+    .ftable td{padding:9px 8px;border-top:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.68);}
+    .ftable td:not(:first-child){text-align:right;font-family:'Syne',sans-serif;font-weight:600;font-size:.85rem;}
+
+    /* ─── RELATED ─── */
+    .related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:12px;}
+    .rc{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;text-decoration:none;color:inherit;display:block;transition:border-color .2s,transform .2s;}
+    .rc:hover{border-color:rgba(201,168,76,.3);transform:translateY(-2px);}
+    .rc-photo{height:116px;background:var(--ink);overflow:hidden;}
+    .rc-photo img{width:100%;height:100%;object-fit:cover;}
+    .rc-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.06);font-size:2.5rem;}
+    .rc-body{padding:11px 13px;}
+    .rc-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;}
+    .rc-meta{font-size:.7rem;color:rgba(255,255,255,.3);margin-top:2px;}
+    .rc-price{color:var(--gold);font-family:'Syne',sans-serif;font-weight:700;font-size:.98rem;margin-top:6px;}
+
+    /* ───────────────────────────────────────
+       SIDEBAR
+    ─────────────────────────────────────── */
+    .sidebar{position:sticky;top:68px;}
+
+    /* Price card */
+    .price-card{
+      background:var(--panel);border:1px solid var(--border);
+      border-radius:14px;padding:20px 22px;margin-bottom:12px;
+    }
+    .price-amt{font-family:'Syne',sans-serif;font-weight:800;font-size:2.6rem;color:var(--gold);line-height:1;}
+    .price-note{font-size:.72rem;color:rgba(255,255,255,.22);margin-top:7px;line-height:1.6;}
+
+    /* ★ CALL US PANEL ★ */
+    .contact-card{
+      background:linear-gradient(145deg,rgba(201,168,76,.1),rgba(201,168,76,.03));
+      border:1.5px solid rgba(201,168,76,.28);
+      border-radius:14px;padding:20px 22px;margin-bottom:12px;
+    }
+    .contact-heading{
+      display:flex;align-items:center;gap:10px;margin-bottom:14px;
+      padding-bottom:14px;border-bottom:1px solid rgba(201,168,76,.14);
+    }
+    .contact-icon{
+      width:42px;height:42px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+      border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .contact-biz{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;line-height:1.3;}
+    .contact-sub{font-size:.72rem;color:var(--muted);margin-top:2px;}
+    .contact-tagline{font-size:.8rem;color:rgba(255,255,255,.45);margin-bottom:16px;line-height:1.6;}
+    .phone-display{
+      display:flex;align-items:center;gap:10px;
+      background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.18);
+      border-radius:10px;padding:12px 15px;margin-bottom:14px;
+      text-decoration:none;color:inherit;transition:background .15s;cursor:pointer;
+    }
+    .phone-display:hover{background:rgba(201,168,76,.14);}
+    .phone-icon{font-size:1.3rem;flex-shrink:0;}
+    .phone-label{font-size:.62rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}
+    .phone-num{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:var(--gold);letter-spacing:.02em;}
+    .phone-hint{font-size:.68rem;color:rgba(255,255,255,.25);margin-top:2px;}
+
+    /* Action buttons stack */
+    .actions{display:flex;flex-direction:column;gap:8px;}
+    .act-btn{
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      width:100%;padding:13px 16px;border-radius:11px;
+      font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.09em;
+      text-decoration:none;border:none;cursor:pointer;transition:opacity .15s;
+      text-align:center;
+    }
+    .act-btn:hover{opacity:.87;}
+    .btn-call{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);font-size:.9rem;}
+    .btn-wa  {background:rgba(37,211,102,.13);color:#25D366;border:1px solid rgba(37,211,102,.28);}
+    .btn-enq {background:rgba(99,102,241,.12);color:#a5b4fc;border:1px solid rgba(99,102,241,.25);}
+    .btn-td  {background:rgba(255,255,255,.06);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.1);}
+    .btn-save{background:rgba(239,68,68,.07);color:rgba(239,68,68,.7);border:1px solid rgba(239,68,68,.18);}
+    .btn-save.saved{background:rgba(239,68,68,.18);color:#FCA5A5;border-color:rgba(239,68,68,.35);}
+    .btn-chat{background:rgba(99,102,241,.1);color:#c7d2fe;border:1px solid rgba(99,102,241,.22);}
+
+    /* Inline forms */
+    .inline-form{
+      background:var(--panel2);border:1px solid rgba(201,168,76,.12);
+      border-radius:12px;padding:16px;margin-bottom:10px;display:none;
+    }
+    .inline-form.open{display:block;}
+    .form-title{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;}
+    .fi{
+      width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+      border-radius:9px;padding:10px 13px;color:#fff;font-size:.85rem;
+      font-family:'DM Sans',sans-serif;margin-bottom:9px;transition:border-color .15s;
+    }
+    .fi:focus{outline:none;border-color:var(--gold);}
+    .fi::placeholder{color:rgba(255,255,255,.22);}
+    .fi:last-of-type{margin-bottom:10px;}
+    textarea.fi{resize:vertical;min-height:68px;}
+
+    /* Chat mini widget */
+    .chat-widget{
+      background:var(--panel2);border:1px solid rgba(99,102,241,.2);
+      border-radius:12px;padding:14px;margin-bottom:10px;display:none;
+    }
+    .chat-widget.open{display:block;}
+    .chat-msgs{max-height:150px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;scrollbar-width:thin;}
+    .chat-empty{font-size:.75rem;color:rgba(255,255,255,.25);text-align:center;padding:10px 0;}
+    .chat-row{display:flex;gap:8px;}
+    .chat-in{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;color:#fff;font-size:.82rem;font-family:inherit;}
+    .chat-in:focus{outline:none;border-color:var(--gold);}
+    .chat-send-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:8px;padding:9px 14px;font-family:'Syne',sans-serif;font-weight:700;font-size:.72rem;cursor:pointer;}
+
+    /* Share row */
+    .share-row{display:flex;gap:7px;margin-top:10px;}
+    .share-btn{
+      flex:1;padding:9px 6px;border-radius:8px;
+      font-family:'Syne',sans-serif;font-weight:700;font-size:.65rem;letter-spacing:.06em;
+      text-align:center;text-decoration:none;cursor:pointer;
+      border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
+      color:rgba(255,255,255,.42);transition:all .15s;
+    }
+    .share-btn:hover{border-color:var(--gold);color:var(--gold);}
+    .share-btn.copied{border-color:rgba(34,197,94,.4);color:#86EFAC;background:rgba(34,197,94,.06);}
+
+    /* Toast */
+    .toast{
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      padding:11px 22px;border-radius:10px;font-size:.85rem;z-index:999;
+      display:none;white-space:nowrap;pointer-events:none;
+      box-shadow:0 8px 30px rgba(0,0,0,.5);
+    }
+    @media(min-width:861px){.toast{bottom:24px;}}
+    .toast.ok{background:#0D1F12;border:1px solid rgba(34,197,94,.35);color:#86EFAC;}
+    .toast.info{background:#0F1220;border:1px solid rgba(201,168,76,.35);color:var(--gold2);}
+
+    /* Lightbox */
+    .lb{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.94);align-items:center;justify-content:center;}
+    .lb.open{display:flex;}
+    .lb img{max-width:95vw;max-height:92vh;object-fit:contain;border-radius:6px;}
+    .lb-close{position:absolute;top:16px;right:20px;font-size:2rem;color:rgba(255,255,255,.5);cursor:pointer;background:none;border:none;}
+  </style>
+</head>
+<body>
+
+<!-- ════ TOPBAR ════ -->
+<div class="topbar">
+  <a href="/home" class="tb-brand">
+    <div class="tb-logo">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <span class="tb-name">{{ dealership }}</span>
+  </a>
+  <div class="tb-nav">
+    <a href="/listings">← All Vehicles</a>
+    <a href="/search-ai">🤖 AI Search</a>
+    <a href="/buyer/dashboard" style="color:rgba(255,255,255,.25);">My Account</a>
+  </div>
+</div>
+
+<!-- ════ MOBILE STICKY CALL BAR ════ -->
+<div class="call-bar">
+  {% if contact_phone %}
+  <a href="tel:{{ contact_phone }}" class="cbar-btn cbar-call">📞 CALL NOW</a>
+  <a href="https://wa.me/{{ contact_phone | replace('+','') | replace(' ','') }}?text={{ ('Hi! I%27m interested in the ' ~ vehicle.get('Year','') ~ ' ' ~ vehicle.get('Make','') ~ ' ' ~ vehicle.get('Model','') ~ ' (Stock %23' ~ internal_id ~ '). Is it still available?') }}"
+     target="_blank" class="cbar-btn cbar-wa">💬 WhatsApp</a>
+  {% else %}
+  <button class="cbar-btn cbar-call" style="opacity:.4;cursor:not-allowed;">📞 Call Us</button>
+  {% endif %}
+  <button class="cbar-btn cbar-enq" onclick="openEnquiry()">📩 Enquire</button>
+</div>
+
+<!-- ════ MAIN CONTENT ════ -->
+<div class="wrap">
+
+  <!-- Gallery -->
+  <div class="gallery-wrap">
+    <div class="gallery-main">
+      {% if primary_photo %}
+        <img src="{{ primary_photo }}" alt="{{ vehicle.get('Year','') }} {{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }}" id="mainImg" onclick="openLb(this.src)">
+      {% elif photos %}
+        <img src="{{ photos[0].url }}" alt="" id="mainImg" onclick="openLb(this.src)">
+      {% else %}
+        <div class="gallery-ph">🚗</div>
+      {% endif %}
+
+      {% if vehicle.get('Status') == 'Sold' %}
+        <div class="sold-badge">SOLD</div>
+      {% endif %}
+
+      {% if photos|length > 1 %}
+        <div class="photo-count">📷 {{ photos|length }}</div>
+      {% endif %}
+    </div>
+
+    {% if photos|length > 1 %}
+    <div class="thumbs">
+      {% for p in photos %}
+      <img src="{{ p.url }}" class="thumb {% if loop.first %}active{% endif %}"
+           onclick="setMain(this,'{{ p.url }}')" loading="lazy" alt="">
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ════ TWO-COLUMN LAYOUT ════ -->
+  <div class="layout">
+
+    <!-- ── LEFT ── -->
+    <div>
+      <!-- Vehicle title -->
+      <div class="veh-header">
+        <div class="veh-year">{{ vehicle.get('Year','') }}</div>
+        <div class="veh-name">{{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }}</div>
+        {% if vehicle.get('Trim') %}<div class="veh-trim">{{ vehicle.Trim }}</div>{% endif %}
+        <div class="veh-stock">
+          <span>📋 Stock # {{ internal_id }}</span>
+          {% if vehicle.get('VIN') %}<span>🔑 VIN {{ vehicle.VIN }}</span>{% endif %}
+        </div>
+      </div>
+
+      <!-- Specs -->
+      <div class="specs-grid">
+        {% set specs = [
+          ('Engine',       vehicle.get('Engine','')),
+          ('Mileage',      (vehicle.get('Mileage','') ~ ' km') if vehicle.get('Mileage') else ''),
+          ('Transmission', vehicle.get('Transmission','')),
+          ('Body Style',   vehicle.get('Body','')),
+          ('Fuel Type',    vehicle.get('Fuel','')),
+          ('Colour',       vehicle.get('Color','')|title),
+        ] %}
+        {% for label, val in specs if val %}
+        <div class="spec-box">
+          <div class="spec-label">{{ label }}</div>
+          <div class="spec-value">{{ val }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- VIN row with copy button -->
+      {% if vehicle.get('VIN') %}
+      <div class="vin-row">
+        <div>
+          <div class="vin-label">VIN Number</div>
+          <div class="vin-val">{{ vehicle.VIN }}</div>
+        </div>
+        <button class="icon-btn" id="vinCopyBtn" onclick="copyVin('{{ vehicle.VIN }}')">COPY VIN</button>
+      </div>
+      {% endif %}
+
+      <!-- Description -->
+      {% if vehicle.get('Notes') %}
+      <div class="section-card">
+        <div class="section-label">About This Vehicle</div>
+        <div class="desc-text">{{ vehicle.Notes }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Finance estimate -->
+      {% if finance %}
+      <div class="section-card">
+        <div class="section-label">💰 Finance Estimate — {{ finance.term_years }}-Year Loan</div>
+        <table class="ftable">
+          <tr><th>Rate</th><th>Weekly</th><th>Fortnightly</th><th>Monthly</th></tr>
+          {% for rate, vals in finance.rates.items() %}
+          <tr>
+            <td style="color:rgba(255,255,255,.4);">{{ rate }}</td>
+            <td>${{ vals.weekly }}</td>
+            <td>${{ vals.fortnightly }}</td>
+            <td>${{ vals.monthly }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        <p style="font-size:.68rem;color:rgba(255,255,255,.2);margin-top:10px;">Estimates only. Subject to lender approval. Based on {{ finance.term_years }}-year term.</p>
+      </div>
+      {% endif %}
+
+      <!-- Related -->
+      {% if related %}
+      <div style="margin-top:28px;">
+        <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:14px;">
+          More <span style="color:var(--gold)">{{ vehicle.get('Make','') }}</span> Vehicles
+        </div>
+        <div class="related-grid">
+          {% for rv in related %}
+          <a href="/listing/{{ rv.get('Internal_ID','') }}" class="rc">
+            <div class="rc-photo">
+              {% if rv._primary_photo %}<img src="{{ rv._primary_photo }}" loading="lazy" alt="">
+              {% else %}<div class="rc-ph">🚗</div>{% endif %}
+            </div>
+            <div class="rc-body">
+              <div class="rc-name">{{ rv.get('Year','') }} {{ rv.get('Make','') }} {{ rv.get('Model','') }}</div>
+              <div class="rc-meta">{{ rv.get('Mileage','') }}{% if rv.get('Transmission') %} · {{ rv.Transmission }}{% endif %}</div>
+              <div class="rc-price">{{ rv.get('Price','') }}</div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── RIGHT SIDEBAR ── -->
+    <div class="sidebar">
+
+      <!-- Price -->
+      <div class="price-card">
+        <div class="price-amt">{{ vehicle.get('Price','Call for Price') }}</div>
+        <div class="price-note">
+          Final price · Plus title &amp; tags only<br>
+          Contact us for exact drive-away price
+        </div>
+      </div>
+
+      <!-- ★★★ CALL US PANEL ★★★ -->
+      <div class="contact-card">
+        <div class="contact-heading">
+          <div class="contact-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="contact-biz">{{ dealership }}</div>
+            <div class="contact-sub">We're here to help</div>
+          </div>
+        </div>
+
+        <div class="contact-tagline">
+          Interested in this vehicle? Contact us to arrange a viewing or test drive. We respond within minutes.
+        </div>
+
+        <!-- Phone number — tap to call -->
+        {% if contact_phone %}
+        <a href="tel:{{ contact_phone }}" class="phone-display">
+          <div class="phone-icon">📞</div>
+          <div>
+            <div class="phone-label">Call Us Now</div>
+            <div class="phone-num">{{ contact_phone }}</div>
+            <div class="phone-hint">Tap to call · Mon–Sat 8am–6pm</div>
+          </div>
+        </a>
+        {% else %}
+        <div class="phone-display" style="cursor:default;opacity:.5;">
+          <div class="phone-icon">📞</div>
+          <div>
+            <div class="phone-label">Phone</div>
+            <div class="phone-num" style="font-size:.9rem;">Set DEALERSHIP_PHONE</div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if contact_address %}
+        <div style="font-size:.75rem;color:rgba(255,255,255,.35);margin-bottom:14px;display:flex;align-items:flex-start;gap:7px;">
+          <span>📍</span><span>{{ contact_address }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Action buttons -->
+        <div class="actions">
+          {% if contact_phone %}
+          <a href="tel:{{ contact_phone }}" class="act-btn btn-call">
+            📞 CALL NOW
+          </a>
+          <a href="https://wa.me/{{ contact_phone | replace('+','') | replace(' ','') }}?text={{ ('Hi%21+I%27m+interested+in+the+' ~ vehicle.get('Year','') ~ '+' ~ vehicle.get('Make','') ~ '+' ~ vehicle.get('Model','') ~ '+%28Stock+%23' ~ internal_id ~ '%29.+Is+it+still+available%3F') }}"
+             target="_blank" class="act-btn btn-wa">
+            💬 WHATSAPP US
+          </a>
+          {% endif %}
+          <button class="act-btn btn-enq" id="enqToggleBtn" onclick="togglePanel('enqForm','enqToggleBtn')">
+            📩 SEND ENQUIRY
+          </button>
+          <button class="act-btn btn-td" id="tdToggleBtn" onclick="togglePanel('tdForm','tdToggleBtn')">
+            🚗 BOOK TEST DRIVE
+          </button>
+          <button class="act-btn btn-chat" onclick="toggleChat()">
+            💬 LIVE CHAT
+          </button>
+          <button class="act-btn btn-save" id="saveBtn" onclick="toggleSave()">
+            🤍 SAVE VEHICLE
+          </button>
+        </div>
+      </div>
+
+      <!-- Enquiry form -->
+      <div class="inline-form" id="enqForm">
+        <div class="form-title">Send Enquiry</div>
+        <input class="fi" id="enqName" placeholder="Your Full Name *">
+        <input class="fi" id="enqPhone" placeholder="Phone Number *" type="tel">
+        <input class="fi" id="enqEmail" placeholder="Email (optional)" type="email">
+        <textarea class="fi" id="enqMsg" placeholder="Message (optional)…"></textarea>
+        <button class="act-btn btn-call" onclick="submitEnquiry()" style="margin-top:2px;">SEND ENQUIRY →</button>
+      </div>
+
+      <!-- Test drive form -->
+      <div class="inline-form" id="tdForm">
+        <div class="form-title">Book a Test Drive</div>
+        <input class="fi" id="tdName" placeholder="Your Full Name *">
+        <input class="fi" id="tdPhone" placeholder="Phone Number *" type="tel">
+        <input class="fi" id="tdDate" placeholder="Preferred date &amp; time" type="text">
+        <button class="act-btn btn-call" onclick="submitTestDrive()" style="margin-top:2px;">REQUEST TEST DRIVE →</button>
+      </div>
+
+      <!-- Live chat widget -->
+      <div class="chat-widget" id="chatWidget">
+        <div class="chat-msgs" id="chatMsgs">
+          <div class="chat-empty">We reply within minutes ·<br>Sign in to start a conversation</div>
+        </div>
+        <div class="chat-row">
+          <input class="chat-in" id="chatInput" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send-btn" onclick="sendChat()">SEND</button>
+        </div>
+      </div>
+
+      <!-- Share + Copy Link -->
+      <div class="share-row">
+        <button class="share-btn" id="copyBtn" onclick="copyLink()">🔗 Copy Link</button>
+        <a class="share-btn"
+           href="https://www.facebook.com/sharer/sharer.php?u={{ request.url | urlencode }}"
+           target="_blank" rel="noopener">f Share</a>
+        <a class="share-btn"
+           href="https://wa.me/?text={{ (vehicle.get('Year','') ~ ' ' ~ vehicle.get('Make','') ~ ' ' ~ vehicle.get('Model','') ~ ' — ' ~ vehicle.get('Price','') ~ ' — ' ~ request.url) | urlencode }}"
+           target="_blank" rel="noopener">💬 Share</a>
+      </div>
+
+      <div style="font-size:.65rem;color:rgba(255,255,255,.13);text-align:center;margin-top:10px;line-height:1.7;">
+        Stock # {{ internal_id }}
+        {% if vehicle.get('VIN') %} · VIN {{ vehicle.VIN }}{% endif %}
+      </div>
+    </div>
+    <!-- /sidebar -->
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="background:var(--panel);border-top:1px solid var(--border);padding:22px 20px;text-align:center;margin-top:16px;">
+  <a href="/listings" style="color:rgba(255,255,255,.3);text-decoration:none;font-size:.8rem;">← All Vehicles</a>
+  <span style="color:rgba(255,255,255,.1);margin:0 14px;">·</span>
+  <span style="color:rgba(255,255,255,.15);font-size:.72rem;">© {{ dealership }} · Powered by KeyTrack</span>
+</div>
+
+<!-- Lightbox -->
+<div class="lb" id="lb" onclick="closeLb()">
+  <button class="lb-close" onclick="closeLb()">✕</button>
+  <img id="lbImg" src="" alt="Vehicle photo">
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const VID = '{{ internal_id }}';
+
+/* ── Gallery ── */
+function setMain(thumb, url){
+  const img = document.getElementById('mainImg');
+  if(img){ img.src = url; }
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  thumb.classList.add('active');
+}
+function openLb(src){ document.getElementById('lbImg').src = src; document.getElementById('lb').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeLb(){ document.getElementById('lb').classList.remove('open'); document.body.style.overflow=''; }
+
+/* ── Panel toggles ── */
+function togglePanel(formId, btnId){
+  const form = document.getElementById(formId);
+  const btn  = document.getElementById(btnId);
+  // Close any other open forms
+  ['enqForm','tdForm'].forEach(id => { if(id !== formId) document.getElementById(id).classList.remove('open'); });
+  form.classList.toggle('open');
+  if(form.classList.contains('open')){
+    setTimeout(() => form.scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
+  }
+}
+function openEnquiry(){ togglePanel('enqForm','enqToggleBtn'); }
+function toggleChat(){
+  const w = document.getElementById('chatWidget');
+  w.classList.toggle('open');
+}
+
+/* ── Copy link ── */
+function copyLink(){
+  const btn = document.getElementById('copyBtn');
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    showToast('✓ Link copied to clipboard!', 'ok');
+    setTimeout(() => { btn.textContent = '🔗 Copy Link'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
+/* ── Copy VIN ── */
+function copyVin(vin){
+  const btn = document.getElementById('vinCopyBtn');
+  navigator.clipboard.writeText(vin).then(() => {
+    btn.textContent = '✓ COPIED';
+    btn.classList.add('ok');
+    showToast('✓ VIN copied!', 'ok');
+    setTimeout(() => { btn.textContent = 'COPY VIN'; btn.classList.remove('ok'); }, 2200);
+  });
+}
+
+/* ── Submit enquiry ── */
+async function submitEnquiry(){
+  const name  = document.getElementById('enqName').value.trim();
+  const phone = document.getElementById('enqPhone').value.trim();
+  if(!name || !phone){ showToast('Name and phone are required', 'info'); return; }
+  const r = await fetch('/api/public-enquiry', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ internal_id:VID, name, phone,
+      email:   document.getElementById('enqEmail').value,
+      message: document.getElementById('enqMsg').value })
+  });
+  const d = await r.json();
+  if(d.ok){
+    document.getElementById('enqForm').innerHTML =
+      '<p style="color:#86EFAC;text-align:center;padding:14px 0;font-family:\'Syne\',sans-serif;font-weight:700;">✓ Enquiry sent! We\'ll be in touch shortly.</p>';
+    showToast("✓ Enquiry sent — we'll call you soon!", 'ok');
+  } else {
+    showToast(d.message || 'Could not send — please call us directly.', 'info');
+  }
+}
+
+/* ── Submit test drive ── */
+async function submitTestDrive(){
+  const name  = document.getElementById('tdName').value.trim();
+  const phone = document.getElementById('tdPhone').value.trim();
+  if(!name || !phone){ showToast('Name and phone are required', 'info'); return; }
+  const r = await fetch('/api/public-test-drive', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ internal_id:VID, name, phone,
+      datetime: document.getElementById('tdDate').value })
+  });
+  const d = await r.json();
+  if(d.ok){
+    document.getElementById('tdForm').innerHTML =
+      '<p style="color:#86EFAC;text-align:center;padding:14px 0;font-family:\'Syne\',sans-serif;font-weight:700;">✓ Test drive requested! We\'ll confirm shortly.</p>';
+    showToast('✓ Test drive booked!', 'ok');
+  } else {
+    showToast(d.message || 'Error — please call us directly.', 'info');
+  }
+}
+
+/* ── Save vehicle ── */
+async function toggleSave(){
+  const r = await fetch('/api/buyer/save', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ vid: VID })
+  });
+  const d = await r.json();
+  if(d.login_required){ location.href = '/onboard'; return; }
+  const btn = document.getElementById('saveBtn');
+  if(d.saved){
+    btn.textContent = '❤️ SAVED';
+    btn.classList.add('saved');
+    showToast('Saved! We\'ll alert you if the price drops.', 'ok');
+  } else {
+    btn.textContent = '🤍 SAVE VEHICLE';
+    btn.classList.remove('saved');
+  }
+}
+
+/* ── Live chat ── */
+let chatId = null;
+async function sendChat(){
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if(!text) return;
+  if(!chatId){
+    const r = await fetch('/api/chat/start', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ vid: VID, dealer_id: '' })
+    });
+    const d = await r.json();
+    if(d.login_required){ location.href = '/onboard?next=/listing/' + VID; return; }
+    chatId = d.chat_id;
+  }
+  const r = await fetch(`/api/chat/${chatId}/send`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ message: text, sender: 'buyer' })
+  });
+  const d = await r.json();
+  if(d.ok){ input.value = ''; loadChatMsgs(); }
+  else if(d.login_required){ location.href = '/onboard?next=/listing/' + VID; }
+}
+async function loadChatMsgs(){
+  if(!chatId) return;
+  const r = await fetch(`/api/chat/${chatId}/messages`);
+  const d = await r.json();
+  const el = document.getElementById('chatMsgs');
+  if(!(d.messages && d.messages.length)) return;
+  el.innerHTML = d.messages.map(m => `
+    <div style="display:flex;flex-direction:column;align-items:${m.sender==='buyer'?'flex-end':'flex-start'}">
+      <div style="background:${m.sender==='buyer'?'rgba(201,168,76,.18)':'rgba(255,255,255,.07)'};padding:8px 12px;border-radius:8px;font-size:.82rem;max-width:90%;">${m.text}</div>
+      <div style="font-size:.62rem;color:rgba(255,255,255,.2);margin-top:2px;">${m.sender==='buyer'?'You':'Dealer'} · ${m.time}</div>
+    </div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ── Check saved state ── */
+fetch('/api/buyer/saved').then(r => r.json()).then(d => {
+  if(d.saved && d.saved.includes(VID)){
+    const btn = document.getElementById('saveBtn');
+    if(btn){ btn.textContent = '❤️ SAVED'; btn.classList.add('saved'); }
+  }
+}).catch(() => {});
+
+/* ── Toast ── */
+function showToast(msg, type='ok'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type}`;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+</script>
+
+<!-- PWA -->
+<script>
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js', { scope:'/' }).catch(() => {});
+  }
+</script>
+</body>
+</html>

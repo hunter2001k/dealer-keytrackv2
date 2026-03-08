@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dealer Portal — {{ dealership }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold2:#F0CB6E;--ink:#06080D;--ink2:#0E1118;--border:rgba(201,168,76,.18);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--ink);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background-image:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(201,168,76,.08),transparent 70%);}
+    .card{background:var(--ink2);border:1px solid var(--border);border-radius:22px;padding:40px 36px;width:100%;max-width:400px;}
+    .logo{text-align:center;margin-bottom:32px;}
+    .logo-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+    .brand{font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);font-size:.9rem;}
+    .portal-tag{font-size:.7rem;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase;margin-top:3px;}
+    h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;text-align:center;margin-bottom:6px;}
+    .sub{text-align:center;color:rgba(255,255,255,.35);font-size:.85rem;margin-bottom:28px;}
+    .field{margin-bottom:15px;}
+    label{font-size:.7rem;color:rgba(255,255,255,.4);letter-spacing:.08em;display:block;margin-bottom:5px;text-transform:uppercase;}
+    input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;color:#fff;font-size:.92rem;font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+    input:focus{outline:none;border-color:var(--gold);}
+    input::placeholder{color:rgba(255,255,255,.2);}
+    .btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:12px;padding:14px;font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:.1em;cursor:pointer;margin-top:6px;transition:opacity .15s;}
+    .btn:hover{opacity:.88;}
+    .err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#FCA5A5;border-radius:8px;padding:10px 14px;font-size:.82rem;margin-bottom:14px;display:none;}
+    .links{text-align:center;margin-top:20px;display:flex;flex-direction:column;gap:8px;}
+    .links a{color:rgba(255,255,255,.3);text-decoration:none;font-size:.78rem;transition:color .15s;}
+    .links a:hover{color:var(--gold);}
+    .divider{border:none;border-top:1px solid rgba(255,255,255,.06);margin:20px 0;}
+    .register-btn{display:block;width:100%;padding:12px;border-radius:12px;border:1px solid rgba(201,168,76,.25);background:transparent;color:var(--gold);font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;text-align:center;text-decoration:none;cursor:pointer;transition:all .15s;}
+    .register-btn:hover{background:rgba(201,168,76,.08);}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <div class="brand">{{ dealership }}</div>
+    <div class="portal-tag">Dealer Portal</div>
+  </div>
+  <h1>Welcome Back</h1>
+  <p class="sub">Sign in to manage your inventory and listings</p>
+  <div class="err" id="err"></div>
+  <div class="field"><label>Email Address</label><input id="email" type="email" placeholder="you@dealership.com.au" autocomplete="email"></div>
+  <div class="field"><label>Password</label><input id="password" type="password" placeholder="Your password" autocomplete="current-password"></div>
+  <button class="btn" onclick="login()">SIGN IN →</button>
+  <hr class="divider">
+  <a href="/onboard" class="register-btn">Don't have an account? Register Free →</a>
+  <div class="links">
+    <a href="/home">← Back to {{ dealership }}</a>
+    <a href="/platform/login" style="color:rgba(255,255,255,.15);">Platform Admin</a>
+  </div>
+</div>
+<script>
+async function login(){
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const err=document.getElementById('err');err.style.display='none';
+  if(!email||!password){err.textContent='Email and password required';err.style.display='block';return;}
+  const r=await fetch('/dealer-portal/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+  const d=await r.json();
+  if(d.ok)location.href=d.redirect||'/dealer-portal';
+  else{err.textContent=d.message;err.style.display='block';}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+</script>
+</body>
+</html>

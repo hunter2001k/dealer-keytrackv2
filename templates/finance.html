@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Finance Calculator — {{ dealership }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:rgba(255,255,255,.07);--gold:#C9A84C;--gold2:#e6c97a;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--text:rgba(255,255,255,.87);--muted:rgba(255,255,255,.4);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold);letter-spacing:.06em;}
+.nav-back{color:var(--muted);font-size:.8rem;text-decoration:none;display:flex;align-items:center;gap:6px;}
+.nav-back:hover{color:var(--gold);}
+.page{max-width:900px;margin:0 auto;padding:32px 20px;}
+.page-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;letter-spacing:.05em;margin-bottom:4px;}
+.page-sub{color:var(--muted);font-size:.82rem;margin-bottom:28px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:640px){.grid2{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+.card-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;}
+.field-label{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.field-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:.88rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;}
+.field-input:focus{border-color:var(--gold);}
+select.field-input option{background:#1a1a28;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.08em;cursor:pointer;border:none;transition:all .2s;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,.35);}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border);}
+.rate-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px;}
+.rate-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;color:var(--gold);margin-bottom:12px;}
+.rate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.rate-item{text-align:center;}
+.rate-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;color:var(--text);}
+.rate-lbl{font-size:.65rem;color:var(--muted);margin-top:2px;letter-spacing:.08em;text-transform:uppercase;}
+.summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem;}
+.summary-row:last-child{border-bottom:none;}
+.summary-val{font-weight:600;color:var(--gold);}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#resultsSection{display:none;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-logo">💰 FINANCE CALCULATOR</span>
+  <span style="color:var(--border)">|</span>
+  <a class="nav-back" href="/dashboard">← Dashboard</a>
+</nav>
+<div class="page">
+  <div class="page-title">Finance Calculator</div>
+  <div class="page-sub">Calculate weekly, fortnightly and monthly repayments for any vehicle</div>
+
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <div class="card-title">Vehicle & Loan Details</div>
+        <div style="margin-bottom:14px;">
+          <label class="field-label">Select Vehicle (or enter price manually)</label>
+          <select class="field-input" id="vehicleSelect" onchange="vehiclePicked()">
+            <option value="">— Enter price manually —</option>
+            {% for v in vehicles %}
+            <option value="{{ v.Internal_ID }}" data-price="{{ v.Price }}">
+              {{ v.Year }} {{ v.Make }} {{ v.Model }} — {{ v.Price }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label class="field-label">Vehicle Price ($)</label>
+          <input class="field-input" type="number" id="priceInput" placeholder="e.g. 24990" min="0"/>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label class="field-label">Deposit ($)</label>
+          <input class="field-input" type="number" id="depositInput" placeholder="e.g. 3000" min="0" value="0"/>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label class="field-label">Loan Term</label>
+          <select class="field-input" id="termSelect">
+            <option value="1">1 Year</option>
+            <option value="2">2 Years</option>
+            <option value="3">3 Years</option>
+            <option value="4">4 Years</option>
+            <option value="5" selected>5 Years</option>
+            <option value="7">7 Years</option>
+          </select>
+        </div>
+        <button class="btn btn-gold" style="width:100%" onclick="calcFinance()">
+          CALCULATE REPAYMENTS
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div id="resultsSection">
+        <div class="card">
+          <div class="card-title">Loan Summary</div>
+          <div id="summaryRows"></div>
+        </div>
+        <div id="rateCards"></div>
+        <button class="btn btn-ghost" style="width:100%;margin-top:8px;" onclick="window.print()">🖨 Print / Save PDF</button>
+      </div>
+      <div id="emptyState" class="card" style="text-align:center;padding:40px 24px;">
+        <div style="font-size:2.5rem;margin-bottom:12px;opacity:.3;">💰</div>
+        <div style="color:var(--muted);font-size:.85rem;">Select a vehicle and click Calculate to see repayments</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function vehiclePicked() {
+  const sel = document.getElementById('vehicleSelect');
+  const opt = sel.options[sel.selectedIndex];
+  const price = opt.dataset.price || '';
+  const num = price.replace(/[^0-9.]/g,'');
+  if (num) document.getElementById('priceInput').value = num;
+}
+
+function fmt(n) {
+  return '$' + parseFloat(n).toLocaleString('en-AU', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+async function calcFinance() {
+  const price   = document.getElementById('priceInput').value;
+  const deposit = document.getElementById('depositInput').value || '0';
+  const term    = document.getElementById('termSelect').value;
+  const vid     = document.getElementById('vehicleSelect').value;
+
+  if (!price || parseFloat(price) <= 0) {
+    alert('Please enter a vehicle price.');
+    return;
+  }
+
+  const payload = {deposit: parseFloat(deposit), term_years: parseInt(term)};
+  if (vid) payload.vid = vid;
+  else payload.price = parseFloat(price);
+
+  const r = await fetch('/api/finance-calc', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const data = await r.json();
+  if (!data.ok) { alert(data.message); return; }
+
+  // Summary
+  document.getElementById('summaryRows').innerHTML =
+    row('Vehicle Price', fmt(data.price)) +
+    row('Deposit', fmt(data.deposit)) +
+    row('Amount Financed', fmt(data.principal));
+
+  // Rate cards
+  const rateColors = {'Low (6.9%)':'#22c55e','Avg (9.9%)':'#f59e0b','High (13.9%)':'#ef4444'};
+  let html = '';
+  for (const [name, vals] of Object.entries(data.rates)) {
+    html += `<div class="rate-card">
+      <div class="rate-title" style="color:${rateColors[name]||'var(--gold)'}">${name} — ${data.term_years} Year Term</div>
+      <div class="rate-grid">
+        <div class="rate-item"><div class="rate-num">${fmt(vals.weekly)}</div><div class="rate-lbl">Weekly</div></div>
+        <div class="rate-item"><div class="rate-num">${fmt(vals.fortnightly)}</div><div class="rate-lbl">Fortnightly</div></div>
+        <div class="rate-item"><div class="rate-num">${fmt(vals.monthly)}</div><div class="rate-lbl">Monthly</div></div>
+      </div>
+      <div style="margin-top:10px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);border-top:1px solid rgba(255,255,255,.05);padding-top:8px;">
+        <span>Total repaid: <b style="color:var(--text)">${fmt(vals.total)}</b></span>
+        <span>Interest: <b style="color:var(--red)">${fmt(vals.interest)}</b></span>
+      </div>
+    </div>`;
+  }
+  document.getElementById('rateCards').innerHTML = html;
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('emptyState').style.display = 'none';
+}
+
+function row(label, val) {
+  return `<div class="summary-row"><span style="color:var(--muted)">${label}</span><span class="summary-val">${val}</span></div>`;
+}
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     KEYTRACK GLOBAL — Command Palette · Keyboard Shortcuts · Inline Edit
+     Inject before </body> in dashboard.html, vehicle.html, admin.html
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- CMD PALETTE OVERLAY -->
+<div id="cmdOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;">
+  <div id="cmdBox" style="width:100%;max-width:560px;background:#16161f;border:1px solid rgba(201,168,76,.3);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <span style="font-size:1.1rem;opacity:.5;">⌘</span>
+      <input id="cmdInput" placeholder="Search pages, vehicles, actions…"
+        style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:.95rem;font-family:'Inter',sans-serif;"
+        autocomplete="off" spellcheck="false"/>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">ESC</span>
+    </div>
+    <div id="cmdResults" style="max-height:360px;overflow-y:auto;padding:6px;"></div>
+    <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:16px;font-size:.68rem;color:rgba(255,255,255,.25);">
+      <span>↑↓ navigate</span><span>↵ open</span><span>ESC close</span><span>⌘K / Ctrl+K open</span>
+    </div>
+  </div>
+</div>
+
+<!-- INLINE EDIT POPOVER -->
+<div id="inlinePopover" style="position:fixed;z-index:8000;display:none;background:#1a1a28;border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);min-width:240px;max-width:320px;">
+  <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;" id="inlinePopLabel">Edit Field</div>
+  <div id="inlinePopInput"></div>
+  <div style="display:flex;gap:6px;margin-top:10px;">
+    <button onclick="saveInlineEdit()" style="flex:1;padding:7px;background:linear-gradient(135deg,#C9A84C,#e6c97a);color:#000;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;cursor:pointer;">SAVE</button>
+    <button onclick="closeInlinePop()" style="padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;cursor:pointer;font-size:.8rem;">✕</button>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUT TOAST -->
+<div id="kbToast" style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);background:#1c1c28;border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:8px 20px;font-size:.78rem;color:rgba(255,255,255,.7);opacity:0;transition:all .3s;pointer-events:none;z-index:7000;white-space:nowrap;"></div>
+
+<!-- SHORTCUT HELP OVERLAY -->
+<div id="shortcutHelp" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8500;display:none;align-items:center;justify-content:center;">
+  <div style="background:#16161f;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;max-width:480px;width:100%;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.08em;color:#C9A84C;margin-bottom:16px;">⌨ KEYBOARD SHORTCUTS</div>
+    <div id="shortcutList" style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;"></div>
+    <button onclick="document.getElementById('shortcutHelp').style.display='none'" style="margin-top:18px;padding:8px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;">CLOSE</button>
+  </div>
+</div>
+
+<style>
+.cmd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.cmd-item:hover,.cmd-item.active{background:rgba(201,168,76,.1);}
+.cmd-icon{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.cmd-label{font-size:.85rem;font-weight:500;color:#fff;}
+.cmd-sub{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:1px;}
+.kb-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;font-size:.7rem;font-family:monospace;color:rgba(255,255,255,.6);}
+.ie-enabled{cursor:pointer;transition:background .15s;}
+.ie-enabled:hover{background:rgba(201,168,76,.08);border-radius:4px;}
+.ie-enabled::after{content:' ✏';font-size:.6rem;opacity:0;transition:opacity .15s;}
+.ie-enabled:hover::after{opacity:.5;}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMAND PALETTE
+// ═══════════════════════════════════════════════════════════════════════════
+var _cmdOpen = false;
+var _cmdIdx = -1;
+var _cmdItems = [];
+var _cmdTimer = null;
+
+function openCmd() {
+  document.getElementById('cmdOverlay').style.display = 'flex';
+  document.getElementById('cmdInput').value = '';
+  _cmdOpen = true; _cmdIdx = -1;
+  setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+  loadCmdResults('');
+}
+function closeCmd() {
+  document.getElementById('cmdOverlay').style.display = 'none';
+  _cmdOpen = false;
+}
+document.getElementById('cmdOverlay').addEventListener('click', function(e){
+  if (e.target === this) closeCmd();
+});
+document.getElementById('cmdInput').addEventListener('input', function(){
+  clearTimeout(_cmdTimer);
+  _cmdTimer = setTimeout(() => loadCmdResults(this.value), 180);
+});
+document.getElementById('cmdInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveCmdIdx(1); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); moveCmdIdx(-1); }
+  if (e.key === 'Enter')     { e.preventDefault(); selectCmd(); }
+});
+
+async function loadCmdResults(q) {
+  const r = await fetch('/api/cmd-palette?q=' + encodeURIComponent(q));
+  const data = await r.json();
+  if (!data.ok) return;
+  _cmdItems = data.results;
+  _cmdIdx = -1;
+  renderCmdResults();
+}
+
+function renderCmdResults() {
+  const el = document.getElementById('cmdResults');
+  if (!_cmdItems.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:.8rem;color:rgba(255,255,255,.3);">No results</div>';
+    return;
+  }
+  el.innerHTML = _cmdItems.map((item, i) =>
+    `<div class="cmd-item${i===_cmdIdx?' active':''}" onclick="goCmd(${i})">
+      <div class="cmd-icon">${item.icon||'📄'}</div>
+      <div>
+        <div class="cmd-label">${item.label}</div>
+        ${item.sublabel ? `<div class="cmd-sub">${item.sublabel}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+function moveCmdIdx(dir) {
+  _cmdIdx = Math.max(-1, Math.min(_cmdItems.length-1, _cmdIdx + dir));
+  renderCmdResults();
+  const items = document.querySelectorAll('.cmd-item');
+  if (items[_cmdIdx]) items[_cmdIdx].scrollIntoView({block:'nearest'});
+}
+function selectCmd() {
+  if (_cmdIdx >= 0 && _cmdItems[_cmdIdx]) goCmd(_cmdIdx);
+  else if (_cmdItems[0]) goCmd(0);
+}
+function goCmd(i) {
+  const item = _cmdItems[i];
+  if (item) { closeCmd(); window.location.href = item.url; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════════════
+var SHORTCUTS = [
+  {key:'k', mod:'ctrl/cmd', label:'Command Palette',     action: openCmd},
+  {key:'/', mod:'',         label:'Global Search',       action: () => window.location.href='/search'},
+  {key:'d', mod:'',         label:'Dashboard',            action: () => goShortcut('/dashboard')},
+  {key:'p', mod:'',         label:'Pipeline',             action: () => goShortcut('/pipeline')},
+  {key:'f', mod:'',         label:'Finance Calculator',   action: () => goShortcut('/finance')},
+  {key:'h', mod:'',         label:'Inventory Health',     action: () => goShortcut('/inventory-health')},
+  {key:'a', mod:'',         label:'Analytics',            action: () => goShortcut('/analytics')},
+  {key:'t', mod:'',         label:'Trade-Ins',            action: () => goShortcut('/trade-ins')},
+  {key:'n', mod:'',         label:'New Vehicle (Admin)',  action: () => goShortcut('/admin')},
+  {key:'?', mod:'',         label:'Show shortcuts',       action: showShortcutHelp},
+  {key:'Escape', mod:'',    label:'Close / Back',         action: closeAll},
+];
+
+function goShortcut(url) {
+  showKbToast('→ ' + url);
+  setTimeout(() => window.location.href = url, 300);
+}
+function showKbToast(msg) {
+  const t = document.getElementById('kbToast');
+  t.textContent = msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)';}, 1800);
+}
+function closeAll() {
+  closeCmd();
+  document.getElementById('shortcutHelp').style.display = 'none';
+  closeInlinePop();
+}
+function showShortcutHelp() {
+  const list = document.getElementById('shortcutList');
+  list.innerHTML = SHORTCUTS.map(s =>
+    `<div><kbd class="kb-badge">${s.mod ? s.mod+'+' : ''}${s.key === 'Escape' ? 'ESC' : s.key.toUpperCase()}</kbd></div><div style="color:rgba(255,255,255,.7)">${s.label}</div>`
+  ).join('');
+  document.getElementById('shortcutHelp').style.display = 'flex';
+}
+
+document.addEventListener('keydown', function(e) {
+  // Don't fire if typing in an input
+  const tag = document.activeElement.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+  // CMD/Ctrl+K — always open palette
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if (_cmdOpen) closeCmd(); else openCmd();
+    return;
+  }
+  if (_cmdOpen) return; // let palette handle all keys
+  if (isInput) return;
+
+  // Single-key shortcuts
+  switch(e.key) {
+    case '/': e.preventDefault(); window.location.href='/search'; break;
+    case 'd': case 'D': goShortcut('/dashboard'); break;
+    case 'p': case 'P': goShortcut('/pipeline'); break;
+    case 'f': case 'F': goShortcut('/finance'); break;
+    case 'h': case 'H': goShortcut('/inventory-health'); break;
+    case 'a': case 'A': goShortcut('/analytics'); break;
+    case 't': case 'T': goShortcut('/trade-ins'); break;
+    case 'n': case 'N': goShortcut('/admin'); break;
+    case '?': showShortcutHelp(); break;
+    case 'Escape': closeAll(); break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INLINE EDIT
+// ═══════════════════════════════════════════════════════════════════════════
+var _inlineVid = null;
+var _inlineField = null;
+var _inlineFields = null;
+var _inlineTriggerEl = null;
+
+async function initInlineEdit() {
+  const r = await fetch('/api/inline-editable-fields');
+  const data = await r.json();
+  if (data.ok) _inlineFields = data.fields;
+}
+
+// Safe guard - inline edit only works on pages with VEHICLE_ID
+function openInlineEdit(el, vid, field, currentValue) {
+  if (!_inlineFields) return;
+  if (!vid) return;
+  var meta = _inlineFields[field];
+  if (!meta) return;
+  _inlineVid = vid;
+  _inlineField = field;
+  _inlineTriggerEl = el;
+
+  document.getElementById('inlinePopLabel').textContent = 'Edit: ' + meta.label;
+  var inp = document.getElementById('inlinePopInput');
+
+  if (meta.type === 'select') {
+    inp.innerHTML = '<select id="inlineVal" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;">' +
+      meta.options.map(function(o){ return '<option value="' + o + '"' + (o===currentValue?' selected':'') + '>' + o + '</option>'; }).join('') +
+      '</select>';
+  } else if (meta.type === 'textarea') {
+    inp.innerHTML = '<textarea id="inlineVal" rows="3" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;resize:vertical;outline:none;">' + (currentValue||'') + '</textarea>';
+  } else {
+    inp.innerHTML = '<input id="inlineVal" type="text" value="' + (currentValue||'').replace(/"/g,'&quot;') + '" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;"/>';
+  }
+
+  var rect = el.getBoundingClientRect();
+  var pop = document.getElementById('inlinePopover');
+  pop.style.display = 'block';
+  var top = rect.bottom + window.scrollY + 6;
+  var left = rect.left + window.scrollX;
+  if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+  if (top + 160 > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - 165;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+
+  setTimeout(function(){
+    var v = document.getElementById('inlineVal');
+    if (v) { v.focus(); if (v.select) v.select(); }
+  }, 50);
+
+  document.getElementById('inlineVal').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') saveInlineEdit();
+    if (e.key === 'Escape') closeInlinePop();
+  });
+}
+
+
+async function saveInlineEdit() {
+  const val = document.getElementById('inlineVal')?.value;
+  if (val === undefined) return;
+  const r = await fetch('/api/inline-edit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({vid: _inlineVid, field: _inlineField, value: val})
+  });
+  const data = await r.json();
+  if (data.ok) {
+    showKbToast('✅ ' + _inlineField + ' updated');
+    // Update the element text
+    if (_inlineTriggerEl) {
+      _inlineTriggerEl.textContent = val;
+      _inlineTriggerEl.dataset.val = val;
+    }
+    closeInlinePop();
+  } else {
+    showKbToast('❌ ' + (data.message || 'Error'));
+  }
+}
+function closeInlinePop() {
+  document.getElementById('inlinePopover').style.display = 'none';
+  _inlineVid = null; _inlineField = null;
+}
+// Close on outside click
+document.addEventListener('click', function(e){
+  const pop = document.getElementById('inlinePopover');
+  if (pop.style.display !== 'none' && !pop.contains(e.target)) {
+    if (!e.target.classList.contains('ie-enabled')) closeInlinePop();
+  }
+});
+
+// ── Add ⌘K button to all pages ───────────────────────────────────────────────
+(function(){
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  const btn = document.createElement('button');
+  btn.innerHTML = '⌘K';
+  btn.title = 'Command Palette (Ctrl+K / ⌘K)';
+  btn.onclick = openCmd;
+  btn.style.cssText = 'margin-left:auto;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:4px 10px;color:#C9A84C;font-family:\'Rajdhani\',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;';
+  btn.onmouseenter = () => btn.style.background = 'rgba(201,168,76,.2)';
+  btn.onmouseleave = () => btn.style.background = 'rgba(201,168,76,.1)';
+  // Insert before last nav child (scanner button usually)
+  const existing = nav.querySelector('[style*="margin-left:auto"]');
+  if (existing) {
+    existing.style.marginLeft = '0';
+    nav.insertBefore(btn, existing);
+  } else {
+    nav.appendChild(btn);
+  }
+})();
+
+// Init inline edit on pages that support it
+try { initInlineEdit(); } catch(e) {}
+</script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sales Scoreboard — {{ dealership }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#080A0E;--panel:#0F1320;--border:rgba(201,168,76,.18);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;background:var(--dark);}
+    body{font-family:'DM Sans',sans-serif;color:#fff;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;}
+    /* Header */
+    .hdr{background:linear-gradient(90deg,#080A0E 0%,#10141E 50%,#080A0E 100%);border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;}
+    .hdr-brand{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:.2em;color:var(--gold);}
+    .hdr-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.5rem;letter-spacing:.1em;}
+    .clock{font-family:'Rajdhani',sans-serif;font-size:1.3rem;color:rgba(255,255,255,.4);letter-spacing:.1em;}
+    /* Stat cards row */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:24px 32px 0;}
+    .stat-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:24px 28px;position:relative;overflow:hidden;}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:18px 18px 0 0;}
+    .stat-today::before{background:linear-gradient(90deg,var(--gold),var(--gold-light));}
+    .stat-week::before{background:linear-gradient(90deg,#6366f1,#818cf8);}
+    .stat-month::before{background:linear-gradient(90deg,#22c55e,#86efac);}
+    .stat-period{font-size:.7rem;letter-spacing:.15em;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:8px;}
+    .stat-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:4.5rem;line-height:1;letter-spacing:-.02em;}
+    .stat-today .stat-num{color:var(--gold);}
+    .stat-week .stat-num{color:#818cf8;}
+    .stat-month .stat-num{color:#86efac;}
+    .stat-label{font-size:.82rem;color:rgba(255,255,255,.35);margin-top:6px;}
+    .stat-revenue{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:1.2rem;color:rgba(255,255,255,.5);margin-top:8px;}
+    /* Progress bar */
+    .target-section{padding:20px 32px 0;}
+    .target-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 24px;}
+    .target-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+    .target-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;color:rgba(255,255,255,.4);}
+    .target-pct{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;color:{% if pct >= 100 %}#86efac{% elif pct >= 60 %}var(--gold){% else %}#f87171{% endif %};}
+    .progress-track{height:14px;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden;}
+    .progress-fill{height:100%;border-radius:7px;transition:width 1.5s cubic-bezier(.25,.46,.45,.94);background:{% if pct >= 100 %}linear-gradient(90deg,#22c55e,#86efac){% elif pct >= 60 %}linear-gradient(90deg,var(--gold),var(--gold-light)){% else %}linear-gradient(90deg,#ef4444,#f87171){% endif %};width:0%;}
+    .target-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:rgba(255,255,255,.25);}
+    /* Main content area */
+    .main-area{display:grid;grid-template-columns:1fr 320px;gap:20px;padding:20px 32px;flex:1;}
+    /* Recent sales table */
+    .panel-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+    .panel-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.12em;color:rgba(255,255,255,.5);}
+    .sale-row{display:flex;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);gap:14px;transition:background .15s;}
+    .sale-row:hover{background:rgba(255,255,255,.02);}
+    .sale-row:last-child{border-bottom:none;}
+    .sale-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;color:rgba(255,255,255,.2);width:28px;text-align:center;}
+    .sale-icon{width:36px;height:36px;background:rgba(201,168,76,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+    .sale-info{flex:1;}
+    .sale-vehicle{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;}
+    .sale-date{font-size:.72rem;color:rgba(255,255,255,.25);margin-top:2px;}
+    .sale-price{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--gold);}
+    /* Stock & metrics side panel */
+    .side-grid{display:flex;flex-direction:column;gap:14px;}
+    .side-box{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+    .side-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2.2rem;color:var(--gold);}
+    .side-label{font-size:.7rem;letter-spacing:.1em;color:rgba(255,255,255,.3);margin-top:4px;text-transform:uppercase;}
+    /* Ticker */
+    .ticker{background:rgba(201,168,76,.06);border-top:1px solid var(--border);padding:10px 32px;display:flex;align-items:center;gap:20px;overflow:hidden;}
+    .ticker-label{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.15em;color:var(--gold);white-space:nowrap;}
+    .ticker-items{display:flex;gap:40px;animation:ticker 30s linear infinite;white-space:nowrap;}
+    @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+    .ticker-item{font-size:.78rem;color:rgba(255,255,255,.4);}
+    .ticker-item span{color:rgba(255,255,255,.7);}
+    /* Celebration overlay */
+    .celebrate{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:100;flex-direction:column;gap:16px;}
+    .celebrate.show{display:flex;}
+    .celebrate-text{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:4rem;color:var(--gold);letter-spacing:.08em;text-align:center;animation:pulse 1s ease-in-out infinite alternate;}
+    @keyframes pulse{from{opacity:.7;transform:scale(.97)}to{opacity:1;transform:scale(1.03)}}
+    .confetti{position:fixed;inset:0;pointer-events:none;}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-brand">{{ dealership }}</div>
+  <div class="hdr-title">SALES <span style="color:var(--gold)">SCOREBOARD</span></div>
+  <div class="clock" id="clock">--:--</div>
+</div>
+
+<!-- Top stat cards -->
+<div class="stats-row">
+  <div class="stat-card stat-today">
+    <div class="stat-period">TODAY</div>
+    <div class="stat-num">{{ today_count }}</div>
+    <div class="stat-label">Vehicle{{ 's' if today_count != 1 else '' }} sold today</div>
+    <div class="stat-revenue">${{ "{:,.0f}".format(today_revenue) }}</div>
+  </div>
+  <div class="stat-card stat-week">
+    <div class="stat-period">THIS WEEK</div>
+    <div class="stat-num">{{ week_count }}</div>
+    <div class="stat-label">Vehicle{{ 's' if week_count != 1 else '' }} in last 7 days</div>
+    <div class="stat-revenue">${{ "{:,.0f}".format(week_revenue) }}</div>
+  </div>
+  <div class="stat-card stat-month">
+    <div class="stat-period">THIS MONTH</div>
+    <div class="stat-num">{{ month_count }}</div>
+    <div class="stat-label">Vehicle{{ 's' if month_count != 1 else '' }} this month</div>
+    <div class="stat-revenue">${{ "{:,.0f}".format(month_revenue) }}</div>
+  </div>
+</div>
+
+<!-- Monthly target progress -->
+<div class="target-section">
+  <div class="target-card">
+    <div class="target-header">
+      <div class="target-title">MONTHLY TARGET: {{ month_count }} / {{ target }} SOLD</div>
+      <div class="target-pct">{{ pct }}%</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" data-pct="{{ pct }}"></div>
+    </div>
+    <div class="target-meta">
+      <span>0</span>
+      <span>{{ target }} target</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main area -->
+<div class="main-area">
+  <!-- Recent sales list -->
+  <div class="panel-card">
+    <div class="panel-header">
+      <div class="panel-title">RECENT SALES (LAST 30 DAYS)</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.25);">{{ month_count }} sold</div>
+    </div>
+    {% if not month_sales %}
+    <div style="padding:40px;text-align:center;color:rgba(255,255,255,.2);font-size:.9rem;">No sales recorded this month yet</div>
+    {% endif %}
+    {% for v in month_sales[:12] %}
+    <div class="sale-row">
+      <div class="sale-num">{{ loop.index }}</div>
+      <div class="sale-icon">🚗</div>
+      <div class="sale-info">
+        <div class="sale-vehicle">{{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') }}</div>
+        <div class="sale-date">{{ v.get('Sold_Date','')[:10] }} · {{ v.get('Buyer_Name','') or 'Buyer' }}</div>
+      </div>
+      <div class="sale-price">
+        {% if v.get('Price') %}${{ "{:,.0f}".format((v.Price|string|replace(",","")|replace("$","")|float)) }}{% else %}—{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Side metrics -->
+  <div class="side-grid">
+    <div class="side-box">
+      <div class="side-num">{{ all_vehicles | selectattr('Status','equalto','Available') | list | length }}</div>
+      <div class="side-label">IN STOCK NOW</div>
+    </div>
+    <div class="side-box">
+      <div class="side-num">${{ "{:,.0f}".format(stock_value) }}</div>
+      <div class="side-label">STOCK VALUE</div>
+    </div>
+    <div class="side-box">
+      <div class="side-num">{{ all_vehicles | selectattr('Status','equalto','Hold') | list | length }}</div>
+      <div class="side-label">ON HOLD</div>
+    </div>
+    <div class="side-box">
+      <div class="side-num">{{ all_vehicles | selectattr('Status','equalto','In Service') | list | length }}</div>
+      <div class="side-label">IN SERVICE</div>
+    </div>
+    <div class="side-box" style="border-color:rgba(201,168,76,.3);">
+      <div class="side-num" style="color:{% if pct>=100 %}#86efac{% else %}var(--gold){% endif %};">{{ target - month_count if month_count < target else 0 }}</div>
+      <div class="side-label">NEEDED FOR TARGET</div>
+    </div>
+    <div class="side-box">
+      <div style="font-size:.7rem;color:rgba(255,255,255,.25);margin-bottom:8px;letter-spacing:.08em;">TODAY'S SALES</div>
+      {% if not today_sales %}
+      <div style="font-size:.8rem;color:rgba(255,255,255,.2);">None yet — go close a deal! 💪</div>
+      {% endif %}
+      {% for v in today_sales[:3] %}
+      <div style="font-size:.8rem;color:rgba(255,255,255,.6);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+        {{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') }}
+        <span style="color:var(--gold);float:right;">${{ "{:,.0f}".format(v.get('Price',0)|float) }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Ticker -->
+<div class="ticker">
+  <div class="ticker-label">LIVE ·</div>
+  <div class="ticker-items" id="ticker">
+    {% for v in all_vehicles | selectattr('Status','equalto','Available') | list %}
+    <div class="ticker-item"><span>{{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') }}</span> · ${{ v.get('Price','—') }}</div>
+    {% endfor %}
+    <!-- duplicate for seamless loop -->
+    {% for v in all_vehicles | selectattr('Status','equalto','Available') | list %}
+    <div class="ticker-item"><span>{{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') }}</span> · ${{ v.get('Price','—') }}</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if pct >= 100 %}
+<div class="celebrate show" onclick="this.classList.remove('show')">
+  <div class="celebrate-text">🏆 TARGET SMASHED! 🏆</div>
+  <div style="font-family:'Rajdhani',sans-serif;font-size:1.5rem;color:rgba(255,255,255,.5);letter-spacing:.1em;">{{ month_count }} VEHICLES SOLD THIS MONTH</div>
+  <div style="font-size:.85rem;color:rgba(255,255,255,.3);margin-top:8px;">Tap to dismiss</div>
+</div>
+{% endif %}
+
+<script>
+  // Clock
+  function tick(){
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  }
+  tick(); setInterval(tick, 1000);
+
+  // Animate progress bar on load
+  setTimeout(()=>{
+    const fill = document.getElementById('progressFill');
+    fill.style.width = fill.dataset.pct + '%';
+  }, 300);
+
+  // Auto-refresh every 2 minutes
+  setTimeout(()=> location.reload(), 120000);
+</script>
+</body>
+</html>

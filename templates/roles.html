@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Roles & Permissions — {{ dealership }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:rgba(255,255,255,.07);--gold:#C9A84C;--gold2:#e6c97a;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b;--muted:rgba(255,255,255,.4);--text:rgba(255,255,255,.87);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold);letter-spacing:.06em;}
+.nav-back{color:var(--muted);font-size:.8rem;text-decoration:none;}
+.nav-back:hover{color:var(--gold);}
+.page{max-width:1000px;margin:0 auto;padding:28px 20px;}
+.page-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;letter-spacing:.05em;margin-bottom:4px;}
+.page-sub{color:var(--muted);font-size:.82rem;margin-bottom:28px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:20px;}
+.card-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;}
+/* Permission matrix */
+table.matrix{width:100%;border-collapse:collapse;font-size:.78rem;}
+table.matrix th{background:rgba(255,255,255,.04);padding:8px 12px;text-align:center;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);}
+table.matrix th:first-child{text-align:left;}
+table.matrix td{padding:8px 12px;border:1px solid rgba(255,255,255,.04);text-align:center;vertical-align:middle;}
+table.matrix td:first-child{text-align:left;font-size:.8rem;color:var(--text);}
+table.matrix tr:hover td{background:rgba(255,255,255,.02);}
+.check{font-size:.9rem;}
+.role-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.08em;}
+.role-admin  {background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25);}
+.role-manager{background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.25);}
+.role-sales  {background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.25);}
+.role-service{background:rgba(168,85,247,.12);color:#d8b4fe;border:1px solid rgba(168,85,247,.25);}
+.role-viewer {background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border);}
+.code-block{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:monospace;font-size:.78rem;line-height:1.8;color:#a5f3fc;overflow-x:auto;}
+.comment{color:rgba(255,255,255,.3);}
+.key{color:var(--gold);}
+.val{color:#86efac;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-logo">🔐 ROLES &amp; PERMISSIONS</span>
+  <span style="color:var(--border)">|</span>
+  <a class="nav-back" href="/admin">← Admin</a>
+  <a class="nav-back" href="/admin/staff" style="margin-left:8px;">Staff Manager →</a>
+</nav>
+<div class="page">
+  <div class="page-title">Roles &amp; Permissions</div>
+  <div class="page-sub">Five role levels control what each staff member can see and do. Assign roles when adding staff accounts in app.py or via the Staff Manager.</div>
+
+  <!-- Role summary cards -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px;">
+    <div class="card" style="padding:16px;text-align:center;">
+      <div class="role-badge role-admin" style="margin-bottom:8px;">admin</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:6px;">Full access to everything including delete, sell, staff management and exports.</div>
+    </div>
+    <div class="card" style="padding:16px;text-align:center;">
+      <div class="role-badge role-manager" style="margin-bottom:8px;">manager</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:6px;">Can edit, sell, add vehicles and export. Cannot delete or manage staff.</div>
+    </div>
+    <div class="card" style="padding:16px;text-align:center;">
+      <div class="role-badge role-sales" style="margin-bottom:8px;">sales</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:6px;">Can view, edit vehicles, add new stock and assign key tags. Cannot sell or delete.</div>
+    </div>
+    <div class="card" style="padding:16px;text-align:center;">
+      <div class="role-badge role-service" style="margin-bottom:8px;">service</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:6px;">View-only access plus key tag assignment. Cannot edit vehicle details.</div>
+    </div>
+    <div class="card" style="padding:16px;text-align:center;">
+      <div class="role-badge role-viewer" style="margin-bottom:8px;">viewer</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:6px;">Read-only access to inventory. No editing, no keys, no admin.</div>
+    </div>
+  </div>
+
+  <!-- Permission Matrix -->
+  <div class="card">
+    <div class="card-title">Permission Matrix</div>
+    <div style="overflow-x:auto;">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th style="min-width:200px;">Permission</th>
+            <th><span class="role-badge role-admin">admin</span></th>
+            <th><span class="role-badge role-manager">manager</span></th>
+            <th><span class="role-badge role-sales">sales</span></th>
+            <th><span class="role-badge role-service">service</span></th>
+            <th><span class="role-badge role-viewer">viewer</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set perms = [
+            ('View inventory',           True, True, True, True, True),
+            ('Add new vehicles',         True, True, True, False, False),
+            ('Edit vehicle details',     True, True, True, False, False),
+            ('Inline price/status edit', True, True, True, False, False),
+            ('Mark vehicle as Sold',     True, True, False, False, False),
+            ('Delete vehicles',          True, False, False, False, False),
+            ('Assign key tags',          True, True, True, True, False),
+            ('Export CSV / Backup',      True, True, False, False, False),
+            ('Manage staff accounts',    True, False, False, False, False),
+            ('View audit trail',         True, False, False, False, False),
+            ('Admin panel access',       True, False, False, False, False),
+            ('Deal pipeline',            True, True, True, False, False),
+            ('AI features',              True, True, True, False, False),
+            ('Finance calculator',       True, True, True, True, False),
+            ('Documents',                True, True, True, False, False),
+          ] %}
+          {% for perm, adm, mgr, sls, svc, vwr in perms %}
+          <tr>
+            <td>{{ perm }}</td>
+            <td class="check">{% if adm %}<span style="color:var(--green);">✅</span>{% else %}<span style="color:rgba(255,255,255,.12);">—</span>{% endif %}</td>
+            <td class="check">{% if mgr %}<span style="color:var(--green);">✅</span>{% else %}<span style="color:rgba(255,255,255,.12);">—</span>{% endif %}</td>
+            <td class="check">{% if sls %}<span style="color:var(--green);">✅</span>{% else %}<span style="color:rgba(255,255,255,.12);">—</span>{% endif %}</td>
+            <td class="check">{% if svc %}<span style="color:var(--green);">✅</span>{% else %}<span style="color:rgba(255,255,255,.12);">—</span>{% endif %}</td>
+            <td class="check">{% if vwr %}<span style="color:var(--green);">✅</span>{% else %}<span style="color:rgba(255,255,255,.12);">—</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- How to assign roles -->
+  <div class="card">
+    <div class="card-title">How to Assign Roles — Edit app.py</div>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px;">Find the <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px;">_staff_accounts</code> dict in <code style="background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px;">app.py</code> and add accounts with the desired role:</p>
+    <div class="code-block"><span class="comment"># In app.py — _staff_accounts dict</span>
+_staff_accounts = {
+    <span class="key">"admin"</span>:   {<span class="key">"name"</span>: <span class="val">"Admin"</span>,        <span class="key">"role"</span>: <span class="val">"admin"</span>,   <span class="key">"password"</span>: ADMIN_PASSWORD},
+    <span class="key">"staff"</span>:   {<span class="key">"name"</span>: <span class="val">"Staff"</span>,        <span class="key">"role"</span>: <span class="val">"staff"</span>,   <span class="key">"password"</span>: ACCESS_PASSWORD},
+    <span class="comment"># Add your team below:</span>
+    <span class="key">"john"</span>:    {<span class="key">"name"</span>: <span class="val">"John Smith"</span>,   <span class="key">"role"</span>: <span class="val">"sales"</span>,   <span class="key">"password"</span>: <span class="val">"John2024!"</span>},
+    <span class="key">"sarah"</span>:   {<span class="key">"name"</span>: <span class="val">"Sarah Jones"</span>,  <span class="key">"role"</span>: <span class="val">"manager"</span>, <span class="key">"password"</span>: <span class="val">"Sarah2024!"</span>},
+    <span class="key">"tech"</span>:    {<span class="key">"name"</span>: <span class="val">"Tech Team"</span>,    <span class="key">"role"</span>: <span class="val">"service"</span>, <span class="key">"password"</span>: <span class="val">"Tech2024!"</span>},
+    <span class="key">"readonly"</span>:{<span class="key">"name"</span>: <span class="val">"Read Only"</span>,   <span class="key">"role"</span>: <span class="val">"viewer"</span>,  <span class="key">"password"</span>: <span class="val">"View2024!"</span>},
+}</div>
+    <p style="font-size:.75rem;color:var(--muted);margin-top:12px;">After editing, push app.py to GitHub — Railway will auto-deploy within ~2 minutes.</p>
+  </div>
+</div>
+</body>
+</html>

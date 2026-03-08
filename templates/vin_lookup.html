@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>VIN Lookup — {{ dealership }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--panel2:#161B26;--border:rgba(201,168,76,0.18);}
+    *{box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;padding-bottom:60px;}
+    .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:50;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);}
+    .wrap{max-width:760px;margin:0 auto;padding:24px 16px;}
+    .nav-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.8rem;letter-spacing:.1em;text-decoration:none;color:rgba(255,255,255,.45);transition:all .15s;}
+    .nav-pill:hover{background:rgba(201,168,76,.1);color:var(--gold);}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;margin-bottom:18px;}
+    .field-label{display:block;color:rgba(255,255,255,.35);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+    .vin-input{width:100%;background:var(--panel2);border:2px solid rgba(255,255,255,.08);border-radius:10px;color:#fff;padding:14px 16px;font-size:1.1rem;font-family:'Courier New',monospace;letter-spacing:.12em;outline:none;transition:border-color .2s;text-transform:uppercase;}
+    .vin-input:focus{border-color:var(--gold);}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.1em;border:none;cursor:pointer;transition:opacity .15s;}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;}
+    .btn-ghost{background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);}
+    .btn:hover{opacity:.85;}
+    .btn:disabled{opacity:.4;cursor:not-allowed;}
+    .spec-section{margin-bottom:16px;}
+    .spec-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:6px;margin-bottom:10px;}
+    .spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+    .spec-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+    .spec-k{font-size:.78rem;color:rgba(255,255,255,.4);}
+    .spec-v{font-size:.82rem;font-weight:500;color:#fff;text-align:right;max-width:200px;}
+    .recall-item{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+    .char-count{font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:6px;margin-top:8px;display:inline-block;}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(201,168,76,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="brand">KEYTRACK</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <a href="/dashboard" class="nav-pill">← FLEET</a>
+      <a href="/admin" class="nav-pill">ADMIN</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div style="margin-bottom:24px;">
+    <h1 style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;line-height:1;">VIN <span style="color:var(--gold)">Decoder</span></h1>
+    <p style="color:rgba(255,255,255,.35);font-size:.85rem;margin-top:4px;">{{ dealership }} · Free NHTSA lookup — no API key needed</p>
+  </div>
+
+  <div class="card">
+    <label class="field-label">Enter Vehicle VIN</label>
+    <input class="vin-input" id="vinInput" maxlength="17" placeholder="e.g. 1HGCM82633A004352" oninput="onVinInput(this)"/>
+    <div id="charCount" class="char-count" style="background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);">0 / 17</div>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+      <button class="btn btn-gold" id="decodeBtn" onclick="decodeVIN()" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        DECODE VIN
+      </button>
+      <button class="btn btn-ghost" onclick="clearAll()">CLEAR</button>
+    </div>
+  </div>
+
+  <div id="results" style="display:none;">
+    <div class="card" id="specCard"></div>
+    <div class="card" id="recallCard" style="display:none;">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;color:#FCA5A5;font-size:1rem;letter-spacing:.1em;margin-bottom:12px;">⚠ NHTSA RECALLS</div>
+      <div id="recallList"></div>
+    </div>
+    <div class="card" style="background:rgba(201,168,76,.06);border-color:var(--border);">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--gold);font-size:.9rem;letter-spacing:.1em;margin-bottom:12px;">ADD THIS VEHICLE TO FLEET</div>
+      <p style="font-size:.82rem;color:rgba(255,255,255,.45);margin-bottom:14px;">Go to Admin panel and use these decoded values to add the vehicle.</p>
+      <a href="/admin" class="btn btn-gold">GO TO ADMIN PANEL →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function onVinInput(el) {
+  el.value = el.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
+  var len = el.value.length;
+  var cc = document.getElementById('charCount');
+  cc.textContent = len + ' / 17';
+  if (len === 17) {
+    cc.style.background = 'rgba(34,197,94,.12)'; cc.style.color = '#86EFAC';
+    document.getElementById('decodeBtn').disabled = false;
+  } else if (len > 0) {
+    cc.style.background = 'rgba(251,191,36,.08)'; cc.style.color = '#FDE68A';
+    document.getElementById('decodeBtn').disabled = true;
+  } else {
+    cc.style.background = 'rgba(255,255,255,.05)'; cc.style.color = 'rgba(255,255,255,.3)';
+    document.getElementById('decodeBtn').disabled = true;
+  }
+}
+
+async function decodeVIN() {
+  var vin = document.getElementById('vinInput').value.trim();
+  if (vin.length !== 17) { alert('VIN must be exactly 17 characters.'); return; }
+  var btn = document.getElementById('decodeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> DECODING...';
+  try {
+    var r = await fetch('/api/decode-vin', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+      body: JSON.stringify({vin: vin})
+    });
+    var d = await r.json();
+    if (!d.ok) { alert('Could not decode VIN: ' + (d.error||'Unknown error')); return; }
+    renderSpecs(d.decoded, vin);
+    checkRecalls(d.decoded);
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({behavior:'smooth'});
+  } catch(e) { alert('Network error. Check your connection.'); }
+  finally { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> DECODE VIN'; }
+}
+
+function renderSpecs(decoded, vin) {
+  var card = document.getElementById('specCard');
+  var sections = {'Identity':['Make','Model','Year','Trim','Series','Body','Drive','Fuel'],
+                  'Powertrain':['Engine','Displacement','Cylinders','Transmission'],
+                  'Safety':['ABS','ESC','Airbags','BrakeType']};
+  var html = '<div style="font-family:\'Rajdhani\',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold);margin-bottom:4px;">' + (decoded['Make']||'Unknown') + ' ' + (decoded['Model']||'Unknown') + '</div>';
+  html += '<div style="font-size:.82rem;color:rgba(255,255,255,.35);margin-bottom:18px;font-family:monospace;">' + vin + '</div>';
+  for (var section in sections) {
+    var rows = '';
+    sections[section].forEach(function(key) {
+      if (decoded[key] && decoded[key] !== 'Not Applicable') {
+        rows += '<div class="spec-row"><span class="spec-k">' + key + '</span><span class="spec-v">' + decoded[key] + '</span></div>';
+      }
+    });
+    if (rows) html += '<div class="spec-section"><div class="spec-title">' + section + '</div>' + rows + '</div>';
+  }
+  card.innerHTML = html;
+}
+
+async function checkRecalls(decoded) {
+  var make = decoded['Make'], model = decoded['Model'], year = decoded['Year'];
+  if (!make || !model || !year) return;
+  try {
+    var r = await fetch('/api/check-recalls', {
+      method: 'POST', headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+      body: JSON.stringify({make:make, model:model, year:year})
+    });
+    var d = await r.json();
+    if (d.count > 0) {
+      document.getElementById('recallCard').style.display = 'block';
+      document.getElementById('recallList').innerHTML = d.recalls.map(function(rc) {
+        return '<div class="recall-item"><div style="font-size:.7rem;color:rgba(239,68,68,.5);font-family:monospace;margin-bottom:4px;">CAMPAIGN ' + rc.campaign + ' · ' + rc.date + '</div>' +
+               '<div style="font-weight:600;color:#FCA5A5;font-size:.875rem;margin-bottom:5px;">' + rc.component + '</div>' +
+               '<div style="font-size:.78rem;color:rgba(255,255,255,.45);">' + rc.summary + '</div></div>';
+      }).join('');
+    }
+  } catch(e) {}
+}
+
+function clearAll() {
+  document.getElementById('vinInput').value = '';
+  onVinInput(document.getElementById('vinInput'));
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('recallCard').style.display = 'none';
+}
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     KEYTRACK GLOBAL — Command Palette · Keyboard Shortcuts · Inline Edit
+     Inject before </body> in dashboard.html, vehicle.html, admin.html
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- CMD PALETTE OVERLAY -->
+<div id="cmdOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;">
+  <div id="cmdBox" style="width:100%;max-width:560px;background:#16161f;border:1px solid rgba(201,168,76,.3);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <span style="font-size:1.1rem;opacity:.5;">⌘</span>
+      <input id="cmdInput" placeholder="Search pages, vehicles, actions…"
+        style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:.95rem;font-family:'Inter',sans-serif;"
+        autocomplete="off" spellcheck="false"/>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">ESC</span>
+    </div>
+    <div id="cmdResults" style="max-height:360px;overflow-y:auto;padding:6px;"></div>
+    <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:16px;font-size:.68rem;color:rgba(255,255,255,.25);">
+      <span>↑↓ navigate</span><span>↵ open</span><span>ESC close</span><span>⌘K / Ctrl+K open</span>
+    </div>
+  </div>
+</div>
+
+<!-- INLINE EDIT POPOVER -->
+<div id="inlinePopover" style="position:fixed;z-index:8000;display:none;background:#1a1a28;border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);min-width:240px;max-width:320px;">
+  <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;" id="inlinePopLabel">Edit Field</div>
+  <div id="inlinePopInput"></div>
+  <div style="display:flex;gap:6px;margin-top:10px;">
+    <button onclick="saveInlineEdit()" style="flex:1;padding:7px;background:linear-gradient(135deg,#C9A84C,#e6c97a);color:#000;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;cursor:pointer;">SAVE</button>
+    <button onclick="closeInlinePop()" style="padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;cursor:pointer;font-size:.8rem;">✕</button>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUT TOAST -->
+<div id="kbToast" style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);background:#1c1c28;border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:8px 20px;font-size:.78rem;color:rgba(255,255,255,.7);opacity:0;transition:all .3s;pointer-events:none;z-index:7000;white-space:nowrap;"></div>
+
+<!-- SHORTCUT HELP OVERLAY -->
+<div id="shortcutHelp" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8500;display:none;align-items:center;justify-content:center;">
+  <div style="background:#16161f;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;max-width:480px;width:100%;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.08em;color:#C9A84C;margin-bottom:16px;">⌨ KEYBOARD SHORTCUTS</div>
+    <div id="shortcutList" style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;"></div>
+    <button onclick="document.getElementById('shortcutHelp').style.display='none'" style="margin-top:18px;padding:8px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;">CLOSE</button>
+  </div>
+</div>
+
+<style>
+.cmd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.cmd-item:hover,.cmd-item.active{background:rgba(201,168,76,.1);}
+.cmd-icon{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.cmd-label{font-size:.85rem;font-weight:500;color:#fff;}
+.cmd-sub{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:1px;}
+.kb-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;font-size:.7rem;font-family:monospace;color:rgba(255,255,255,.6);}
+.ie-enabled{cursor:pointer;transition:background .15s;}
+.ie-enabled:hover{background:rgba(201,168,76,.08);border-radius:4px;}
+.ie-enabled::after{content:' ✏';font-size:.6rem;opacity:0;transition:opacity .15s;}
+.ie-enabled:hover::after{opacity:.5;}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMAND PALETTE
+// ═══════════════════════════════════════════════════════════════════════════
+var _cmdOpen = false;
+var _cmdIdx = -1;
+var _cmdItems = [];
+var _cmdTimer = null;
+
+function openCmd() {
+  document.getElementById('cmdOverlay').style.display = 'flex';
+  document.getElementById('cmdInput').value = '';
+  _cmdOpen = true; _cmdIdx = -1;
+  setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+  loadCmdResults('');
+}
+function closeCmd() {
+  document.getElementById('cmdOverlay').style.display = 'none';
+  _cmdOpen = false;
+}
+document.getElementById('cmdOverlay').addEventListener('click', function(e){
+  if (e.target === this) closeCmd();
+});
+document.getElementById('cmdInput').addEventListener('input', function(){
+  clearTimeout(_cmdTimer);
+  _cmdTimer = setTimeout(() => loadCmdResults(this.value), 180);
+});
+document.getElementById('cmdInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveCmdIdx(1); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); moveCmdIdx(-1); }
+  if (e.key === 'Enter')     { e.preventDefault(); selectCmd(); }
+});
+
+async function loadCmdResults(q) {
+  const r = await fetch('/api/cmd-palette?q=' + encodeURIComponent(q));
+  const data = await r.json();
+  if (!data.ok) return;
+  _cmdItems = data.results;
+  _cmdIdx = -1;
+  renderCmdResults();
+}
+
+function renderCmdResults() {
+  const el = document.getElementById('cmdResults');
+  if (!_cmdItems.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:.8rem;color:rgba(255,255,255,.3);">No results</div>';
+    return;
+  }
+  el.innerHTML = _cmdItems.map((item, i) =>
+    `<div class="cmd-item${i===_cmdIdx?' active':''}" onclick="goCmd(${i})">
+      <div class="cmd-icon">${item.icon||'📄'}</div>
+      <div>
+        <div class="cmd-label">${item.label}</div>
+        ${item.sublabel ? `<div class="cmd-sub">${item.sublabel}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+function moveCmdIdx(dir) {
+  _cmdIdx = Math.max(-1, Math.min(_cmdItems.length-1, _cmdIdx + dir));
+  renderCmdResults();
+  const items = document.querySelectorAll('.cmd-item');
+  if (items[_cmdIdx]) items[_cmdIdx].scrollIntoView({block:'nearest'});
+}
+function selectCmd() {
+  if (_cmdIdx >= 0 && _cmdItems[_cmdIdx]) goCmd(_cmdIdx);
+  else if (_cmdItems[0]) goCmd(0);
+}
+function goCmd(i) {
+  const item = _cmdItems[i];
+  if (item) { closeCmd(); window.location.href = item.url; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════════════
+var SHORTCUTS = [
+  {key:'k', mod:'ctrl/cmd', label:'Command Palette',     action: openCmd},
+  {key:'/', mod:'',         label:'Global Search',       action: () => window.location.href='/search'},
+  {key:'d', mod:'',         label:'Dashboard',            action: () => goShortcut('/dashboard')},
+  {key:'p', mod:'',         label:'Pipeline',             action: () => goShortcut('/pipeline')},
+  {key:'f', mod:'',         label:'Finance Calculator',   action: () => goShortcut('/finance')},
+  {key:'h', mod:'',         label:'Inventory Health',     action: () => goShortcut('/inventory-health')},
+  {key:'a', mod:'',         label:'Analytics',            action: () => goShortcut('/analytics')},
+  {key:'t', mod:'',         label:'Trade-Ins',            action: () => goShortcut('/trade-ins')},
+  {key:'n', mod:'',         label:'New Vehicle (Admin)',  action: () => goShortcut('/admin')},
+  {key:'?', mod:'',         label:'Show shortcuts',       action: showShortcutHelp},
+  {key:'Escape', mod:'',    label:'Close / Back',         action: closeAll},
+];
+
+function goShortcut(url) {
+  showKbToast('→ ' + url);
+  setTimeout(() => window.location.href = url, 300);
+}
+function showKbToast(msg) {
+  const t = document.getElementById('kbToast');
+  t.textContent = msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)';}, 1800);
+}
+function closeAll() {
+  closeCmd();
+  document.getElementById('shortcutHelp').style.display = 'none';
+  closeInlinePop();
+}
+function showShortcutHelp() {
+  const list = document.getElementById('shortcutList');
+  list.innerHTML = SHORTCUTS.map(s =>
+    `<div><kbd class="kb-badge">${s.mod ? s.mod+'+' : ''}${s.key === 'Escape' ? 'ESC' : s.key.toUpperCase()}</kbd></div><div style="color:rgba(255,255,255,.7)">${s.label}</div>`
+  ).join('');
+  document.getElementById('shortcutHelp').style.display = 'flex';
+}
+
+document.addEventListener('keydown', function(e) {
+  // Don't fire if typing in an input
+  const tag = document.activeElement.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+  // CMD/Ctrl+K — always open palette
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if (_cmdOpen) closeCmd(); else openCmd();
+    return;
+  }
+  if (_cmdOpen) return; // let palette handle all keys
+  if (isInput) return;
+
+  // Single-key shortcuts
+  switch(e.key) {
+    case '/': e.preventDefault(); window.location.href='/search'; break;
+    case 'd': case 'D': goShortcut('/dashboard'); break;
+    case 'p': case 'P': goShortcut('/pipeline'); break;
+    case 'f': case 'F': goShortcut('/finance'); break;
+    case 'h': case 'H': goShortcut('/inventory-health'); break;
+    case 'a': case 'A': goShortcut('/analytics'); break;
+    case 't': case 'T': goShortcut('/trade-ins'); break;
+    case 'n': case 'N': goShortcut('/admin'); break;
+    case '?': showShortcutHelp(); break;
+    case 'Escape': closeAll(); break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INLINE EDIT
+// ═══════════════════════════════════════════════════════════════════════════
+var _inlineVid = null;
+var _inlineField = null;
+var _inlineFields = null;
+var _inlineTriggerEl = null;
+
+async function initInlineEdit() {
+  const r = await fetch('/api/inline-editable-fields');
+  const data = await r.json();
+  if (data.ok) _inlineFields = data.fields;
+}
+
+// Safe guard - inline edit only works on pages with VEHICLE_ID
+function openInlineEdit(el, vid, field, currentValue) {
+  if (!_inlineFields) return;
+  if (!vid) return;
+  var meta = _inlineFields[field];
+  if (!meta) return;
+  _inlineVid = vid;
+  _inlineField = field;
+  _inlineTriggerEl = el;
+
+  document.getElementById('inlinePopLabel').textContent = 'Edit: ' + meta.label;
+  var inp = document.getElementById('inlinePopInput');
+
+  if (meta.type === 'select') {
+    inp.innerHTML = '<select id="inlineVal" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;">' +
+      meta.options.map(function(o){ return '<option value="' + o + '"' + (o===currentValue?' selected':'') + '>' + o + '</option>'; }).join('') +
+      '</select>';
+  } else if (meta.type === 'textarea') {
+    inp.innerHTML = '<textarea id="inlineVal" rows="3" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;resize:vertical;outline:none;">' + (currentValue||'') + '</textarea>';
+  } else {
+    inp.innerHTML = '<input id="inlineVal" type="text" value="' + (currentValue||'').replace(/"/g,'&quot;') + '" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;"/>';
+  }
+
+  var rect = el.getBoundingClientRect();
+  var pop = document.getElementById('inlinePopover');
+  pop.style.display = 'block';
+  var top = rect.bottom + window.scrollY + 6;
+  var left = rect.left + window.scrollX;
+  if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+  if (top + 160 > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - 165;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+
+  setTimeout(function(){
+    var v = document.getElementById('inlineVal');
+    if (v) { v.focus(); if (v.select) v.select(); }
+  }, 50);
+
+  document.getElementById('inlineVal').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') saveInlineEdit();
+    if (e.key === 'Escape') closeInlinePop();
+  });
+}
+
+
+async function saveInlineEdit() {
+  const val = document.getElementById('inlineVal')?.value;
+  if (val === undefined) return;
+  const r = await fetch('/api/inline-edit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({vid: _inlineVid, field: _inlineField, value: val})
+  });
+  const data = await r.json();
+  if (data.ok) {
+    showKbToast('✅ ' + _inlineField + ' updated');
+    // Update the element text
+    if (_inlineTriggerEl) {
+      _inlineTriggerEl.textContent = val;
+      _inlineTriggerEl.dataset.val = val;
+    }
+    closeInlinePop();
+  } else {
+    showKbToast('❌ ' + (data.message || 'Error'));
+  }
+}
+function closeInlinePop() {
+  document.getElementById('inlinePopover').style.display = 'none';
+  _inlineVid = null; _inlineField = null;
+}
+// Close on outside click
+document.addEventListener('click', function(e){
+  const pop = document.getElementById('inlinePopover');
+  if (pop.style.display !== 'none' && !pop.contains(e.target)) {
+    if (!e.target.classList.contains('ie-enabled')) closeInlinePop();
+  }
+});
+
+// ── Add ⌘K button to all pages ───────────────────────────────────────────────
+(function(){
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  const btn = document.createElement('button');
+  btn.innerHTML = '⌘K';
+  btn.title = 'Command Palette (Ctrl+K / ⌘K)';
+  btn.onclick = openCmd;
+  btn.style.cssText = 'margin-left:auto;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:4px 10px;color:#C9A84C;font-family:\'Rajdhani\',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;';
+  btn.onmouseenter = () => btn.style.background = 'rgba(201,168,76,.2)';
+  btn.onmouseleave = () => btn.style.background = 'rgba(201,168,76,.1)';
+  // Insert before last nav child (scanner button usually)
+  const existing = nav.querySelector('[style*="margin-left:auto"]');
+  if (existing) {
+    existing.style.marginLeft = '0';
+    nav.insertBefore(btn, existing);
+  } else {
+    nav.appendChild(btn);
+  }
+})();
+
+// Init inline edit on pages that support it
+try { initInlineEdit(); } catch(e) {}
+</script>
+</body>
+</html>

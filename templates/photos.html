@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Photos — {{ internal_id }} — KeyTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--panel2:#161B26;--border:rgba(201,168,76,0.2);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:50;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);}
+    .wrap{max-width:800px;margin:0 auto;padding:28px 16px;}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;border:none;cursor:pointer;transition:opacity .15s;text-decoration:none;}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;}
+    .btn-ghost{background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);}
+    .btn:hover{opacity:.85;}
+    .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:24px;}
+    .photo-card{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;position:relative;transition:border-color .2s;}
+    .photo-card.primary{border-color:var(--gold);}
+    .photo-card img{width:100%;height:160px;object-fit:cover;display:block;}
+    .photo-card-body{padding:10px 12px;}
+    .primary-badge{position:absolute;top:8px;left:8px;background:var(--gold);color:#0A0C10;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.6rem;letter-spacing:.1em;padding:3px 8px;border-radius:4px;}
+    .photo-actions{display:flex;gap:6px;margin-top:8px;}
+    .photo-btn{flex:1;padding:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);border-radius:6px;font-size:.72rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.06em;transition:all .15s;text-align:center;}
+    .photo-btn:hover{border-color:var(--gold);color:var(--gold);}
+    .photo-btn.danger:hover{border-color:#ef4444;color:#ef4444;}
+    .upload-zone{border:2px dashed rgba(201,168,76,.3);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(201,168,76,.03);}
+    .upload-zone:hover,.upload-zone.dragover{border-color:var(--gold);background:rgba(201,168,76,.07);}
+    .upload-zone input{display:none;}
+    .progress-bar{height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:16px;overflow:hidden;display:none;}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:2px;width:0%;transition:width .3s;}
+    .caption-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:5px 8px;color:#fff;font-size:.75rem;font-family:'DM Sans',sans-serif;margin-top:6px;}
+    .caption-input:focus{outline:none;border-color:var(--gold);}
+    .empty-state{text-align:center;padding:60px 20px;color:rgba(255,255,255,.3);}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1C2130;border:1px solid var(--border);color:#fff;padding:12px 20px;border-radius:10px;font-size:.85rem;z-index:999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div style="max-width:800px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="brand">KEYTRACK</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="/scan/{{ internal_id }}" class="btn btn-ghost" style="padding:6px 14px;font-size:.75rem;">← VEHICLE</a>
+      <a href="/listings" class="btn btn-ghost" style="padding:6px 14px;font-size:.75rem;">🌐 LISTINGS</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div style="margin-bottom:24px;">
+    <h1 style="font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;">Photo <span style="color:var(--gold)">Gallery</span></h1>
+    <p style="color:rgba(255,255,255,.4);margin-top:4px;font-size:.9rem;">
+      {{ internal_id }} · {{ vehicle.get('Year','') }} {{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }} ·
+      <span id="photoCount">{{ photos|length }}</span>/20 photos
+    </p>
+    {% if not has_cloudinary %}
+    <div style="margin-top:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:10px 14px;font-size:.8rem;color:#FDE68A;">
+      ⚠ Add <strong>CLOUDINARY_CLOUD_NAME</strong>, <strong>CLOUDINARY_API_KEY</strong>, <strong>CLOUDINARY_API_SECRET</strong> to your environment for permanent photo storage. Currently storing in memory (lost on restart).
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Upload zone -->
+  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+    <div ondragover="event.preventDefault();this.closest('.upload-zone').classList.add('dragover')"
+         ondragleave="this.closest('.upload-zone').classList.remove('dragover')"
+         ondrop="handleDrop(event)">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,.5)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <p style="color:rgba(255,255,255,.5);font-size:.9rem;">Drag & drop photos or <span style="color:var(--gold)">tap to browse</span></p>
+      <p style="color:rgba(255,255,255,.25);font-size:.75rem;margin-top:6px;">JPG, PNG, WebP · Max 10MB each · Up to 20 photos</p>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple onchange="uploadFiles(this.files)">
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- Photo grid -->
+  <div class="photo-grid" id="photoGrid">
+    {% if not photos %}
+    <div class="empty-state" style="grid-column:1/-1;">
+      <p style="font-size:2rem;margin-bottom:8px;">📷</p>
+      <p>No photos yet — upload some above</p>
+    </div>
+    {% endif %}
+    {% for p in photos %}
+    <div class="photo-card {% if p.primary %}primary{% endif %}" id="card-{{ p.id }}">
+      {% if p.primary %}<div class="primary-badge">★ PRIMARY</div>{% endif %}
+      <img src="{{ p.url }}" alt="{{ p.caption or 'Vehicle photo' }}" loading="lazy">
+      <div class="photo-card-body">
+        <input class="caption-input" placeholder="Add caption…" value="{{ p.caption }}"
+               onblur="saveCaption('{{ p.id }}', this.value)">
+        <div class="photo-actions">
+          {% if not p.primary %}
+          <button class="photo-btn" onclick="setPrimary('{{ p.id }}')">⭐ Primary</button>
+          {% endif %}
+          <button class="photo-btn danger" onclick="deletePhoto('{{ p.id }}')">🗑</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const VID = '{{ internal_id }}';
+
+  function toast(msg, ok=true){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = ok ? '#0D1F12' : '#1F0D0D';
+    t.style.borderColor = ok ? 'rgba(34,197,94,.3)' : 'rgba(239,68,68,.3)';
+    t.style.display = 'block';
+    setTimeout(()=> t.style.display='none', 2800);
+  }
+
+  function handleDrop(e){
+    e.preventDefault();
+    e.currentTarget.closest('.upload-zone').classList.remove('dragover');
+    uploadFiles(e.dataTransfer.files);
+  }
+
+  async function uploadFiles(files){
+    if(!files.length) return;
+    const bar = document.getElementById('progressBar');
+    const fill = document.getElementById('progressFill');
+    bar.style.display = 'block'; fill.style.width='0%';
+    const fd = new FormData();
+    for(const f of files) fd.append('photos', f);
+    fill.style.width='40%';
+    try{
+      const r = await fetch(`/api/photos/${VID}/upload`,{
+        method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body:fd
+      });
+      fill.style.width='100%';
+      const d = await r.json();
+      if(d.ok){ toast(`✓ ${d.added} photo(s) uploaded`); renderPhotos(d.photos); }
+      else toast(d.message||'Upload failed', false);
+    } catch(e){ toast('Upload error', false); }
+    setTimeout(()=>{ bar.style.display='none'; fill.style.width='0%'; },600);
+  }
+
+  function renderPhotos(photos){
+    document.getElementById('photoCount').textContent = photos.length;
+    const grid = document.getElementById('photoGrid');
+    if(!photos.length){
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><p style="font-size:2rem;">📷</p><p>No photos yet</p></div>';
+      return;
+    }
+    grid.innerHTML = photos.map(p => `
+      <div class="photo-card ${p.primary?'primary':''}" id="card-${p.id}">
+        ${p.primary?'<div class="primary-badge">★ PRIMARY</div>':''}
+        <img src="${p.url}" alt="${p.caption||'Vehicle photo'}" loading="lazy" style="width:100%;height:160px;object-fit:cover;display:block;">
+        <div class="photo-card-body">
+          <input class="caption-input" placeholder="Add caption…" value="${p.caption||''}"
+                 onblur="saveCaption('${p.id}', this.value)">
+          <div class="photo-actions">
+            ${!p.primary?`<button class="photo-btn" onclick="setPrimary('${p.id}')">⭐ Primary</button>`:''}
+            <button class="photo-btn danger" onclick="deletePhoto('${p.id}')">🗑</button>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  async function setPrimary(pid){
+    const r = await fetch(`/api/photos/${VID}/set-primary`,{
+      method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+      body:JSON.stringify({id:pid})});
+    const d = await r.json();
+    if(d.ok){ toast('✓ Primary photo set'); location.reload(); }
+  }
+
+  async function deletePhoto(pid){
+    if(!confirm('Delete this photo?')) return;
+    const r = await fetch(`/api/photos/${VID}/delete`,{
+      method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+      body:JSON.stringify({id:pid})});
+    const d = await r.json();
+    if(d.ok){ toast('Photo deleted'); document.getElementById('card-'+pid)?.remove(); }
+    else toast('Delete failed',false);
+  }
+
+  async function saveCaption(pid, caption){
+    await fetch(`/api/photos/${VID}/caption`,{
+      method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+      body:JSON.stringify({id:pid,caption})});
+  }
+</script>
+</body>
+</html>

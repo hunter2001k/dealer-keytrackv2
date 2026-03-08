@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — KeyTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #C9A84C; --gold-light: #F0CB6E;
+      --dark: #0A0C10; --panel: #10141C; --panel2: #161B26; --panel3: #1C2130;
+      --border: rgba(201,168,76,0.18); --red: #EF4444; --green: #22C55E;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #fff; min-height: 100vh; }
+
+    /* ── Layout ── */
+    .topbar { background: var(--panel); border-bottom: 1px solid var(--border); padding: 14px 20px; position: sticky; top: 0; z-index: 100; }
+    .brand { font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.15em; }
+    .admin-badge { background: rgba(239,68,68,0.15); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.25); font-family: 'Rajdhani', sans-serif; font-size: 0.65rem; letter-spacing: 0.15em; padding: 3px 10px; border-radius: 20px; }
+    .content { max-width: 900px; margin: 0 auto; padding: 28px 16px 60px; }
+
+    /* ── Section cards ── */
+    .section { background: var(--panel); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; margin-bottom: 20px; overflow: hidden; }
+    .section-header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px; }
+    .section-body { padding: 20px; }
+
+    /* ── Form fields ── */
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    @media (max-width: 600px) { .field-grid, .field-grid-3 { grid-template-columns: 1fr; } }
+    .field-label { display: block; color: rgba(255,255,255,0.4); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+    .field-input {
+      width: 100%; background: var(--panel2); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; color: #fff; padding: 10px 13px;
+      font-size: 0.9rem; font-family: 'DM Sans', sans-serif; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+    .field-input.span-2 { grid-column: span 2; }
+    textarea.field-input { resize: vertical; min-height: 80px; }
+    select.field-input option { background: #1C2130; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.85rem; letter-spacing: 0.1em; border: none; cursor: pointer; transition: opacity 0.15s, transform 0.1s; text-decoration: none; }
+    .btn:active { transform: scale(0.97); }
+    .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #0A0C10; }
+    .btn-ghost { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-red { background: rgba(239,68,68,0.15); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.2); }
+    .btn-yellow { background: rgba(251,191,36,0.12); color: #FDE68A; border: 1px solid rgba(251,191,36,0.2); }
+    .btn-green { background: rgba(34,197,94,0.12); color: #86EFAC; border: 1px solid rgba(34,197,94,0.2); }
+    .btn:hover { opacity: 0.85; }
+    .btn-sm { padding: 6px 12px; font-size: 0.75rem; }
+
+    /* ── Vehicle table ── */
+    .vtable { width: 100%; border-collapse: collapse; }
+    .vtable th { text-align: left; color: rgba(255,255,255,0.3); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); font-weight: 500; }
+    .vtable td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; font-size: 0.875rem; }
+    .vtable tr:last-child td { border-bottom: none; }
+    .vtable tr:hover td { background: rgba(255,255,255,0.02); }
+    .vid { font-family: 'Rajdhani', sans-serif; font-weight: 700; color: var(--gold); font-size: 1rem; }
+
+    /* ── Status badge ── */
+    .sbadge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.65rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500; }
+    .s-available { background: rgba(34,197,94,0.12); color: #86EFAC; border: 1px solid rgba(34,197,94,0.2); }
+    .s-sold { background: rgba(239,68,68,0.12); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.2); }
+    .s-in-service { background: rgba(251,191,36,0.12); color: #FDE68A; border: 1px solid rgba(251,191,36,0.2); }
+    .s-demo { background: rgba(139,92,246,0.12); color: #C4B5FD; border: 1px solid rgba(139,92,246,0.2); }
+    .s-hold { background: rgba(59,130,246,0.12); color: #93C5FD; border: 1px solid rgba(59,130,246,0.2); }
+    .s-pending { background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.2); }
+    .s-archived { background: rgba(100,116,139,0.12); color: #94A3B8; border: 1px solid rgba(100,116,139,0.2); }
+
+    /* ── Tag badge ── */
+    .tag-chip { display: inline-flex; align-items: center; gap: 5px; background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid var(--border); padding: 2px 9px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; }
+
+    /* ── Modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--panel); z-index: 1; }
+    .modal-title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.2rem; }
+    .modal-body { padding: 20px 24px 24px; }
+    .close-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); font-size: 1.4rem; line-height: 1; transition: color 0.15s; }
+    .close-btn:hover { color: rgba(255,255,255,0.7); }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--panel); border: 1px solid var(--border); color: #fff; padding: 11px 22px; border-radius: 10px; font-size: 0.875rem; opacity: 0; transition: opacity 0.3s, transform 0.3s; z-index: 500; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Free tag pills ── */
+    .free-tag { display: inline-flex; flex-direction: column; align-items: flex-start; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .free-tag:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+    .free-tag .tag-id { font-family: monospace; color: var(--gold); font-size: 0.9rem; }
+    .free-tag .tag-from { color: rgba(255,255,255,0.35); font-size: 0.7rem; margin-top: 2px; }
+
+    /* ── Search ── */
+    .search-input { width: 100%; background: var(--panel2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; padding: 9px 14px 9px 38px; font-size: 0.875rem; font-family: 'DM Sans', sans-serif; outline: none; }
+    .search-input:focus { border-color: var(--gold); }
+    .search-wrap { position: relative; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.3; }
+
+    /* ── Confirm dialog ── */
+    #confirmModal .modal { max-width: 400px; }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:30px;height:30px;background:#B91C1C;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <span class="brand" style="color:var(--gold)">KEYTRACK</span>
+      <span class="admin-badge">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-sm">STAFF VIEW</a>
+      <a href="{{ url_for('reports_page') }}" class="btn btn-ghost btn-sm">REPORTS</a>
+      <a href="{{ url_for('bulk_stickers') }}" class="btn btn-ghost btn-sm" style="color:var(--gold);border-color:rgba(201,168,76,.3);">🖨 BULK STICKERS</a>
+      <a href="/admin/bulk-import" class="btn btn-ghost btn-sm" style="color:var(--gold)">📦 Bulk Import</a>
+      <a href="{{ url_for('admin_staff') }}" class="btn btn-ghost btn-sm">STAFF</a>
+      <a href="{{ url_for('admin_audit') }}" class="btn btn-ghost btn-sm">AUDIT</a>
+      <a href="{{ url_for('admin_export_csv') }}" class="btn btn-ghost btn-sm">CSV</a>
+      <a href="{{ url_for('admin_backup') }}" class="btn btn-ghost btn-sm">BACKUP</a>
+      <a href="/scanner" style="background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.25);color:var(--gold);border-radius:7px;padding:5px 12px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;">📷 SCAN</a>
+      <a href="{{ url_for('upload_inventory_page') }}" class="btn btn-ghost btn-sm">⬆ UPLOAD</a>
+      <a href="/roles" class="btn btn-ghost btn-sm">🔐 ROLES</a>
+      <a href="{{ url_for('settings_page') }}" class="btn btn-ghost btn-sm">⚙ SETTINGS</a>
+      <a href="{{ url_for('admin_logout') }}" style="color:rgba(255,255,255,0.25);font-size:0.8rem;text-decoration:none;">LOGOUT</a>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ── STATS ROW ── -->
+  {% set active = vehicles | selectattr('Status', 'ne', 'Sold') | selectattr('Status', 'ne', 'Archived') | list %}
+  {% set sold   = vehicles | selectattr('Status', 'equalto', 'Sold') | list %}
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+    {% for label, count, color in [
+        ('Total', vehicles|length, 'var(--gold)'),
+        ('Available', vehicles|selectattr('Status','equalto','Available')|list|length, '#86EFAC'),
+        ('Sold', sold|length, '#FCA5A5'),
+        ('Free Tags', free_tags|length, '#93C5FD'),
+    ] %}
+    <div style="background:var(--panel);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px;">
+      <div style="color:rgba(255,255,255,0.35);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">{{ label }}</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:{{ color }};line-height:1;">{{ count }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── FREE TAGS ── -->
+  {% if free_tags %}
+  <div class="section" style="border-color:rgba(201,168,76,0.2);">
+    <div class="section-header">
+      <div class="section-title" style="color:var(--gold);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21 2-9 9"/><path d="M8 8a3 3 0 0 0 0 6h4l1 1 1-1 1 1 1-1 3 3 2-2-3-3 1-1V8a3 3 0 0 0-3-3H8z"/></svg>
+        Freed-Up Key Tags — Ready to Reassign
+      </div>
+      <span style="color:rgba(255,255,255,0.3);font-size:0.75rem;">Click a tag to reassign it</span>
+    </div>
+    <div class="section-body" style="display:flex;flex-wrap:wrap;gap:10px;">
+      {% for ft in free_tags %}
+      <div class="free-tag" onclick="openReassign('{{ ft.tag }}','{{ ft.was }}')">
+        <span class="tag-id">{{ ft.tag }}</span>
+        <span class="tag-from">freed from {{ ft.was }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── ACTIVE KEY CHECKOUTS ── -->
+  {% if checkouts %}
+  <div class="section" style="border-color:rgba(59,130,246,0.25);">
+    <div class="section-header">
+      <div class="section-title" style="color:#93C5FD;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21 2-9 9"/><path d="M8 8a3 3 0 0 0 0 6h4l1 1 1-1 1 1 1-1 3 3 2-2-3-3 1-1V8a3 3 0 0 0-3-3H8z"/></svg>
+        Keys Currently Checked Out ({{ checkouts|length }})
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">Tag</th>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">Vehicle</th>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">Staff</th>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">Since</th>
+        </tr></thead>
+        <tbody>
+          {% for co in checkouts %}
+          <tr>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);font-family:monospace;color:#93C5FD;">{{ co.tag }}</td>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--gold);">{{ co.vehicle }}</td>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);">{{ co.staff }}</td>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.4);font-size:.8rem;">{{ co.time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── AGING ALERT ── -->
+  {% if aging_90 %}
+  <div class="section" style="border-color:rgba(239,68,68,0.3);">
+    <div class="section-header">
+      <div class="section-title" style="color:#FCA5A5;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        {{ aging_90|length }} Vehicle{{ 's' if aging_90|length != 1 }} Aging 90+ Days — Action Needed
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">ID</th>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">Vehicle</th>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">Days on Lot</th>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">Price</th>
+          <th style="text-align:left;color:rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);">Status</th>
+        </tr></thead>
+        <tbody>
+          {% for v in aging_90 %}
+          {% set status_cls = v.get('Status','available').lower().replace(' ','-') %}
+          <tr>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);"><a href="{{ url_for('scan', internal_id=v.get('Internal_ID','')) }}" style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--gold);text-decoration:none;">{{ v.get('Internal_ID','—') }}</a></td>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);">{{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') }}</td>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);"><span style="color:#FCA5A5;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;">{{ v.get('_days_on_lot','?') }}d</span></td>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--gold);">{{ v.get('Price','—') }}</td>
+            <td style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.04);"><span class="sbadge s-{{ status_cls }}">{{ v.get('Status','—') }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── ADD VEHICLE ── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Add New Vehicle
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleSection('addForm')">TOGGLE</button>
+    </div>
+    <div class="section-body" id="addForm">
+
+      <!-- ROW 1: ID / Make / Model -->
+      <div class="field-grid-3" style="margin-bottom:14px;">
+        <div>
+          <label class="field-label">Internal ID *</label>
+          <input class="field-input" id="add_internal_id" placeholder="{{ suggested_id }}" value="{{ suggested_id }}"/>
+        </div>
+        <div>
+          <label class="field-label">Make *</label>
+          <input class="field-input" id="add_make" placeholder="Toyota"/>
+        </div>
+        <div>
+          <label class="field-label">Model *</label>
+          <input class="field-input" id="add_model" placeholder="Camry"/>
+        </div>
+      </div>
+
+      <!-- ROW 2: Year / Color / Status -->
+      <div class="field-grid-3" style="margin-bottom:14px;">
+        <div>
+          <label class="field-label">Year</label>
+          <input class="field-input" id="add_year" type="number" placeholder="2024"/>
+        </div>
+        <div>
+          <label class="field-label">Color</label>
+          <select class="field-input" id="add_color">
+            <option value="">— Select —</option>
+            {% for c in colours %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Status</label>
+          <select class="field-input" id="add_status">
+            {% for s in statuses %}<option value="{{ s }}" {% if s=='Available' %}selected{% endif %}>{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- ROW 3: VIN DECODE (full width) -->
+      <div style="margin-bottom:14px;">
+        <label class="field-label">VIN — enter 17 chars &amp; tap DECODE to autofill</label>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <input class="field-input" id="add_vin"
+            placeholder="e.g. 1HGBH41JXMN109186"
+            maxlength="17"
+            style="font-family:monospace;font-size:0.85rem;letter-spacing:0.08em;flex:1;"
+            oninput="onAddVinType(this)"/>
+          <button id="vinDecodeBtn" type="button" onclick="decodeAndFill()" disabled
+            style="flex-shrink:0;padding:10px 16px;border:none;border-radius:9px;
+                   background:linear-gradient(135deg,#C9A84C,#F0CB6E);color:#0A0C10;
+                   font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;
+                   letter-spacing:.1em;cursor:pointer;opacity:.35;transition:opacity .2s;
+                   white-space:nowrap;">
+            🔍 DECODE
+          </button>
+        </div>
+        <div id="vinDecodeMsg" style="font-size:.72rem;margin-top:5px;min-height:14px;color:rgba(255,255,255,.3);"></div>
+      </div>
+
+      <!-- ROW 4: Price / Mileage / Transmission -->
+      <div class="field-grid-3" style="margin-bottom:14px;">
+        <div>
+          <label class="field-label">Price ($)</label>
+          <input class="field-input" id="add_price" placeholder="29900" type="number" min="0"/>
+        </div>
+        <div>
+          <label class="field-label">Mileage (km)</label>
+          <input class="field-input" id="add_mileage" placeholder="54000" type="number" min="0"/>
+        </div>
+        <div>
+          <label class="field-label">Transmission</label>
+          <select class="field-input" id="add_transmission">
+            <option value="">— Select —</option>
+            <option>Automatic</option><option>Manual</option><option>CVT</option>
+            <option>Dual Clutch (DCT)</option><option>Semi-Automatic</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ROW 5: Body / Fuel / Engine -->
+      <div class="field-grid-3" style="margin-bottom:14px;">
+        <div>
+          <label class="field-label">Body Style</label>
+          <select class="field-input" id="add_body">
+            <option value="">— Select —</option>
+            <option>Sedan</option><option>Hatchback</option><option>SUV</option>
+            <option>Wagon</option><option>Ute / Pickup</option><option>Coupe</option>
+            <option>Convertible</option><option>Van</option><option>People Mover</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Fuel Type</label>
+          <select class="field-input" id="add_fuel">
+            <option value="">— Select —</option>
+            <option>Petrol</option><option>Diesel</option><option>Hybrid</option>
+            <option>Plug-in Hybrid (PHEV)</option><option>Electric (EV)</option><option>LPG</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Engine</label>
+          <input class="field-input" id="add_engine" placeholder="2.5L 4-Cyl"/>
+        </div>
+      </div>
+
+      <!-- ROW 6: Trim / Purchase Price / Recon Cost -->
+      <div class="field-grid-3" style="margin-bottom:14px;">
+        <div>
+          <label class="field-label">Trim</label>
+          <input class="field-input" id="add_trim" placeholder="GLX Sport"/>
+        </div>
+        <div>
+          <label class="field-label">Cost Price ($)</label>
+          <input class="field-input" id="add_purchase_price" placeholder="18000" type="number" min="0"/>
+        </div>
+        <div>
+          <label class="field-label">Recon Cost ($)</label>
+          <input class="field-input" id="add_recon_cost" placeholder="0" type="number" min="0"/>
+        </div>
+      </div>
+
+      <!-- ROW 7: Notes (full width) -->
+      <div style="margin-bottom:20px;">
+        <label class="field-label">Notes <span style="color:rgba(255,255,255,0.25);font-size:0.65rem;text-transform:none;letter-spacing:0;">(AI uses this for the sales pitch)</span></label>
+        <textarea class="field-input" id="add_notes" rows="3" placeholder="e.g. One-owner, no accidents. Recently serviced. Sunroof, heated seats, Apple CarPlay."></textarea>
+      </div>
+
+      <!-- hidden fields still needed by backend -->
+      <input type="hidden" id="add_drive" value=""/>
+      <input type="hidden" id="add_key_tag_id" value=""/>
+      <input type="hidden" id="add_deep_link_url" value=""/>
+      <input type="hidden" id="add_date_added" value=""/>
+
+      <button class="btn btn-gold" style="width:100%;justify-content:center;padding:14px;" onclick="addVehicle()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        ADD VEHICLE TO FLEET
+      </button>
+    </div>
+  </div>
+
+  <!-- ── VEHICLE TABLE ── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Fleet Inventory ({{ vehicles|length }})
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a href="{{ url_for('admin_panel', archived=('0' if show_archived else '1')) }}"
+           class="btn btn-ghost btn-sm">
+          {{ 'HIDE ARCHIVED' if show_archived else 'SHOW ARCHIVED' }}
+        </a>
+      </div>
+    </div>
+    <div style="padding:14px 20px 0;">
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-input" id="tableSearch" placeholder="Search by ID, make, model, VIN…" oninput="filterTable()"/>
+      </div>
+    </div>
+    <div style="overflow-x:auto;padding:14px 0 0;">
+      <table class="vtable" id="vehicleTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Vehicle</th>
+            <th>VIN</th>
+            <th>Status</th>
+            <th>Key Tag</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vehicles %}
+          {% set status_cls = v.get('Status','available').lower().replace(' ','-') %}
+          <tr data-search="{{ v.get('Internal_ID','') }} {{ v.get('Make','') }} {{ v.get('Model','') }} {{ v.get('VIN','') }}">
+            <td><span class="vid">{{ v.get('Internal_ID','—') }}</span></td>
+            <td>
+              <div style="font-weight:500;">{% if v.get('Year') %}{{ v.Year }} {% endif %}{{ v.get('Make','') }} {{ v.get('Model','') }}</div>
+              {% if v.get('Price') %}<div style="color:var(--gold);font-size:0.78rem;">{{ v.Price }}</div>{% endif %}
+            </td>
+            <td><span style="font-family:monospace;font-size:0.72rem;color:rgba(255,255,255,0.45);letter-spacing:0.04em;">{{ v.get('VIN','—') }}</span></td>
+            <td><span class="sbadge s-{{ status_cls }}">{{ v.get('Status','—') }}</span></td>
+            <td>
+              {% if v.get('Key_Tag_ID') %}
+              <span class="tag-chip">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21 2-9 9"/><path d="M8 8a3 3 0 0 0 0 6h4l1 1 1-1 1 1 1-1 3 3 2-2-3-3 1-1V8a3 3 0 0 0-3-3H8z"/></svg>
+                {{ v.Key_Tag_ID }}
+              </span>
+              {% else %}
+              <span style="color:rgba(255,255,255,0.2);font-size:0.75rem;">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-ghost btn-sm" onclick="openEdit('{{ v.get('Internal_ID','') }}')">EDIT</button>
+                {% if v.get('Status') not in ('Sold','Archived') %}
+                <button class="btn btn-yellow btn-sm" onclick="confirmSell('{{ v.get('Internal_ID','') }}')">SOLD</button>
+                {% endif %}
+                {% if v.get('Status') != 'Archived' %}
+                <button class="btn btn-red btn-sm" onclick="confirmArchive('{{ v.get('Internal_ID','') }}')">ARCHIVE</button>
+                {% else %}
+                <button class="btn btn-red btn-sm" onclick="confirmDelete('{{ v.get('Internal_ID','') }}')">DELETE</button>
+                {% endif %}
+                <a href="{{ url_for('scan', internal_id=v.get('Internal_ID','')) }}" target="_blank" class="btn btn-ghost btn-sm">VIEW</a>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.2);padding:40px;">No vehicles found</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- ── EDIT MODAL ── -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Vehicle — <span id="editModalTitle" style="color:var(--gold)"></span></span>
+      <button class="close-btn" onclick="closeModal('editModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-grid-3" style="margin-bottom:14px;">
+        <div><label class="field-label">Make</label><input class="field-input" id="e_make"/></div>
+        <div><label class="field-label">Model</label><input class="field-input" id="e_model"/></div>
+        <div><label class="field-label">Year</label><input class="field-input" id="e_year" type="number"/></div>
+      </div>
+      <div class="field-grid-3" style="margin-bottom:14px;">
+        <div>
+          <label class="field-label">Color</label>
+          <select class="field-input" id="e_color">
+            <option value="">— Select —</option>
+            {% for c in colours %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label class="field-label">Price</label><input class="field-input" id="e_price"/></div>
+        <div><label class="field-label">Mileage</label><input class="field-input" id="e_mileage"/></div>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px;">
+        <div><label class="field-label">VIN</label><input class="field-input" id="e_vin" style="font-family:monospace;font-size:0.8rem;letter-spacing:0.05em;"/></div>
+        <div><label class="field-label">Status</label>
+          <select class="field-input" id="e_status">
+            {% for s in statuses %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px;">
+        <div><label class="field-label">Trim</label><input class="field-input" id="e_trim"/></div>
+        <div><label class="field-label">Engine</label><input class="field-input" id="e_engine"/></div>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px;">
+        <div>
+          <label class="field-label">Transmission</label>
+          <select class="field-input" id="e_transmission">
+            <option value="">— Select —</option>
+            <option>Automatic</option><option>Manual</option><option>CVT</option>
+            <option>Dual Clutch (DCT)</option><option>Semi-Automatic</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Body Style</label>
+          <select class="field-input" id="e_body">
+            <option value="">— Select —</option>
+            <option>Sedan</option><option>Hatchback</option><option>SUV</option>
+            <option>Wagon</option><option>Ute / Pickup</option><option>Coupe</option>
+            <option>Convertible</option><option>Van</option><option>People Mover</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px;">
+        <div>
+          <label class="field-label">Drive Type</label>
+          <select class="field-input" id="e_drive">
+            <option value="">— Select —</option>
+            <option>FWD</option><option>RWD</option><option>AWD</option><option>4WD</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Fuel Type</label>
+          <select class="field-input" id="e_fuel">
+            <option value="">— Select —</option>
+            <option>Petrol</option><option>Diesel</option><option>Hybrid</option>
+            <option>Plug-in Hybrid (PHEV)</option><option>Electric (EV)</option>
+            <option>LPG</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-grid-3" style="margin-bottom:14px;">
+        <div><label class="field-label">Purchase Price</label><input class="field-input" id="e_purchase_price" placeholder="$18,000"/></div>
+        <div><label class="field-label">Recon Cost</label><input class="field-input" id="e_recon_cost" placeholder="$1,200"/></div>
+        <div><label class="field-label">Date Added</label><input class="field-input" id="e_date_added" type="date"/></div>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px;">
+        <div><label class="field-label">Key Tag ID</label><input class="field-input" id="e_key_tag_id" style="font-family:monospace;"/></div>
+        <div><label class="field-label">Deep Link URL</label><input class="field-input" id="e_deep_link_url"/></div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label class="field-label">Notes</label>
+        <textarea class="field-input" id="e_notes"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-gold" onclick="saveEdit()">SAVE CHANGES</button>
+        <button class="btn btn-ghost" onclick="closeModal('editModal')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── REASSIGN TAG MODAL ── -->
+<div class="modal-overlay" id="reassignModal">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title">Reassign Key Tag</span>
+      <button class="close-btn" onclick="closeModal('reassignModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(201,168,76,0.08);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:4px;">Tag being reassigned</div>
+        <div class="tag-chip" style="font-size:1rem;" id="reassignTagDisplay"></div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:6px;">Previously on: <span id="reassignFromDisplay" style="color:rgba(255,255,255,0.5);"></span></div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label class="field-label">Assign to Vehicle ID</label>
+        <input class="field-input" id="reassignToId" placeholder="e.g. CAR-07" style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:0.1em;text-transform:uppercase;"/>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.25);margin-top:6px;">Enter the Internal_ID of the new vehicle</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-gold" onclick="saveReassign()">REASSIGN TAG</button>
+        <button class="btn btn-ghost" onclick="closeModal('reassignModal')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM MODAL ── -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <span class="modal-title" id="confirmTitle">Confirm Action</span>
+      <button class="close-btn" onclick="closeModal('confirmModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMessage" style="color:rgba(255,255,255,0.6);margin-bottom:24px;line-height:1.6;"></p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-red" id="confirmOkBtn">CONFIRM</button>
+        <button class="btn btn-ghost" onclick="closeModal('confirmModal')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ── SELL MODAL ── -->
+<div class="modal-overlay" id="sellModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <span class="modal-title">Mark as Sold — <span id="sellVehicleId" style="color:var(--gold)"></span></span>
+      <button class="close-btn" onclick="closeModal('sellModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="_sellId"/>
+      <div style="background:rgba(201,168,76,.07);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:.8rem;color:rgba(255,255,255,.45);line-height:1.5;">
+        Status → Sold, date recorded, key tag released. All buyer details saved to Airtable.
+      </div>
+
+      <!-- Buyer Identity -->
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.06);">BUYER IDENTITY</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="grid-column:1/-1;">
+          <label class="field-label">Full Name *</label>
+          <input class="field-input" id="sellBuyerName" placeholder="e.g. John Smith"/>
+        </div>
+        <div>
+          <label class="field-label">Date of Birth</label>
+          <input class="field-input" id="sellBuyerDOB" type="date"/>
+        </div>
+        <div>
+          <label class="field-label">Driver's Licence No.</label>
+          <input class="field-input" id="sellBuyerLicence" placeholder="e.g. 12345678"/>
+        </div>
+      </div>
+
+      <!-- Payment card removed -->
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-yellow" onclick="saveSell()" style="flex:1;">✓ CONFIRM SOLD</button>
+        <button class="btn btn-ghost" onclick="closeModal('sellModal')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════════
+  //  KeyTrack Admin — Clean JS (single source of truth)
+  // ══════════════════════════════════════════════════════
+
+  // ── Toast notification ──────────────────────────────
+  function showToast(msg, color) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.borderColor = color || 'var(--border)';
+    t.style.color = color || '#fff';
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 3000);
+  }
+
+  // ── Modal helpers ───────────────────────────────────
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  // Close modal on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      if (e.target === el) closeModal(el.id);
+    });
+  });
+
+  // ── Table search ────────────────────────────────────
+  function filterTable() {
+    var q = document.getElementById('tableSearch').value.toLowerCase();
+    document.querySelectorAll('#vehicleTable tbody tr').forEach(function(row) {
+      row.style.display = (row.dataset.search || '').toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  // ── Toggle section (add form) ────────────────────────
+  function toggleSection(id) {
+    var el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? '' : 'none';
+  }
+
+  // ── Central AJAX helper — handles auth expiry ───────
+  async function adminFetch(url, options) {
+    try {
+      var opts = Object.assign({ method: 'POST' }, options || {});
+      if (!opts.headers) opts.headers = {};
+      opts.headers['X-Requested-With'] = 'XMLHttpRequest';
+      var r = await fetch(url, opts);
+      if (r.status === 401) {
+        showToast('Session expired — redirecting to login…', '#EF4444');
+        setTimeout(function(){ window.location.href = '/admin/login'; }, 1800);
+        return null;
+      }
+      var data = await r.json();
+      return data;
+    } catch(e) {
+      showToast('Network error — check your connection', '#EF4444');
+      return null;
+    }
+  }
+
+  // ── Add vehicle ─────────────────────────────────────
+  async function addVehicle() {
+    // Required field check first
+    if (!document.getElementById('add_internal_id').value.trim()) {
+      showToast('Internal ID is required', '#EF4444');
+      document.getElementById('add_internal_id').focus(); return;
+    }
+    if (!document.getElementById('add_make').value.trim()) {
+      showToast('Make is required', '#EF4444');
+      document.getElementById('add_make').focus(); return;
+    }
+    var data = new FormData();
+    var textFields = ['internal_id','make','model','color','vin','trim','engine',
+                      'key_tag_id','deep_link_url','status','notes',
+                      'transmission','body','drive','fuel','date_added'];
+    // Number fields — send as plain integers so Airtable accepts them
+    var numFields  = ['year','price','mileage','purchase_price','recon_cost'];
+    textFields.forEach(function(f) {
+      var el = document.getElementById('add_' + f);
+      if (el) data.append(f, el.value);
+    });
+    numFields.forEach(function(f) {
+      var el = document.getElementById('add_' + f);
+      if (el && el.value !== '') {
+        // Strip any $ , spaces and send clean integer string
+        var clean = el.value.toString().replace(/[$,\s]/g,'');
+        var num = parseInt(clean, 10);
+        data.append(f, isNaN(num) ? '' : num.toString());
+      }
+    });
+    var result = await adminFetch('/admin/add', { method: 'POST', body: data });
+    if (!result) return;
+    if (result.ok) {
+      showToast('\u2713 ' + (result.message || 'Vehicle added'), 'var(--gold)');
+      setTimeout(function(){ location.reload(); }, 1200);
+    } else {
+      showToast('\u26a0 ' + (result.message || 'Failed to add vehicle'), '#EF4444');
+    }
+  }
+
+  // ── Edit vehicle ─────────────────────────────────────
+  var currentEditId = '';
+
+  async function openEdit(id) {
+    currentEditId = id;
+    document.getElementById('editModalTitle').textContent = id;
+    var data = await adminFetch('/admin/edit/' + id, { method: 'GET' });
+    if (!data) return;
+    if (!data.ok) { showToast('Could not load vehicle', '#EF4444'); return; }
+    var v = data.vehicle;
+    document.getElementById('e_make').value         = v.Make || '';
+    document.getElementById('e_model').value        = v.Model || '';
+    document.getElementById('e_year').value         = v.Year || '';
+    document.getElementById('e_color').value        = v.Color || '';
+    document.getElementById('e_price').value        = v.Price || '';
+    document.getElementById('e_mileage').value      = v.Mileage || '';
+    document.getElementById('e_vin').value          = v.VIN || '';
+    document.getElementById('e_trim').value         = v.Trim || '';
+    document.getElementById('e_engine').value       = v.Engine || '';
+    document.getElementById('e_key_tag_id').value   = v.Key_Tag_ID || '';
+    document.getElementById('e_deep_link_url').value= v.Deep_Link_URL || '';
+    document.getElementById('e_notes').value           = v.Notes || '';
+    document.getElementById('e_status').value          = v.Status || 'Available';
+    document.getElementById('e_transmission').value    = v.Transmission || '';
+    document.getElementById('e_body').value            = v.Body || '';
+    document.getElementById('e_drive').value           = v.Drive || '';
+    document.getElementById('e_fuel').value            = v.Fuel || '';
+    document.getElementById('e_purchase_price').value  = v.Purchase_Price || '';
+    document.getElementById('e_recon_cost').value      = v.Recon_Cost || '';
+    document.getElementById('e_date_added').value      = v.Date_Added ? v.Date_Added.substring(0,10) : '';
+    openModal('editModal');
+  }
+
+  async function saveEdit() {
+    var data = new FormData();
+    var fields = [
+      'make','model','year','color','price','mileage',
+      'vin','trim','engine','key_tag_id','deep_link_url','status','notes',
+      'transmission','body','drive','fuel',
+      'purchase_price','recon_cost','date_added'
+    ];
+    fields.forEach(function(f) {
+      var el = document.getElementById('e_' + f);
+      if (el) data.append(f, el.value);
+    });
+    var result = await adminFetch('/admin/edit/' + currentEditId, {
+      method: 'POST', body: data
+    });
+    if (!result) return;
+    if (result.ok) {
+      showToast('\u2713 ' + (result.message || 'Saved'), 'var(--gold)');
+      closeModal('editModal');
+      setTimeout(function(){ location.reload(); }, 1000);
+    } else {
+      showToast('\u26a0 ' + (result.message || 'Save failed'), '#EF4444');
+    }
+  }
+
+  // ── Confirm dialog ───────────────────────────────────
+  var _confirmCallback = null;
+
+  function showConfirm(title, message, onConfirm) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    _confirmCallback = onConfirm;
+    openModal('confirmModal');
+  }
+
+  document.getElementById('confirmOkBtn').addEventListener('click', function() {
+    closeModal('confirmModal');
+    if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+  });
+
+  // ── Action buttons ───────────────────────────────────
+  async function doAction(url, successMsg, successColor) {
+    var result = await adminFetch(url, { method: 'POST' });
+    if (!result) return;
+    if (result.ok) {
+      showToast(successMsg, successColor || 'var(--gold)');
+      setTimeout(function(){ location.reload(); }, 1200);
+    } else {
+      showToast('\u26a0 ' + (result.message || 'Action failed'), '#EF4444');
+    }
+  }
+
+  function confirmSell(id) {
+    document.getElementById('sellVehicleId').textContent = id;
+    document.getElementById('sellBuyerName').value = '';
+    document.getElementById('_sellId').value = id;
+    openModal('sellModal');
+  }
+
+  async // fmtCard removed
+  // fmtExp removed
+  async function saveSell() {
+    var id = document.getElementById('_sellId').value;
+    var buyer = document.getElementById('sellBuyerName').value.trim();
+    if(!buyer){ showToast('Buyer name is required','#EF4444'); return; }
+    var payload = {
+      buyer:         buyer,
+      buyer_dob:     document.getElementById('sellBuyerDOB').value,
+      buyer_licence: document.getElementById('sellBuyerLicence').value.trim(),
+    };
+    var result = await adminFetch('/admin/sell/' + id, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify(payload)
+    });
+    if (!result) return;
+    closeModal('sellModal');
+    if (result.ok) {
+      showToast('\u2713 ' + id + ' marked as Sold', 'var(--gold)');
+      setTimeout(function(){ location.reload(); }, 1200);
+    } else {
+      showToast('\u26a0 ' + (result.message || 'Failed'), '#EF4444');
+    }
+  }
+
+  function confirmArchive(id) {
+    showConfirm(
+      'Archive Vehicle',
+      'Archive ' + id + '? It will be hidden from the fleet and its key tag released. You can restore it by editing.',
+      function(){ doAction('/admin/archive/' + id, '\u2713 ' + id + ' archived', '#86EFAC'); }
+    );
+  }
+
+  function confirmDelete(id) {
+    showConfirm(
+      '\u26a0 Permanently Delete',
+      'Permanently delete ' + id + ' from Airtable? This CANNOT be undone.',
+      function(){ doAction('/admin/delete/' + id, '\u2713 ' + id + ' deleted', '#86EFAC'); }
+    );
+  }
+
+  // ── Tag reassignment ─────────────────────────────────
+  var _reassignTag = '', _reassignFrom = '';
+
+  function openReassign(tagId, fromId) {
+    _reassignTag = tagId;
+    _reassignFrom = fromId;
+    document.getElementById('reassignTagDisplay').textContent = tagId;
+    document.getElementById('reassignFromDisplay').textContent = fromId;
+    document.getElementById('reassignToId').value = '';
+    openModal('reassignModal');
+  }
+
+  async function saveReassign() {
+    var toId = document.getElementById('reassignToId').value.trim().toUpperCase();
+    if (!toId) { showToast('Enter a destination vehicle ID', '#EF4444'); return; }
+    var result = await adminFetch('/admin/reassign-tag', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify({ from_id: _reassignFrom, to_id: toId, tag_id: _reassignTag })
+    });
+    if (!result) return;
+    if (result.ok) {
+      showToast('\u2713 Tag ' + _reassignTag + ' moved to ' + toId, 'var(--gold)');
+      closeModal('reassignModal');
+      setTimeout(function(){ location.reload(); }, 1200);
+    } else {
+      showToast('\u26a0 ' + (result.message || 'Reassign failed'), '#EF4444');
+    }
+  }
+
+  // ── VIN Decode & Autofill ────────────────────────────
+  function onAddVinType(el) {
+    el.value = el.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
+    var len = el.value.length;
+    var btn = document.getElementById('vinDecodeBtn');
+    var msg = document.getElementById('vinDecodeMsg');
+    if (len === 17) {
+      btn.disabled = false; btn.style.opacity = '1';
+      msg.style.color = '#86EFAC';
+      msg.textContent = '\u2713 Ready — tap DECODE to autofill';
+    } else if (len > 0) {
+      btn.disabled = true; btn.style.opacity = '.35';
+      msg.style.color = '#FDE68A';
+      msg.textContent = (17 - len) + ' more character' + (17 - len === 1 ? '' : 's') + ' needed';
+    } else {
+      btn.disabled = true; btn.style.opacity = '.35';
+      msg.textContent = '';
+    }
+  }
+
+  async function decodeAndFill() {
+    var vin = document.getElementById('add_vin').value.trim();
+    if (vin.length !== 17) { showToast('VIN must be exactly 17 characters', '#EF4444'); return; }
+    var btn = document.getElementById('vinDecodeBtn');
+    var msg = document.getElementById('vinDecodeMsg');
+    btn.disabled = true; btn.textContent = '\u23f3 DECODING...';
+    msg.style.color = 'rgba(255,255,255,.35)';
+    msg.textContent = 'Contacting NHTSA database...';
+    try {
+      var r = await fetch('/api/decode-vin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ vin: vin })
+      });
+      var d = await r.json();
+      if (!d.ok) {
+        msg.style.color = '#FCA5A5';
+        msg.textContent = '\u2717 ' + (d.error || 'VIN not recognised');
+        showToast('VIN decode failed', '#EF4444');
+        return;
+      }
+      var fills = [
+        ['add_make',         d.make         || ''],
+        ['add_model',        d.model        || ''],
+        ['add_year',         d.year         || ''],
+        ['add_trim',         d.trim         || ''],
+        ['add_engine',       d.engine       || ''],
+        ['add_transmission', d.transmission || ''],
+        ['add_body',         d.body         || ''],
+        ['add_drive',        d.drive        || ''],
+        ['add_fuel',         d.fuel         || ''],
+      ];
+      var filled = [];
+      fills.forEach(function(pair) {
+        var el = document.getElementById(pair[0]);
+        if (el && pair[1] && !el.value.trim()) {
+          el.value = pair[1];
+          el.style.borderColor = '#C9A84C';
+          setTimeout(function(){ el.style.borderColor = ''; }, 2000);
+          filled.push(pair[0].replace('add_', ''));
+        }
+      });
+      if (filled.length) {
+        msg.style.color = '#86EFAC';
+        msg.textContent = '\u2713 Autofilled: ' + filled.join(', ');
+        showToast('\u2713 Autofilled ' + filled.length + ' fields from VIN', '#C9A84C');
+      } else {
+        msg.style.color = '#FDE68A';
+        msg.textContent = '\u2139 Fields already have values — clear them first to overwrite';
+        showToast('Fields already filled — clear to overwrite', '#FDE68A');
+      }
+    } catch(e) {
+      msg.style.color = '#FCA5A5';
+      msg.textContent = '\u2717 Network error — try again';
+      showToast('Network error', '#EF4444');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '\ud83d\udd0d DECODE';
+      btn.style.opacity = '1';
+    }
+  }
+
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     KEYTRACK GLOBAL — Command Palette · Keyboard Shortcuts · Inline Edit
+     Inject before </body> in dashboard.html, vehicle.html, admin.html
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- CMD PALETTE OVERLAY -->
+<div id="cmdOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;">
+  <div id="cmdBox" style="width:100%;max-width:560px;background:#16161f;border:1px solid rgba(201,168,76,.3);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <span style="font-size:1.1rem;opacity:.5;">⌘</span>
+      <input id="cmdInput" placeholder="Search pages, vehicles, actions…"
+        style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:.95rem;font-family:'Inter',sans-serif;"
+        autocomplete="off" spellcheck="false"/>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">ESC</span>
+    </div>
+    <div id="cmdResults" style="max-height:360px;overflow-y:auto;padding:6px;"></div>
+    <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:16px;font-size:.68rem;color:rgba(255,255,255,.25);">
+      <span>↑↓ navigate</span><span>↵ open</span><span>ESC close</span><span>⌘K / Ctrl+K open</span>
+    </div>
+  </div>
+</div>
+
+<!-- INLINE EDIT POPOVER -->
+<div id="inlinePopover" style="position:fixed;z-index:8000;display:none;background:#1a1a28;border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);min-width:240px;max-width:320px;">
+  <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;" id="inlinePopLabel">Edit Field</div>
+  <div id="inlinePopInput"></div>
+  <div style="display:flex;gap:6px;margin-top:10px;">
+    <button onclick="saveInlineEdit()" style="flex:1;padding:7px;background:linear-gradient(135deg,#C9A84C,#e6c97a);color:#000;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;cursor:pointer;">SAVE</button>
+    <button onclick="closeInlinePop()" style="padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;cursor:pointer;font-size:.8rem;">✕</button>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUT TOAST -->
+<div id="kbToast" style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);background:#1c1c28;border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:8px 20px;font-size:.78rem;color:rgba(255,255,255,.7);opacity:0;transition:all .3s;pointer-events:none;z-index:7000;white-space:nowrap;"></div>
+
+<!-- SHORTCUT HELP OVERLAY -->
+<div id="shortcutHelp" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8500;display:none;align-items:center;justify-content:center;">
+  <div style="background:#16161f;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;max-width:480px;width:100%;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.08em;color:#C9A84C;margin-bottom:16px;">⌨ KEYBOARD SHORTCUTS</div>
+    <div id="shortcutList" style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;"></div>
+    <button onclick="document.getElementById('shortcutHelp').style.display='none'" style="margin-top:18px;padding:8px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;">CLOSE</button>
+  </div>
+</div>
+
+<style>
+.cmd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.cmd-item:hover,.cmd-item.active{background:rgba(201,168,76,.1);}
+.cmd-icon{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.cmd-label{font-size:.85rem;font-weight:500;color:#fff;}
+.cmd-sub{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:1px;}
+.kb-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;font-size:.7rem;font-family:monospace;color:rgba(255,255,255,.6);}
+.ie-enabled{cursor:pointer;transition:background .15s;}
+.ie-enabled:hover{background:rgba(201,168,76,.08);border-radius:4px;}
+.ie-enabled::after{content:' ✏';font-size:.6rem;opacity:0;transition:opacity .15s;}
+.ie-enabled:hover::after{opacity:.5;}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMAND PALETTE
+// ═══════════════════════════════════════════════════════════════════════════
+var _cmdOpen = false;
+var _cmdIdx = -1;
+var _cmdItems = [];
+var _cmdTimer = null;
+
+function openCmd() {
+  document.getElementById('cmdOverlay').style.display = 'flex';
+  document.getElementById('cmdInput').value = '';
+  _cmdOpen = true; _cmdIdx = -1;
+  setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+  loadCmdResults('');
+}
+function closeCmd() {
+  document.getElementById('cmdOverlay').style.display = 'none';
+  _cmdOpen = false;
+}
+document.getElementById('cmdOverlay').addEventListener('click', function(e){
+  if (e.target === this) closeCmd();
+});
+document.getElementById('cmdInput').addEventListener('input', function(){
+  clearTimeout(_cmdTimer);
+  _cmdTimer = setTimeout(() => loadCmdResults(this.value), 180);
+});
+document.getElementById('cmdInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveCmdIdx(1); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); moveCmdIdx(-1); }
+  if (e.key === 'Enter')     { e.preventDefault(); selectCmd(); }
+});
+
+async function loadCmdResults(q) {
+  const r = await fetch('/api/cmd-palette?q=' + encodeURIComponent(q));
+  const data = await r.json();
+  if (!data.ok) return;
+  _cmdItems = data.results;
+  _cmdIdx = -1;
+  renderCmdResults();
+}
+
+function renderCmdResults() {
+  const el = document.getElementById('cmdResults');
+  if (!_cmdItems.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:.8rem;color:rgba(255,255,255,.3);">No results</div>';
+    return;
+  }
+  el.innerHTML = _cmdItems.map((item, i) =>
+    `<div class="cmd-item${i===_cmdIdx?' active':''}" onclick="goCmd(${i})">
+      <div class="cmd-icon">${item.icon||'📄'}</div>
+      <div>
+        <div class="cmd-label">${item.label}</div>
+        ${item.sublabel ? `<div class="cmd-sub">${item.sublabel}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+function moveCmdIdx(dir) {
+  _cmdIdx = Math.max(-1, Math.min(_cmdItems.length-1, _cmdIdx + dir));
+  renderCmdResults();
+  const items = document.querySelectorAll('.cmd-item');
+  if (items[_cmdIdx]) items[_cmdIdx].scrollIntoView({block:'nearest'});
+}
+function selectCmd() {
+  if (_cmdIdx >= 0 && _cmdItems[_cmdIdx]) goCmd(_cmdIdx);
+  else if (_cmdItems[0]) goCmd(0);
+}
+function goCmd(i) {
+  const item = _cmdItems[i];
+  if (item) { closeCmd(); window.location.href = item.url; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════════════
+var SHORTCUTS = [
+  {key:'k', mod:'ctrl/cmd', label:'Command Palette',     action: openCmd},
+  {key:'/', mod:'',         label:'Global Search',       action: () => window.location.href='/search'},
+  {key:'d', mod:'',         label:'Dashboard',            action: () => goShortcut('/dashboard')},
+  {key:'p', mod:'',         label:'Pipeline',             action: () => goShortcut('/pipeline')},
+  {key:'f', mod:'',         label:'Finance Calculator',   action: () => goShortcut('/finance')},
+  {key:'h', mod:'',         label:'Inventory Health',     action: () => goShortcut('/inventory-health')},
+  {key:'a', mod:'',         label:'Analytics',            action: () => goShortcut('/analytics')},
+  {key:'t', mod:'',         label:'Trade-Ins',            action: () => goShortcut('/trade-ins')},
+  {key:'n', mod:'',         label:'New Vehicle (Admin)',  action: () => goShortcut('/admin')},
+  {key:'?', mod:'',         label:'Show shortcuts',       action: showShortcutHelp},
+  {key:'Escape', mod:'',    label:'Close / Back',         action: closeAll},
+];
+
+function goShortcut(url) {
+  showKbToast('→ ' + url);
+  setTimeout(() => window.location.href = url, 300);
+}
+function showKbToast(msg) {
+  const t = document.getElementById('kbToast');
+  t.textContent = msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)';}, 1800);
+}
+function closeAll() {
+  closeCmd();
+  document.getElementById('shortcutHelp').style.display = 'none';
+  closeInlinePop();
+}
+function showShortcutHelp() {
+  const list = document.getElementById('shortcutList');
+  list.innerHTML = SHORTCUTS.map(s =>
+    `<div><kbd class="kb-badge">${s.mod ? s.mod+'+' : ''}${s.key === 'Escape' ? 'ESC' : s.key.toUpperCase()}</kbd></div><div style="color:rgba(255,255,255,.7)">${s.label}</div>`
+  ).join('');
+  document.getElementById('shortcutHelp').style.display = 'flex';
+}
+
+document.addEventListener('keydown', function(e) {
+  // Don't fire if typing in an input
+  const tag = document.activeElement.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+  // CMD/Ctrl+K — always open palette
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if (_cmdOpen) closeCmd(); else openCmd();
+    return;
+  }
+  if (_cmdOpen) return; // let palette handle all keys
+  if (isInput) return;
+
+  // Single-key shortcuts
+  switch(e.key) {
+    case '/': e.preventDefault(); window.location.href='/search'; break;
+    case 'd': case 'D': goShortcut('/dashboard'); break;
+    case 'p': case 'P': goShortcut('/pipeline'); break;
+    case 'f': case 'F': goShortcut('/finance'); break;
+    case 'h': case 'H': goShortcut('/inventory-health'); break;
+    case 'a': case 'A': goShortcut('/analytics'); break;
+    case 't': case 'T': goShortcut('/trade-ins'); break;
+    case 'n': case 'N': goShortcut('/admin'); break;
+    case '?': showShortcutHelp(); break;
+    case 'Escape': closeAll(); break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INLINE EDIT
+// ═══════════════════════════════════════════════════════════════════════════
+var _inlineVid = null;
+var _inlineField = null;
+var _inlineFields = null;
+var _inlineTriggerEl = null;
+
+async function initInlineEdit() {
+  const r = await fetch('/api/inline-editable-fields');
+  const data = await r.json();
+  if (data.ok) _inlineFields = data.fields;
+}
+
+// Safe guard - inline edit only works on pages with VEHICLE_ID
+function openInlineEdit(el, vid, field, currentValue) {
+  if (!_inlineFields) return;
+  if (!vid) return;
+  var meta = _inlineFields[field];
+  if (!meta) return;
+  _inlineVid = vid;
+  _inlineField = field;
+  _inlineTriggerEl = el;
+
+  document.getElementById('inlinePopLabel').textContent = 'Edit: ' + meta.label;
+  var inp = document.getElementById('inlinePopInput');
+
+  if (meta.type === 'select') {
+    inp.innerHTML = '<select id="inlineVal" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;">' +
+      meta.options.map(function(o){ return '<option value="' + o + '"' + (o===currentValue?' selected':'') + '>' + o + '</option>'; }).join('') +
+      '</select>';
+  } else if (meta.type === 'textarea') {
+    inp.innerHTML = '<textarea id="inlineVal" rows="3" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;resize:vertical;outline:none;">' + (currentValue||'') + '</textarea>';
+  } else {
+    inp.innerHTML = '<input id="inlineVal" type="text" value="' + (currentValue||'').replace(/"/g,'&quot;') + '" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;"/>';
+  }
+
+  var rect = el.getBoundingClientRect();
+  var pop = document.getElementById('inlinePopover');
+  pop.style.display = 'block';
+  var top = rect.bottom + window.scrollY + 6;
+  var left = rect.left + window.scrollX;
+  if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+  if (top + 160 > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - 165;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+
+  setTimeout(function(){
+    var v = document.getElementById('inlineVal');
+    if (v) { v.focus(); if (v.select) v.select(); }
+  }, 50);
+
+  document.getElementById('inlineVal').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') saveInlineEdit();
+    if (e.key === 'Escape') closeInlinePop();
+  });
+}
+
+
+async function saveInlineEdit() {
+  const val = document.getElementById('inlineVal')?.value;
+  if (val === undefined) return;
+  const r = await fetch('/api/inline-edit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({vid: _inlineVid, field: _inlineField, value: val})
+  });
+  const data = await r.json();
+  if (data.ok) {
+    showKbToast('✅ ' + _inlineField + ' updated');
+    // Update the element text
+    if (_inlineTriggerEl) {
+      _inlineTriggerEl.textContent = val;
+      _inlineTriggerEl.dataset.val = val;
+    }
+    closeInlinePop();
+  } else {
+    showKbToast('❌ ' + (data.message || 'Error'));
+  }
+}
+function closeInlinePop() {
+  document.getElementById('inlinePopover').style.display = 'none';
+  _inlineVid = null; _inlineField = null;
+}
+// Close on outside click
+document.addEventListener('click', function(e){
+  const pop = document.getElementById('inlinePopover');
+  if (pop.style.display !== 'none' && !pop.contains(e.target)) {
+    if (!e.target.classList.contains('ie-enabled')) closeInlinePop();
+  }
+});
+
+// ── Add ⌘K button to all pages ───────────────────────────────────────────────
+(function(){
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  const btn = document.createElement('button');
+  btn.innerHTML = '⌘K';
+  btn.title = 'Command Palette (Ctrl+K / ⌘K)';
+  btn.onclick = openCmd;
+  btn.style.cssText = 'margin-left:auto;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:4px 10px;color:#C9A84C;font-family:\'Rajdhani\',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;';
+  btn.onmouseenter = () => btn.style.background = 'rgba(201,168,76,.2)';
+  btn.onmouseleave = () => btn.style.background = 'rgba(201,168,76,.1)';
+  // Insert before last nav child (scanner button usually)
+  const existing = nav.querySelector('[style*="margin-left:auto"]');
+  if (existing) {
+    existing.style.marginLeft = '0';
+    nav.insertBefore(btn, existing);
+  } else {
+    nav.appendChild(btn);
+  }
+})();
+
+// Init inline edit on pages that support it
+try { initInlineEdit(); } catch(e) {}
+</script>
+</body>
+</html>

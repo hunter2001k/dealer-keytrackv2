@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Deposit Receipt — {{ vid }}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Times New Roman',serif;font-size:11pt;color:#111;background:#fff;padding:20mm 18mm;}
+@media print{body{padding:0;} .no-print{display:none;} @page{margin:18mm;size:A4;}}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #111;}
+.dealer-name{font-size:17pt;font-weight:700;letter-spacing:.04em;}
+.dealer-sub{font-size:9pt;color:#444;margin-top:2px;}
+.doc-title{font-size:13pt;font-weight:700;text-align:right;letter-spacing:.05em;}
+.receipt-num{font-size:9pt;color:#555;text-align:right;margin-top:4px;}
+.big-receipt-box{border:2px solid #111;padding:18px 24px;margin:18px 0;background:#f9f9f9;text-align:center;}
+.received-from{font-size:9pt;color:#555;margin-bottom:6px;}
+.amount{font-size:28pt;font-weight:700;}
+.amount-words{font-size:10pt;color:#555;margin-top:4px;font-style:italic;}
+.section{margin-bottom:14px;}
+.section-title{font-size:9pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#333;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:8px;}
+.row{display:flex;gap:12px;margin-bottom:8px;}
+.field{flex:1;}
+.field-label{font-size:7.5pt;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}
+.field-value{font-size:10pt;border-bottom:1px solid #999;padding-bottom:2px;min-height:18px;}
+.field-value.filled{font-weight:600;}
+table.vehicle-specs{width:100%;border-collapse:collapse;font-size:9.5pt;}
+table.vehicle-specs td{padding:4px 8px;border:1px solid #ddd;}
+table.vehicle-specs td:first-child{background:#f4f4f4;font-weight:600;width:32%;}
+.hold-notice{background:#d4edda;border:1px solid #28a745;border-left:4px solid #28a745;padding:10px 14px;margin:12px 0;font-size:9pt;line-height:1.6;}
+.conditions{font-size:8.5pt;color:#333;line-height:1.7;}
+.conditions ol{padding-left:18px;}
+.conditions li{margin-bottom:4px;}
+.sig-row{display:flex;gap:40px;margin-top:18px;}
+.sig-block{flex:1;}
+.sig-line{border-bottom:1px solid #999;height:28px;margin-bottom:4px;}
+.sig-label{font-size:7.5pt;color:#555;letter-spacing:.06em;}
+.copy-notice{text-align:center;font-size:8pt;color:#888;margin-top:10px;font-style:italic;}
+.footer{margin-top:16px;padding-top:8px;border-top:1px solid #ccc;font-size:7.5pt;color:#888;text-align:center;}
+.print-btn{position:fixed;top:16px;right:16px;padding:8px 18px;background:#111;color:#fff;border:none;border-radius:6px;font-size:10pt;cursor:pointer;}
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">🖨 Print / PDF</button>
+
+<div class="header">
+  <div>
+    <div class="dealer-name">{{ dealership }}</div>
+    <div class="dealer-sub">Licensed Motor Vehicle Dealer</div>
+  </div>
+  <div>
+    <div class="doc-title">DEPOSIT RECEIPT</div>
+    <div class="receipt-num">Receipt #: DEP-{{ vid }}-{{ date|replace(' ','')|replace('/','')}}</div>
+    <div class="receipt-num">Date: {{ date }}</div>
+  </div>
+</div>
+
+<div class="big-receipt-box">
+  <div class="received-from">RECEIVED FROM</div>
+  <div class="field-value" style="font-size:14pt;font-weight:700;border-bottom:1px solid #999;min-width:300px;display:inline-block;min-height:22px;padding:0 8px;margin-bottom:8px;"> </div>
+  <br/><br/>
+  <div class="received-from">THE SUM OF</div>
+  <div class="amount">$ _______________</div>
+  <div class="amount-words">( _____________________________________________________ dollars )</div>
+</div>
+
+<div class="section">
+  <div class="section-title">Being Deposit On Vehicle</div>
+  <table class="vehicle-specs">
+    <tr><td>Year / Make / Model</td><td><strong>{{ name }}</strong></td><td>Stock #</td><td>{{ vid }}</td></tr>
+    <tr><td>VIN</td><td style="font-family:monospace;">{{ vin }}</td><td>Agreed Price</td><td style="font-weight:700;">{{ price }}</td></tr>
+    <tr><td>Colour</td><td>{{ vehicle.get('Color','') or '—' }}</td><td>Engine</td><td>{{ vehicle.get('Engine','') or '—' }}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Payment Details</div>
+  <div class="row">
+    <div class="field"><div class="field-label">Payment Method</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Reference / Receipt No.</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Settlement Due Date</div><div class="field-value"> </div></div>
+  </div>
+  <div class="row">
+    <div class="field"><div class="field-label">Balance Owing</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Finance Pre-Approval</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Conditions of Sale</div><div class="field-value"> </div></div>
+  </div>
+</div>
+
+<div class="hold-notice">
+  This vehicle is now <strong>ON HOLD</strong> pending full settlement. The vehicle will be held until the settlement date above. Failure to settle by the agreed date may result in forfeiture of this deposit.
+</div>
+
+<div class="section">
+  <div class="section-title">Conditions</div>
+  <div class="conditions">
+    <ol>
+      <li>This deposit holds the vehicle exclusively for the depositor until the settlement date specified above.</li>
+      <li>The deposit is non-refundable if the buyer withdraws from the sale without just cause.</li>
+      <li>If the dealer is unable to deliver the vehicle as described, the full deposit will be refunded.</li>
+      <li>Settlement of the balance must be completed by the date above, failing which the dealer may re-list the vehicle and the deposit may be forfeited.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="sig-row">
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">BUYER SIGNATURE</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">DEALER REPRESENTATIVE — {{ staff }}</div>
+  </div>
+</div>
+
+<div class="copy-notice">Please retain this receipt as proof of deposit payment</div>
+<div class="footer">{{ dealership }} · Official Deposit Receipt · {{ date }} · Stock #{{ vid }}</div>
+</body>
+</html>

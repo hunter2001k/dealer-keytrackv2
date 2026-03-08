@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Vehicle Inspection — {{ vid }}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Times New Roman',serif;font-size:10.5pt;color:#111;background:#fff;padding:18mm;}
+@media print{body{padding:0;} .no-print{display:none;} @page{margin:14mm;size:A4;}}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #111;}
+.dealer-name{font-size:16pt;font-weight:700;letter-spacing:.04em;}
+.dealer-sub{font-size:8.5pt;color:#444;margin-top:2px;}
+.doc-title{font-size:13pt;font-weight:700;text-align:right;letter-spacing:.05em;}
+.doc-sub{font-size:8.5pt;color:#555;text-align:right;margin-top:3px;}
+.section{margin-bottom:12px;}
+.section-title{font-size:8.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#333;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:6px;}
+table.vehicle-specs{width:100%;border-collapse:collapse;font-size:9pt;}
+table.vehicle-specs td{padding:4px 8px;border:1px solid #ddd;}
+table.vehicle-specs td:first-child{background:#f4f4f4;font-weight:600;width:28%;}
+/* CHECKLIST */
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;}
+table.checklist{width:100%;border-collapse:collapse;font-size:8.5pt;}
+table.checklist th{background:#f0f0f0;padding:4px 6px;text-align:left;font-size:7.5pt;letter-spacing:.08em;text-transform:uppercase;border:1px solid #ccc;}
+table.checklist td{padding:4px 6px;border:1px solid #ddd;vertical-align:middle;}
+table.checklist td.item{font-weight:500;}
+.check-box{width:14px;height:14px;border:1px solid #999;display:inline-block;text-align:center;line-height:12px;font-size:8pt;}
+.rating-row td{text-align:center;}
+.score-legend{display:flex;gap:16px;font-size:7.5pt;color:#555;margin:4px 0 8px;}
+.score-legend span{display:flex;align-items:center;gap:4px;}
+.score-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.overall-box{border:2px solid #111;padding:10px 16px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;background:#f9f9f9;}
+.overall-label{font-size:9pt;font-weight:700;letter-spacing:.06em;}
+.overall-scores{display:flex;gap:20px;}
+.overall-item{text-align:center;}
+.overall-num{font-size:18pt;font-weight:700;}
+.overall-desc{font-size:7pt;color:#555;}
+.sig-row{display:flex;gap:32px;margin-top:14px;}
+.sig-block{flex:1;}
+.sig-line{border-bottom:1px solid #999;height:24px;margin-bottom:3px;}
+.sig-label{font-size:7pt;color:#555;letter-spacing:.06em;}
+.notes-box{border:1px solid #ccc;border-radius:3px;padding:8px;min-height:50px;margin-top:4px;font-size:8.5pt;color:#aaa;}
+.footer{margin-top:12px;padding-top:6px;border-top:1px solid #ccc;font-size:7pt;color:#888;text-align:center;}
+.print-btn{position:fixed;top:16px;right:16px;padding:7px 16px;background:#111;color:#fff;border:none;border-radius:6px;font-size:9.5pt;cursor:pointer;}
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">🖨 Print / PDF</button>
+
+<div class="header">
+  <div>
+    <div class="dealer-name">{{ dealership }}</div>
+    <div class="dealer-sub">Licensed Motor Vehicle Dealer</div>
+  </div>
+  <div>
+    <div class="doc-title">VEHICLE INSPECTION REPORT</div>
+    <div class="doc-sub">Stock #: {{ vid }} · Date: {{ date }}</div>
+    <div class="doc-sub">Inspector: {{ staff }}</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Vehicle Details</div>
+  <table class="vehicle-specs">
+    <tr><td>Year / Make / Model</td><td><strong>{{ name }}</strong></td><td>Trim</td><td>{{ vehicle.get('Trim','') or '—' }}</td></tr>
+    <tr><td>VIN</td><td style="font-family:monospace;font-size:9pt;">{{ vin }}</td><td>Engine</td><td>{{ vehicle.get('Engine','') or '—' }}</td></tr>
+    <tr><td>Colour</td><td>{{ vehicle.get('Color','') or '—' }}</td><td>Odometer</td><td>{{ vehicle.get('Mileage','') or '—' }}</td></tr>
+  </table>
+</div>
+
+<div class="score-legend">
+  <span><div class="score-dot" style="background:#28a745;"></div> OK — No defects</span>
+  <span><div class="score-dot" style="background:#ffc107;"></div> M — Minor defect</span>
+  <span><div class="score-dot" style="background:#dc3545;"></div> R — Repair required</span>
+  <span><div class="score-dot" style="background:#6c757d;"></div> N/A — Not applicable</span>
+</div>
+
+<div class="check-grid">
+  <!-- EXTERIOR -->
+  <div class="section">
+    <div class="section-title">Exterior</div>
+    <table class="checklist">
+      <thead><tr><th style="width:60%;">Item</th><th>OK</th><th>M</th><th>R</th><th>N/A</th></tr></thead>
+      <tbody>
+        {% for item in ['Paintwork — no chips/scratches','Panel gaps uniform','Windscreen — no chips/cracks','All glass intact','Headlights','Tail lights / indicators','Door seals','Boot seal','Wheels &amp; tyres','Spare tyre','Exterior mirrors','Wipers','Antenna'] %}
+        <tr><td class="item">{{ item }}</td><td><div class="check-box"></div></td><td><div class="check-box"></div></td><td><div class="check-box"></div></td><td><div class="check-box"></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- INTERIOR -->
+  <div class="section">
+    <div class="section-title">Interior</div>
+    <table class="checklist">
+      <thead><tr><th style="width:60%;">Item</th><th>OK</th><th>M</th><th>R</th><th>N/A</th></tr></thead>
+      <tbody>
+        {% for item in ['Dashboard — no warning lights','Seat condition','Carpet / floor mats','Headlining','Seatbelts','Air conditioning','Heating / climate','Infotainment / radio','Speakers','Central locking','Electric windows','Sunroof','Interior lights'] %}
+        <tr><td class="item">{{ item }}</td><td><div class="check-box"></div></td><td><div class="check-box"></div></td><td><div class="check-box"></div></td><td><div class="check-box"></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MECHANICAL -->
+  <div class="section">
+    <div class="section-title">Mechanical</div>
+    <table class="checklist">
+      <thead><tr><th style="width:60%;">Item</th><th>OK</th><th>M</th><th>R</th><th>N/A</th></tr></thead>
+      <tbody>
+        {% for item in ['Engine start — no smoke','Oil level &amp; condition','Coolant level','Brake fluid','Power steering fluid','Transmission fluid','Belts &amp; hoses','Battery condition','Exhaust — no leaks/smoke','Brakes — front','Brakes — rear','Steering','Suspension'] %}
+        <tr><td class="item">{{ item }}</td><td><div class="check-box"></div></td><td><div class="check-box"></div></td><td><div class="check-box"></div></td><td><div class="check-box"></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DOCUMENTS & SAFETY -->
+  <div class="section">
+    <div class="section-title">Documents &amp; Safety</div>
+    <table class="checklist">
+      <thead><tr><th style="width:60%;">Item</th><th>OK</th><th>M</th><th>R</th><th>N/A</th></tr></thead>
+      <tbody>
+        {% for item in ['Service history available','Owners manual','Registration papers','PPSR check clear','Keys — all sets','Airbags — no warning light','Traction control operational','ABS — no warning light','Road worthy / safety cert','ANCAP / safety rating noted'] %}
+        <tr><td class="item">{{ item }}</td><td><div class="check-box"></div></td><td><div class="check-box"></div></td><td><div class="check-box"></div></td><td><div class="check-box"></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="overall-box">
+  <div class="overall-label">OVERALL CONDITION SCORE</div>
+  <div class="overall-scores">
+    <div class="overall-item"><div class="overall-num">___</div><div class="overall-desc">Exterior /10</div></div>
+    <div class="overall-item"><div class="overall-num">___</div><div class="overall-desc">Interior /10</div></div>
+    <div class="overall-item"><div class="overall-num">___</div><div class="overall-desc">Mechanical /10</div></div>
+    <div class="overall-item"><div class="overall-num">___</div><div class="overall-desc">Overall /10</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Inspector Notes</div>
+  <div class="notes-box">Notes, defects requiring action, recommended repairs…</div>
+</div>
+
+<div class="sig-row">
+  <div class="sig-block"><div class="sig-line"></div><div class="sig-label">INSPECTOR — {{ staff }}</div></div>
+  <div class="sig-block"><div class="sig-line"></div><div class="sig-label">DATE INSPECTED: {{ date }}</div></div>
+  <div class="sig-block"><div class="sig-line"></div><div class="sig-label">APPROVED BY (MANAGER)</div></div>
+</div>
+
+<div class="footer">{{ dealership }} · Vehicle Inspection Report · {{ date }} · Stock #{{ vid }} · This report is for internal use and pre-sale disclosure only.</div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Test Drive Waiver — {{ vid }}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Times New Roman',serif;font-size:11pt;color:#111;background:#fff;padding:20mm 18mm;}
+@media print{body{padding:0;} .no-print{display:none;} @page{margin:18mm;}}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #111;}
+.dealer-name{font-size:17pt;font-weight:700;letter-spacing:.04em;}
+.dealer-sub{font-size:9pt;color:#444;margin-top:2px;}
+.doc-title{font-size:13pt;font-weight:700;text-align:right;letter-spacing:.05em;}
+.doc-subtitle{font-size:9pt;color:#555;text-align:right;margin-top:4px;}
+.section{margin-bottom:14px;}
+.section-title{font-size:9pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#333;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:8px;}
+.row{display:flex;gap:12px;margin-bottom:8px;}
+.field{flex:1;}
+.field-label{font-size:7.5pt;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}
+.field-value{font-size:10pt;border-bottom:1px solid #999;padding-bottom:2px;min-height:18px;}
+.field-value.filled{font-weight:600;}
+table.vehicle-specs{width:100%;border-collapse:collapse;font-size:9.5pt;}
+table.vehicle-specs td{padding:4px 8px;border:1px solid #ddd;}
+table.vehicle-specs td:first-child{background:#f4f4f4;font-weight:600;width:32%;}
+.warning-box{background:#fff3cd;border:1px solid #f0ad4e;border-left:4px solid #d9534f;padding:10px 14px;margin:12px 0;font-size:9pt;line-height:1.6;}
+.warning-box strong{color:#d9534f;}
+.terms{font-size:8.5pt;color:#333;line-height:1.7;}
+.terms ol{padding-left:18px;}
+.terms li{margin-bottom:4px;}
+.sig-row{display:flex;gap:40px;margin-top:18px;}
+.sig-block{flex:1;}
+.sig-line{border-bottom:1px solid #999;height:28px;margin-bottom:4px;}
+.sig-label{font-size:7.5pt;color:#555;letter-spacing:.06em;}
+.footer{margin-top:20px;padding-top:8px;border-top:1px solid #ccc;font-size:7.5pt;color:#888;text-align:center;}
+.print-btn{position:fixed;top:16px;right:16px;padding:8px 18px;background:#111;color:#fff;border:none;border-radius:6px;font-size:10pt;cursor:pointer;}
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">🖨 Print / PDF</button>
+
+<div class="header">
+  <div>
+    <div class="dealer-name">{{ dealership }}</div>
+    <div class="dealer-sub">Licensed Motor Vehicle Dealer</div>
+  </div>
+  <div>
+    <div class="doc-title">TEST DRIVE WAIVER</div>
+    <div class="doc-subtitle">Stock #: {{ vid }}</div>
+    <div class="doc-subtitle">Date &amp; Time: {{ time }}</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Vehicle Being Tested</div>
+  <table class="vehicle-specs">
+    <tr><td>Year / Make / Model</td><td><strong>{{ name }}</strong></td><td>VIN</td><td style="font-family:monospace;">{{ vin }}</td></tr>
+    <tr><td>Registration</td><td> </td><td>Odometer (at test drive)</td><td> </td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Driver Details</div>
+  <div class="row">
+    <div class="field" style="flex:2;"><div class="field-label">Full Legal Name</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Date of Birth</div><div class="field-value"> </div></div>
+  </div>
+  <div class="row">
+    <div class="field"><div class="field-label">Driver Licence Number</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Licence State/Territory</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Licence Expiry</div><div class="field-value"> </div></div>
+  </div>
+  <div class="row">
+    <div class="field" style="flex:2;"><div class="field-label">Residential Address</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Phone</div><div class="field-value"> </div></div>
+  </div>
+  <div class="row">
+    <div class="field"><div class="field-label">Insurance Company</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Policy Number</div><div class="field-value"> </div></div>
+  </div>
+</div>
+
+<div class="warning-box">
+  <strong>IMPORTANT:</strong> You must hold a valid, full driver licence for this vehicle class. Test drives are conducted on public roads and you are responsible for all traffic laws. Any damage caused during the test drive is the driver's liability.
+</div>
+
+<div class="section">
+  <div class="section-title">Declaration &amp; Indemnity</div>
+  <div class="terms">
+    <ol>
+      <li>I confirm I hold a current, valid driver licence and am legally entitled to drive this vehicle.</li>
+      <li>I have a current comprehensive motor vehicle insurance policy OR I accept full financial responsibility for any damage, theft, or loss during the test drive.</li>
+      <li>I agree to obey all road rules and speed limits during the test drive and will not drive under the influence of alcohol or drugs.</li>
+      <li>I release {{ dealership }} and its staff from any liability for injury, loss or damage (to myself or third parties) arising from the test drive, except where caused by a pre-existing mechanical defect known to the dealer.</li>
+      <li>I confirm the vehicle condition noted above is accurate and I will report any incidents during the test drive immediately upon return.</li>
+      <li>I acknowledge that this test drive does not constitute a contract to purchase and no representations made during the test drive create binding obligations unless in writing.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="sig-row">
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">DRIVER SIGNATURE</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">DATE &amp; TIME</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">DEALER STAFF — {{ staff }}</div>
+  </div>
+</div>
+
+<div style="margin-top:14px;">
+  <div class="row">
+    <div class="field"><div class="field-label">Departure Odometer</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Return Odometer</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Return Time</div><div class="field-value"> </div></div>
+    <div class="field"><div class="field-label">Vehicle Condition on Return</div><div class="field-value"> </div></div>
+  </div>
+</div>
+
+<div class="footer">{{ dealership }} · Test Drive Waiver · {{ time }} · Stock #{{ vid }}</div>
+</body>
+</html>

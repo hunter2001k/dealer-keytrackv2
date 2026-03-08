@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Create Account — {{ dealership }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--border:rgba(201,168,76,0.2);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:36px 32px;width:100%;max-width:420px;}
+    .logo{text-align:center;margin-bottom:28px;}
+    .logo-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:.15em;color:var(--gold);}
+    h1{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;text-align:center;margin-bottom:6px;}
+    .sub{text-align:center;color:rgba(255,255,255,.35);font-size:.85rem;margin-bottom:24px;}
+    .field{margin-bottom:14px;}
+    label{font-size:.75rem;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:6px;}
+    input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:11px 14px;color:#fff;font-size:.9rem;font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+    input:focus{outline:none;border-color:var(--gold);}
+    input::placeholder{color:rgba(255,255,255,.25);}
+    .btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;border:none;border-radius:10px;padding:13px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.1em;cursor:pointer;margin-top:8px;transition:opacity .15s;}
+    .btn:hover{opacity:.85;}
+    .err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#FCA5A5;border-radius:8px;padding:10px 14px;font-size:.82rem;margin-bottom:14px;display:none;}
+    .link{text-align:center;margin-top:18px;font-size:.82rem;color:rgba(255,255,255,.35);}
+    .link a{color:var(--gold);text-decoration:none;}
+    .perks{display:flex;flex-direction:column;gap:8px;margin-bottom:22px;}
+    .perk{display:flex;align-items:center;gap:10px;font-size:.82rem;color:rgba(255,255,255,.5);}
+    .perk-icon{width:24px;height:24px;background:rgba(201,168,76,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <div class="brand">{{ dealership }}</div>
+  </div>
+  <h1>Create Account</h1>
+  <p class="sub">Free buyer account — get alerts on vehicles you love</p>
+
+  <div class="perks">
+    <div class="perk"><div class="perk-icon">❤️</div>Save vehicles &amp; compare</div>
+    <div class="perk"><div class="perk-icon">🔔</div>Price drop alerts via SMS</div>
+    <div class="perk"><div class="perk-icon">🆕</div>New listing alerts for your searches</div>
+  </div>
+
+  <div class="err" id="err"></div>
+  <div class="field"><label>Full Name</label><input id="name" placeholder="Your name" autocomplete="name"></div>
+  <div class="field"><label>Email</label><input id="email" type="email" placeholder="you@email.com" autocomplete="email"></div>
+  <div class="field"><label>Phone (for SMS alerts)</label><input id="phone" type="tel" placeholder="04xx xxx xxx"></div>
+  <div class="field"><label>Password</label><input id="password" type="password" placeholder="At least 6 characters"></div>
+  <button class="btn" onclick="register()">CREATE ACCOUNT</button>
+  <div class="link">Already have an account? <a href="/buyer/login">Sign in</a></div>
+  <div class="link" style="margin-top:8px;"><a href="/listings" style="color:rgba(255,255,255,.3);">← Back to listings</a></div>
+</div>
+<script>
+async function register(){
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const password=document.getElementById('password').value;
+  const err=document.getElementById('err');
+  err.style.display='none';
+  const r=await fetch('/buyer/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,phone,password})});
+  const d=await r.json();
+  if(d.ok) location.href=d.redirect||'/buyer/dashboard';
+  else{err.textContent=d.message;err.style.display='block';}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter')register();});
+</script>
+</body>
+</html>

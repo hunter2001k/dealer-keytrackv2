@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Scan QR — KeyTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--border:rgba(201,168,76,0.18);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;display:flex;flex-direction:column;}
+
+    .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.18em;color:var(--gold);font-size:1rem;}
+
+    .main{flex:1;display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px;}
+
+    /* ── Camera viewfinder ── */
+    .viewfinder-wrap{position:relative;width:100%;max-width:380px;margin-bottom:20px;}
+    #video{width:100%;border-radius:18px;display:block;background:#000;}
+    .frame-overlay{position:absolute;inset:0;pointer-events:none;}
+    /* Corner brackets */
+    .corner{position:absolute;width:32px;height:32px;border-color:var(--gold);border-style:solid;}
+    .corner.tl{top:14px;left:14px;border-width:3px 0 0 3px;border-radius:5px 0 0 0;}
+    .corner.tr{top:14px;right:14px;border-width:3px 3px 0 0;border-radius:0 5px 0 0;}
+    .corner.bl{bottom:14px;left:14px;border-width:0 0 3px 3px;border-radius:0 0 0 5px;}
+    .corner.br{bottom:14px;right:14px;border-width:0 3px 3px 0;border-radius:0 0 5px 0;}
+    /* Scan line animation */
+    .scan-line{position:absolute;left:18px;right:18px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scan 2.2s ease-in-out infinite;border-radius:2px;}
+    @keyframes scan{0%{top:18px;opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{bottom:18px;top:calc(100% - 18px);opacity:0;}}
+
+    /* ── Status pill ── */
+    .status-pill{display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:30px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;margin-bottom:18px;transition:all .3s;}
+    .status-scanning{background:rgba(201,168,76,.1);border:1px solid var(--border);color:var(--gold);}
+    .status-found{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#86EFAC;}
+    .status-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#FCA5A5;}
+    .pulse{width:8px;height:8px;border-radius:50%;animation:blink 1.2s infinite;}
+    .pulse-gold{background:var(--gold);}
+    .pulse-green{background:#86EFAC;}
+    .pulse-red{background:#FCA5A5;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+    /* ── Result card ── */
+    .result-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:hidden;display:none;}
+    .result-card.visible{display:block;}
+    .result-header{padding:16px 20px 0;}
+    .result-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.12em;margin-bottom:10px;}
+    .result-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:.06em;color:#fff;line-height:1.2;}
+    .result-id{font-size:.78rem;color:rgba(255,255,255,.35);margin-top:3px;font-family:monospace;}
+    .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid rgba(255,255,255,.06);margin-top:14px;}
+    .result-cell{padding:11px 20px;border-right:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);}
+    .result-cell:nth-child(even){border-right:none;}
+    .result-cell-label{font-size:.62rem;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+    .result-cell-val{font-size:.9rem;font-weight:500;color:#fff;}
+    .result-actions{padding:14px 20px 20px;display:flex;flex-direction:column;gap:8px;}
+    .btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;border-radius:10px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;border:none;cursor:pointer;text-decoration:none;transition:opacity .15s;}
+    .btn:hover{opacity:.85;}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;}
+    .btn-ghost{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);}
+    .btn-red{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#FCA5A5;}
+    .btn-green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#86EFAC;}
+
+    /* ── Manual entry ── */
+    .manual-wrap{width:100%;max-width:380px;margin-top:16px;}
+    .manual-label{font-size:.7rem;color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:8px;}
+    .manual-row{display:flex;gap:8px;}
+    .manual-input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#fff;padding:10px 14px;font-size:.95rem;font-family:'DM Sans',sans-serif;outline:none;text-transform:uppercase;letter-spacing:.05em;}
+    .manual-input:focus{border-color:var(--gold);}
+    .manual-input::placeholder{text-transform:none;letter-spacing:0;color:rgba(255,255,255,.2);}
+    .manual-btn{background:rgba(201,168,76,.1);border:1px solid var(--border);color:var(--gold);border-radius:9px;padding:10px 16px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.1em;cursor:pointer;}
+    .manual-btn:hover{background:rgba(201,168,76,.2);}
+
+    /* Camera off state */
+    .cam-off{width:100%;max-width:380px;aspect-ratio:1;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;margin-bottom:20px;}
+    .cam-off svg{opacity:.2;}
+    .cam-off p{color:rgba(255,255,255,.25);font-size:.85rem;text-align:center;line-height:1.5;max-width:220px;}
+    .start-btn{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;border:none;border-radius:12px;padding:13px 28px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.12em;cursor:pointer;}
+
+    /* Key checkout inline */
+    .key-section{background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);padding:14px 20px;}
+    .key-label{font-size:.65rem;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+    .key-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .key-tag-display{font-family:monospace;font-size:.95rem;color:var(--gold);}
+    .key-status-badge{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;padding:3px 10px;border-radius:20px;}
+    .key-in{background:rgba(34,197,94,.1);color:#86EFAC;border:1px solid rgba(34,197,94,.2);}
+    .key-out{background:rgba(239,68,68,.1);color:#FCA5A5;border:1px solid rgba(239,68,68,.2);}
+
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--panel);border:1px solid var(--border);color:#fff;padding:10px 22px;border-radius:10px;font-size:.875rem;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    /* Status colours by vehicle status */
+    .s-available{background:rgba(34,197,94,.12);color:#86EFAC;border:1px solid rgba(34,197,94,.2);}
+    .s-sold{background:rgba(239,68,68,.12);color:#FCA5A5;border:1px solid rgba(239,68,68,.2);}
+    .s-service{background:rgba(59,130,246,.12);color:#93C5FD;border:1px solid rgba(59,130,246,.2);}
+    .s-demo{background:rgba(168,85,247,.12);color:#D8B4FE;border:1px solid rgba(168,85,247,.2);}
+    .s-hold{background:rgba(245,158,11,.1);color:#FCD34D;border:1px solid rgba(245,158,11,.15);}
+    .s-other{background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="width:28px;height:28px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5"/><rect x="19" y="14" width="2" height="2" rx=".5"/><rect x="14" y="19" width="2" height="2" rx=".5"/><rect x="19" y="19" width="2" height="2" rx=".5"/></svg>
+    </div>
+    <span class="brand">SCAN QR</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button id="torchBtn" onclick="toggleTorch()" style="display:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;">⚡ TORCH</button>
+    <a href="/dashboard" style="color:rgba(255,255,255,.3);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;text-decoration:none;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.1);">← FLEET</a>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Camera off state -->
+  <div class="cam-off" id="camOff">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h.01M14 18h.01M18 14h.01M18 18h.01"/></svg>
+    <p>Point your camera at a vehicle QR code to pull up its details instantly</p>
+    <button class="start-btn" onclick="startCamera()">START CAMERA</button>
+  </div>
+
+  <!-- Live camera viewfinder -->
+  <div class="viewfinder-wrap" id="viewfinderWrap" style="display:none;">
+    <video id="video" autoplay muted playsinline></video>
+    <div class="frame-overlay">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+      <div class="scan-line" id="scanLine"></div>
+    </div>
+  </div>
+  <canvas id="snapCanvas" style="display:none;"></canvas>
+
+  <!-- Status pill -->
+  <div class="status-pill status-scanning" id="statusPill" style="display:none;">
+    <span class="pulse pulse-gold" id="pulseDot"></span>
+    <span id="statusText">SCANNING…</span>
+  </div>
+
+  <!-- Result card -->
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <span class="result-badge" id="statusBadge">AVAILABLE</span>
+      <div class="result-name" id="vehicleName">—</div>
+      <div class="result-id" id="vehicleId">—</div>
+    </div>
+    <div class="result-grid" id="specGrid"></div>
+
+    <!-- Key checkout section -->
+    <div class="key-section" id="keySection" style="display:none;">
+      <div class="key-label">KEY TAG</div>
+      <div class="key-status-row">
+        <span class="key-tag-display" id="keyTagDisplay">—</span>
+        <span class="key-status-badge" id="keyStatusBadge">—</span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;" id="keyActions"></div>
+    </div>
+
+    <div class="result-actions">
+      <a id="viewFullBtn" href="#" class="btn btn-gold">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        VIEW FULL DETAILS
+      </a>
+      <button class="btn btn-ghost" onclick="resetScanner()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        SCAN ANOTHER
+      </button>
+    </div>
+  </div>
+
+  <!-- Manual entry fallback -->
+  <div class="manual-wrap">
+    <div class="manual-label">or enter vehicle ID manually</div>
+    <div class="manual-row">
+      <input class="manual-input" id="manualId" placeholder="e.g. ASR149003" maxlength="20" onkeydown="if(event.key==='Enter')manualLookup()"/>
+      <button class="manual-btn" onclick="manualLookup()">GO</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- jsQR — lightweight, no CDN dependency issues, MIT licence via unpkg -->
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+  var stream = null;
+  var scanLoop = null;
+  var torchTrack = null;
+  var lastScan = '';
+  var scanning = true;
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(msg, color) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.borderColor = color || 'var(--border)';
+    t.style.color = color || '#fff';
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+  }
+
+  // ── Camera ─────────────────────────────────────────────────────────────────
+  async function startCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      var video = document.getElementById('video');
+      video.srcObject = stream;
+      await video.play();
+
+      document.getElementById('camOff').style.display = 'none';
+      document.getElementById('viewfinderWrap').style.display = 'block';
+      document.getElementById('statusPill').style.display = 'flex';
+      document.getElementById('resultCard').classList.remove('visible');
+
+      // Try torch
+      var [track] = stream.getVideoTracks();
+      torchTrack = track;
+      var caps = track.getCapabilities && track.getCapabilities();
+      if (caps && caps.torch) {
+        document.getElementById('torchBtn').style.display = 'block';
+      }
+
+      scanning = true;
+      lastScan = '';
+      scanLoop = requestAnimationFrame(scanFrame);
+    } catch(err) {
+      showToast('Camera error: ' + err.message, '#EF4444');
+      document.getElementById('camOff').querySelector('p').textContent =
+        'Camera access denied. Please allow camera permission or use manual entry below.';
+    }
+  }
+
+  function stopCamera() {
+    if (scanLoop) { cancelAnimationFrame(scanLoop); scanLoop = null; }
+    if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+  }
+
+  function toggleTorch() {
+    if (!torchTrack) return;
+    var btn = document.getElementById('torchBtn');
+    var on = btn.dataset.on === '1';
+    torchTrack.applyConstraints({ advanced: [{ torch: !on }] }).catch(function(){});
+    btn.dataset.on = on ? '0' : '1';
+    btn.style.color = on ? 'rgba(255,255,255,.5)' : 'var(--gold)';
+    btn.style.borderColor = on ? 'rgba(255,255,255,.1)' : 'var(--border)';
+  }
+
+  // ── Scan frame ─────────────────────────────────────────────────────────────
+  function scanFrame() {
+    if (!scanning) return;
+    var video = document.getElementById('video');
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+      scanLoop = requestAnimationFrame(scanFrame); return;
+    }
+    var canvas = document.getElementById('snapCanvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
+    if (code && code.data && code.data !== lastScan) {
+      lastScan = code.data;
+      handleQRData(code.data);
+      return; // pause scanning until reset
+    }
+    scanLoop = requestAnimationFrame(scanFrame);
+  }
+
+  // ── Handle scanned data ────────────────────────────────────────────────────
+  function handleQRData(raw) {
+    scanning = false;
+
+    // Extract vehicle ID from URL like /scan/ASR149003 or just the ID itself
+    var vid = raw.trim();
+    var m = raw.match(/\/scan\/([A-Z0-9\-]+)/i);
+    if (m) vid = m[1].toUpperCase();
+    else if (/^[A-Z0-9\-]{4,20}$/.test(vid.toUpperCase())) vid = vid.toUpperCase();
+    else {
+      // Not a KeyTrack QR — show the raw data
+      setPill('error', 'NOT A VEHICLE QR');
+      showToast('⚠ Unrecognised QR: ' + raw.substring(0,40), '#EF4444');
+      setTimeout(function(){ resetScanner(); }, 3000);
+      return;
+    }
+
+    setPill('found', 'FOUND — ' + vid);
+    lookupVehicle(vid);
+  }
+
+  // ── Vehicle lookup ─────────────────────────────────────────────────────────
+  async function lookupVehicle(vid) {
+    try {
+      var r = await fetch('/api/vehicle/' + vid, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var d = await r.json();
+      if (d.ok && d.vehicle) {
+        showResult(d.vehicle, vid);
+      } else {
+        setPill('error', 'NOT FOUND');
+        showToast('Vehicle ' + vid + ' not found', '#EF4444');
+        setTimeout(resetScanner, 3000);
+      }
+    } catch(err) {
+      // Fallback: just navigate to scan page
+      showToast('Loading ' + vid + '…', 'var(--gold)');
+      setTimeout(function(){ window.location.href = '/scan/' + vid; }, 600);
+    }
+  }
+
+  // ── Display result ─────────────────────────────────────────────────────────
+  function showResult(v, vid) {
+    // Name
+    document.getElementById('vehicleName').textContent =
+      [v.Year, v.Make, v.Model, v.Trim].filter(Boolean).join(' ');
+    document.getElementById('vehicleId').textContent = v.Internal_ID || vid;
+
+    // Status badge
+    var st  = (v.Status || 'Unknown');
+    var cls = {Available:'s-available',Sold:'s-sold','In Service':'s-service',
+               Demo:'s-demo',Hold:'s-hold'}[st] || 's-other';
+    var badge = document.getElementById('statusBadge');
+    badge.textContent = st.toUpperCase();
+    badge.className = 'result-badge ' + cls;
+
+    // Spec grid
+    var specs = [
+      ['Color',        v.Color       || '—'],
+      ['Mileage',      v.Mileage ? Number(v.Mileage).toLocaleString() + ' km' : '—'],
+      ['Price',        v.Price ? '$' + Number(v.Price).toLocaleString() : '—'],
+      ['Engine',       v.Engine      || '—'],
+      ['Transmission', v.Transmission|| '—'],
+      ['Body',         v.Body        || '—'],
+      ['Drive',        v.Drive       || '—'],
+      ['VIN',          v.VIN ? v.VIN.slice(-8) + '…' : '—'],
+    ];
+    var grid = document.getElementById('specGrid');
+    grid.innerHTML = specs.map(function(s){
+      return '<div class="result-cell"><div class="result-cell-label">'+s[0]+'</div><div class="result-cell-val">'+s[1]+'</div></div>';
+    }).join('');
+
+    // Key checkout section
+    if (v.Key_Tag_ID) {
+      document.getElementById('keySection').style.display = 'block';
+      document.getElementById('keyTagDisplay').textContent = v.Key_Tag_ID;
+      loadKeyStatus(v.Key_Tag_ID, v.Internal_ID || vid);
+    } else {
+      document.getElementById('keySection').style.display = 'none';
+    }
+
+    // Full details link
+    document.getElementById('viewFullBtn').href = '/scan/' + (v.Internal_ID || vid);
+
+    // Show card, hide camera
+    document.getElementById('statusPill').style.display = 'none';
+    document.getElementById('viewfinderWrap').style.display = 'none';
+    document.getElementById('resultCard').classList.add('visible');
+    stopCamera();
+  }
+
+  // ── Key status ─────────────────────────────────────────────────────────────
+  async function loadKeyStatus(tag, vid) {
+    try {
+      var r = await fetch('/api/key-status/' + encodeURIComponent(tag), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      var d = await r.json();
+      var badge   = document.getElementById('keyStatusBadge');
+      var actions = document.getElementById('keyActions');
+      if (d.checked_out) {
+        badge.textContent = 'OUT — ' + d.staff;
+        badge.className = 'key-status-badge key-out';
+        actions.innerHTML = '<button class="btn btn-red" style="flex:1;padding:9px;" onclick="doKeyReturn(\''+tag+'\',\''+vid+'\')">RETURN KEY</button>';
+      } else {
+        badge.textContent = 'AVAILABLE';
+        badge.className = 'key-status-badge key-in';
+        actions.innerHTML = '<button class="btn btn-green" style="flex:1;padding:9px;" onclick="doKeyCheckout(\''+tag+'\',\''+vid+'\')">CHECK OUT KEY</button>';
+      }
+    } catch(e) {
+      document.getElementById('keyActions').innerHTML = '';
+    }
+  }
+
+  async function doKeyCheckout(tag, vid) {
+    var btn = event.target; btn.disabled = true; btn.textContent = '…';
+    try {
+      var r = await fetch('/api/key-checkout', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+        body: JSON.stringify({ tag_id: tag, internal_id: vid, action: 'checkout' })
+      });
+      var d = await r.json();
+      if (d.ok) { showToast('✓ Key checked out', '#86EFAC'); loadKeyStatus(tag, vid); }
+      else { showToast('⚠ ' + d.message, '#EF4444'); btn.disabled=false; btn.textContent='CHECK OUT KEY'; }
+    } catch(e) { showToast('Network error','#EF4444'); btn.disabled=false; btn.textContent='CHECK OUT KEY'; }
+  }
+
+  async function doKeyReturn(tag, vid) {
+    var btn = event.target; btn.disabled = true; btn.textContent = '…';
+    try {
+      var r = await fetch('/api/key-checkout', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+        body: JSON.stringify({ tag_id: tag, internal_id: vid, action: 'return' })
+      });
+      var d = await r.json();
+      if (d.ok) { showToast('✓ Key returned', '#86EFAC'); loadKeyStatus(tag, vid); }
+      else { showToast('⚠ ' + d.message, '#EF4444'); btn.disabled=false; btn.textContent='RETURN KEY'; }
+    } catch(e) { showToast('Network error','#EF4444'); btn.disabled=false; btn.textContent='RETURN KEY'; }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function setPill(type, text) {
+    var pill = document.getElementById('statusPill');
+    var dot  = document.getElementById('pulseDot');
+    pill.className = 'status-pill status-' + (type === 'found' ? 'found' : type === 'error' ? 'error' : 'scanning');
+    dot.className  = 'pulse pulse-' + (type === 'found' ? 'green' : type === 'error' ? 'red' : 'gold');
+    document.getElementById('statusText').textContent = text;
+  }
+
+  function resetScanner() {
+    document.getElementById('resultCard').classList.remove('visible');
+    document.getElementById('manualId').value = '';
+    scanning = true;
+    lastScan = '';
+    startCamera();
+  }
+
+  function manualLookup() {
+    var val = document.getElementById('manualId').value.trim().toUpperCase();
+    if (!val) { showToast('Enter a vehicle ID', 'var(--gold)'); return; }
+    stopCamera();
+    document.getElementById('camOff').style.display = 'none';
+    document.getElementById('viewfinderWrap').style.display = 'none';
+    document.getElementById('statusPill').style.display = 'flex';
+    setPill('scanning', 'LOOKING UP ' + val + '…');
+    lookupVehicle(val);
+  }
+
+  // Auto-start camera on load if supported
+  window.addEventListener('load', function() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      startCamera();
+    }
+  });
+
+  // Clean up on page hide
+  window.addEventListener('pagehide', stopCamera);
+</script>
+</body>
+</html>

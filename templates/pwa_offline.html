@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Offline — {{ dealership }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:#06080D;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;}
+    .icon{font-size:4rem;margin-bottom:20px;}
+    h1{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:10px;}
+    h1 span{color:var(--gold);}
+    p{color:rgba(255,255,255,.4);line-height:1.6;max-width:360px;margin:0 auto 24px;}
+    .btn{display:inline-block;background:linear-gradient(135deg,var(--gold),#F0CB6E);color:#06080D;padding:12px 28px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.1em;text-decoration:none;cursor:pointer;border:none;}
+  </style>
+</head>
+<body>
+  <div>
+    <div class="icon">📵</div>
+    <h1>You're <span>Offline</span></h1>
+    <p>No internet connection right now. Some pages you've visited recently are still available.</p>
+    <button class="btn" onclick="location.reload()">TRY AGAIN</button>
+  </div>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AI Car Search — {{ dealership }}</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#C9A84C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{ pwa_name }}">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <meta name="description" content="Search for your perfect car in plain English. AI-powered vehicle search."/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--panel2:#161B26;--border:rgba(201,168,76,.18);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:rgba(10,12,16,.95);border-bottom:1px solid var(--border);padding:12px 20px;position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);}
+    .topbar-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);}
+    /* Hero */
+    .hero{text-align:center;padding:52px 20px 36px;background:radial-gradient(ellipse at 50% -10%,rgba(201,168,76,.12) 0%,transparent 60%);}
+    .hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);padding:5px 14px;border-radius:20px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;margin-bottom:16px;}
+    .hero h1{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2.8rem;line-height:1.1;margin-bottom:10px;}
+    .hero h1 span{color:var(--gold);}
+    .hero p{color:rgba(255,255,255,.4);font-size:1rem;max-width:500px;margin:0 auto 28px;}
+    /* Search box */
+    .search-wrap{max-width:680px;margin:0 auto;}
+    .search-box{display:flex;background:var(--panel);border:1.5px solid rgba(201,168,76,.3);border-radius:14px;overflow:hidden;transition:border-color .2s;}
+    .search-box:focus-within{border-color:var(--gold);}
+    .search-input{flex:1;background:transparent;border:none;padding:16px 20px;color:#fff;font-size:1.05rem;font-family:'DM Sans',sans-serif;}
+    .search-input:focus{outline:none;}
+    .search-input::placeholder{color:rgba(255,255,255,.25);}
+    .search-btn{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;border:none;padding:14px 22px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+    .search-btn:hover{opacity:.85;}
+    .search-btn:disabled{opacity:.5;cursor:not-allowed;}
+    /* Example queries */
+    .examples{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px;}
+    .example{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.45);padding:6px 14px;border-radius:20px;font-size:.78rem;cursor:pointer;transition:all .15s;}
+    .example:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06);}
+    /* Results */
+    .results-wrap{max-width:860px;margin:0 auto;padding:0 16px 40px;}
+    .ai-summary{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.18);border-radius:10px;padding:12px 16px;margin:20px 0;display:none;}
+    .ai-summary-label{font-size:.7rem;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
+    .ai-summary-text{font-size:.9rem;color:rgba(255,255,255,.7);}
+    .results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+    .vcard{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;display:block;transition:transform .2s,border-color .2s;position:relative;}
+    .vcard:hover{transform:translateY(-2px);border-color:rgba(201,168,76,.3);}
+    .vcard-photo{height:160px;background:#080A0E;overflow:hidden;position:relative;}
+    .vcard-photo img{width:100%;height:100%;object-fit:cover;transition:transform .3s;}
+    .vcard:hover .vcard-photo img{transform:scale(1.04);}
+    .vcard-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.8rem;color:rgba(255,255,255,.08);}
+    .match-score{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.62rem;letter-spacing:.08em;padding:3px 7px;border-radius:4px;}
+    .save-btn{position:absolute;top:8px;left:8px;width:30px;height:30px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);border:none;border-radius:50%;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+    .save-btn:hover{background:rgba(201,168,76,.3);}
+    .save-btn.saved{background:rgba(239,68,68,.3);}
+    .vcard-body{padding:12px 14px;}
+    .vcard-year{font-size:.72rem;color:rgba(255,255,255,.3);}
+    .vcard-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.05rem;margin:2px 0;}
+    .vcard-specs{font-size:.75rem;color:rgba(255,255,255,.35);margin-top:3px;}
+    .vcard-price{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.35rem;color:var(--gold);margin-top:8px;}
+    .loading{text-align:center;padding:40px;display:none;}
+    .spin{width:36px;height:36px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .no-results{text-align:center;padding:60px 20px;color:rgba(255,255,255,.3);display:none;}
+    .results-header{display:flex;align-items:center;justify-content:space-between;padding:16px 0 10px;display:none;}
+    .results-count{font-family:'Rajdhani',sans-serif;font-size:.9rem;color:rgba(255,255,255,.4);}
+    .results-count span{color:#fff;}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:28px;height:28px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="brand">{{ dealership }}</span>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <a href="/listings" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;">All Cars</a>
+      {% if buyer %}
+      <a href="/buyer/dashboard" style="color:var(--gold);text-decoration:none;font-size:.82rem;">My Account</a>
+      {% else %}
+      <a href="/buyer/login" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;">Sign In</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-tag">🤖 AI POWERED SEARCH</div>
+  <h1>Find Your Perfect Car<br>in <span>Plain English</span></h1>
+  <p>Just describe what you want. Our AI understands you.</p>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <input class="search-input" id="searchInput" placeholder="e.g. diesel ute under $30k, good for towing, automatic…" autocomplete="off">
+      <button class="search-btn" id="searchBtn" onclick="doSearch()">SEARCH →</button>
+    </div>
+    <div class="examples">
+      <div class="example" onclick="setQuery(this)">family SUV under $25k</div>
+      <div class="example" onclick="setQuery(this)">cheap tradie van automatic</div>
+      <div class="example" onclick="setQuery(this)">Toyota ute diesel low mileage</div>
+      <div class="example" onclick="setQuery(this)">small city car under $10k</div>
+      <div class="example" onclick="setQuery(this)">7 seater people mover</div>
+      <div class="example" onclick="setQuery(this)">sports car under $20k</div>
+    </div>
+  </div>
+</div>
+
+<div class="results-wrap">
+  <div class="ai-summary" id="aiSummary">
+    <div class="ai-summary-label">🤖 AI understood:</div>
+    <div class="ai-summary-text" id="aiSummaryText"></div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spin"></div>
+    <p style="color:rgba(255,255,255,.35);font-size:.88rem;">AI is searching…</p>
+  </div>
+
+  <div class="results-header" id="resultsHeader">
+    <div class="results-count"><span id="resultCount">0</span> vehicles found</div>
+    <a href="/listings" style="color:rgba(255,255,255,.3);text-decoration:none;font-size:.78rem;">Browse all →</a>
+  </div>
+
+  <div class="results-grid" id="resultsGrid"></div>
+  <div class="no-results" id="noResults">
+    <p style="font-size:2rem;margin-bottom:10px;">🔍</p>
+    <p>No vehicles matched your search</p>
+    <p style="margin-top:8px;font-size:.82rem;">Try a different description or <a href="/listings" style="color:var(--gold);">browse all vehicles</a></p>
+  </div>
+</div>
+
+<script>
+let savedVids = new Set();
+
+// Load saved vehicles if logged in
+fetch('/api/buyer/saved').then(r=>r.json()).then(d=>{
+  if(d.saved) d.saved.forEach(v=>savedVids.add(v));
+});
+
+function setQuery(el){ document.getElementById('searchInput').value=el.textContent; doSearch(); }
+
+document.getElementById('searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
+
+async function doSearch(){
+  const q = document.getElementById('searchInput').value.trim();
+  if(!q) return;
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true; btn.textContent = 'THINKING…';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('resultsHeader').style.display='none';
+  document.getElementById('aiSummary').style.display='none';
+  document.getElementById('noResults').style.display='none';
+  document.getElementById('resultsGrid').innerHTML='';
+
+  try {
+    const r = await fetch('/api/ai-search',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})});
+    const d = await r.json();
+    document.getElementById('loading').style.display='none';
+    btn.disabled=false; btn.textContent='SEARCH →';
+
+    if(!d.ok){ alert(d.message||'Error'); return; }
+
+    document.getElementById('aiSummaryText').textContent = d.summary;
+    document.getElementById('aiSummary').style.display='block';
+    document.getElementById('resultCount').textContent = d.total;
+    document.getElementById('resultsHeader').style.display='flex';
+
+    if(!d.results.length){ document.getElementById('noResults').style.display='block'; return; }
+
+    document.getElementById('resultsGrid').innerHTML = d.results.map(v=>`
+      <a href="/listing/${v.internal_id}" class="vcard">
+        <div class="vcard-photo">
+          ${v.photo ? `<img src="${v.photo}" alt="" loading="lazy">` : '<div class="vcard-placeholder">🚗</div>'}
+          ${v.score>0 ? `<div class="match-score">⭐ ${v.score} match</div>` : ''}
+          <button class="save-btn ${savedVids.has(v.internal_id)?'saved':''}"
+            onclick="toggleSave(event,'${v.internal_id}',this)">${savedVids.has(v.internal_id)?'❤️':'🤍'}</button>
+        </div>
+        <div class="vcard-body">
+          <div class="vcard-year">${v.year}</div>
+          <div class="vcard-name">${v.make} ${v.model}${v.trim?' '+v.trim:''}</div>
+          <div class="vcard-specs">${[v.engine,v.transmission,v.mileage,v.color].filter(Boolean).join(' · ')}</div>
+          <div class="vcard-price">${v.price||'Call for Price'}</div>
+        </div>
+      </a>`).join('');
+  } catch(e){
+    document.getElementById('loading').style.display='none';
+    btn.disabled=false; btn.textContent='SEARCH →';
+    alert('Search error — please try again');
+  }
+}
+
+async function toggleSave(e, vid, btn){
+  e.preventDefault(); e.stopPropagation();
+  const r = await fetch('/api/buyer/save',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({vid})});
+  const d = await r.json();
+  if(d.login_required){ location.href='/buyer/login'; return; }
+  if(d.ok){
+    if(d.saved){ savedVids.add(vid); btn.textContent='❤️'; btn.classList.add('saved'); }
+    else { savedVids.delete(vid); btn.textContent='🤍'; btn.classList.remove('saved'); }
+  }
+}
+</script>
+  <!-- PWA Service Worker -->
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js',{scope:'/'})
+        .then(()=>console.log('SW registered'))
+        .catch(e=>console.log('SW error',e));
+    }
+  </script>
+</body>
+</html>

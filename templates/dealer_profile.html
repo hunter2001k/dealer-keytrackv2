@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ dealer.name }} — Cars For Sale</title>
+  <meta name="description" content="{{ dealer.vehicles|length if vehicles is defined else 0 }} vehicles for sale at {{ dealer.name }}, {{ dealer.suburb }} {{ dealer.state }}."/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0F1117;--panel:#181C27;--border:rgba(255,255,255,.08);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:rgba(15,17,23,.95);border-bottom:1px solid rgba(201,168,76,.12);padding:12px 20px;position:sticky;top:0;z-index:50;}
+    .topbar-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);}
+    .dealer-hero{background:linear-gradient(135deg,#0A0C10,#161B26);border-bottom:1px solid rgba(201,168,76,.1);padding:36px 20px;}
+    .dealer-hero-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+    .dealer-logo{width:72px;height:72px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;}
+    .dealer-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;margin-bottom:4px;}
+    .dealer-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;}
+    .dealer-meta span{font-size:.8rem;color:rgba(255,255,255,.4);}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 16px;}
+    .vehicle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+    .vcard{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;display:block;transition:border-color .2s,transform .2s;}
+    .vcard:hover{border-color:rgba(201,168,76,.3);transform:translateY(-2px);}
+    .vcard-photo{height:160px;background:#0A0C10;overflow:hidden;}
+    .vcard-photo img{width:100%;height:100%;object-fit:cover;}
+    .vcard-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:rgba(255,255,255,.1);}
+    .vcard-body{padding:12px 14px;}
+    .vcard-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;}
+    .vcard-specs{font-size:.75rem;color:rgba(255,255,255,.35);margin-top:3px;}
+    .vcard-price{color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.25rem;margin-top:8px;}
+    .empty{text-align:center;padding:60px 20px;color:rgba(255,255,255,.25);}
+    .contact-box{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:26px;height:26px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="brand">{{ dealership }}</span>
+    </div>
+    <a href="/dealers" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;">← All Dealers</a>
+  </div>
+</div>
+
+<div class="dealer-hero">
+  <div class="dealer-hero-inner">
+    <div class="dealer-logo">🏢</div>
+    <div>
+      <div class="dealer-name">{{ dealer.name }}</div>
+      <div class="dealer-meta">
+        <span>📍 {{ dealer.address }}{% if dealer.suburb %}, {{ dealer.suburb }}{% endif %} {{ dealer.state }}</span>
+        {% if dealer.phone %}<span>📞 {{ dealer.phone }}</span>{% endif %}
+        <span>🚗 {{ vehicles|length }} vehicles</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  {% if dealer.phone %}
+  <div class="contact-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;margin-bottom:4px;">Contact {{ dealer.name }}</div>
+        <div style="font-size:.82rem;color:rgba(255,255,255,.4);">{{ dealer.address }}, {{ dealer.suburb }} {{ dealer.state }}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="tel:{{ dealer.phone }}" style="background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;padding:9px 18px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;text-decoration:none;">📞 CALL</a>
+        <a href="https://wa.me/{{ dealer.phone|replace(' ','') }}" target="_blank" style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.25);color:#25D366;padding:9px 18px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;text-decoration:none;">💬 WHATSAPP</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div style="font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;margin-bottom:16px;color:rgba(255,255,255,.6);">
+    {{ vehicles|length }} VEHICLE{{ 'S' if vehicles|length != 1 else '' }} AVAILABLE
+  </div>
+
+  {% if not vehicles %}
+  <div class="empty">
+    <p style="font-size:2rem;margin-bottom:8px;">🚗</p>
+    <p>No vehicles listed yet</p>
+  </div>
+  {% else %}
+  <div class="vehicle-grid">
+    {% for v in vehicles %}
+    <a href="/listing/{{ v.get('Internal_ID','') }}" class="vcard">
+      <div class="vcard-photo">
+        {% if v._primary_photo %}<img src="{{ v._primary_photo }}" alt="" loading="lazy">
+        {% else %}<div class="vcard-placeholder">🚗</div>{% endif %}
+      </div>
+      <div class="vcard-body">
+        <div class="vcard-name">{{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') }}</div>
+        <div class="vcard-specs">{{ v.get('Mileage','') }} · {{ v.get('Color','') }}</div>
+        <div class="vcard-price">{{ v.get('Price','') }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div style="background:var(--panel);border-top:1px solid var(--border);padding:20px;text-align:center;margin-top:40px;">
+  <a href="/listings" style="color:rgba(255,255,255,.3);text-decoration:none;font-size:.78rem;">← Browse All Vehicles</a>
+  <span style="color:rgba(255,255,255,.1);margin:0 10px;">·</span>
+  <span style="color:rgba(255,255,255,.15);font-size:.72rem;">Powered by KeyTrack</span>
+</div>
+</body>
+</html>

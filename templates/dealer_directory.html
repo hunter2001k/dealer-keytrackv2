@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dealers — {{ dealership }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0F1117;--panel:#181C27;--border:rgba(255,255,255,.08);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:rgba(15,17,23,.95);border-bottom:1px solid rgba(201,168,76,.12);padding:12px 20px;position:sticky;top:0;z-index:50;}
+    .topbar-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);}
+    .hero{background:linear-gradient(135deg,#0A0C10,#161B26);border-bottom:1px solid rgba(201,168,76,.1);padding:40px 20px;text-align:center;}
+    .hero h1{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2rem;margin-bottom:6px;}
+    .hero h1 span{color:var(--gold);}
+    .hero p{color:rgba(255,255,255,.4);font-size:.9rem;}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 16px;}
+    .dealer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+    .dealer-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;text-decoration:none;color:inherit;display:block;transition:border-color .2s,transform .2s;}
+    .dealer-card:hover{border-color:rgba(201,168,76,.3);transform:translateY(-2px);}
+    .dealer-icon{width:48px;height:48px;background:rgba(201,168,76,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:14px;}
+    .dealer-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:4px;}
+    .dealer-location{font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:10px;}
+    .dealer-meta{display:flex;gap:12px;font-size:.75rem;color:rgba(255,255,255,.3);margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.05);}
+    .join-cta{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:28px;text-align:center;margin-top:24px;}
+    .join-cta h3{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;margin-bottom:8px;}
+    .join-btn{display:inline-block;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;padding:11px 28px;border-radius:10px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;text-decoration:none;margin-top:12px;}
+    .empty{text-align:center;padding:60px 20px;color:rgba(255,255,255,.25);}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:26px;height:26px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="brand">{{ dealership }}</span>
+    </div>
+    <a href="/listings" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;">← All Cars</a>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>Our <span>Dealer Network</span></h1>
+  <p>{{ dealers|length }} trusted dealer{{ 's' if dealers|length != 1 else '' }} · Quality vehicles · Real prices</p>
+</div>
+
+<div class="wrap">
+  {% if not dealers %}
+  <div class="empty">
+    <p style="font-size:2rem;margin-bottom:10px;">🏢</p>
+    <p>No dealers in the network yet</p>
+  </div>
+  {% else %}
+  <div class="dealer-grid">
+    {% for d in dealers %}
+    <a href="/dealer/{{ d.slug }}" class="dealer-card">
+      <div class="dealer-icon">🏢</div>
+      <div class="dealer-name">{{ d.name }}</div>
+      <div class="dealer-location">📍 {{ d.suburb }}, {{ d.state }}</div>
+      {% if d.phone %}<div style="font-size:.78rem;color:rgba(255,255,255,.4);">📞 {{ d.phone }}</div>{% endif %}
+      <div class="dealer-meta">
+        <span>🚗 {{ d.vehicles_count }} vehicles</span>
+        <span>✓ Verified dealer</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="join-cta">
+    <h3>Are you a dealer?</h3>
+    <p style="color:rgba(255,255,255,.4);font-size:.88rem;">Join our network and get your inventory in front of serious buyers. Free to start.</p>
+    <a href="/dealers/join" class="join-btn">LIST YOUR CARS →</a>
+  </div>
+</div>
+<div style="background:var(--panel);border-top:1px solid var(--border);padding:20px;text-align:center;margin-top:40px;">
+  <span style="color:rgba(255,255,255,.2);font-size:.75rem;">© {{ dealership }} · Powered by KeyTrack</span>
+</div>
+</body>
+</html>

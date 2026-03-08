@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Marketplace Feeds — KeyTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--panel2:#161B26;--border:rgba(201,168,76,0.2);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:50;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);}
+    .wrap{max-width:800px;margin:0 auto;padding:32px 16px;}
+    .feed-card{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px 24px;margin-bottom:16px;}
+    .feed-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+    .feed-name{display:flex;align-items:center;gap:12px;}
+    .feed-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+    .feed-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:.05em;}
+    .feed-desc{font-size:.8rem;color:rgba(255,255,255,.35);margin-top:3px;}
+    .feed-url{font-family:monospace;font-size:.78rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 12px;margin-top:14px;color:rgba(255,255,255,.5);word-break:break-all;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .copy-btn{background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.2);color:var(--gold);padding:5px 12px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.08em;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+    .copy-btn:hover{opacity:.8;}
+    .open-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;padding:8px 16px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;text-decoration:none;transition:opacity .15s;}
+    .open-btn:hover{opacity:.85;}
+    .status-pill{padding:4px 10px;border-radius:20px;font-size:.7rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;}
+    .status-live{background:rgba(34,197,94,.12);color:#86EFAC;border:1px solid rgba(34,197,94,.2);}
+    .status-warn{background:rgba(251,191,36,.12);color:#FDE68A;border:1px solid rgba(251,191,36,.2);}
+    .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;}
+    .info-box{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;text-align:center;}
+    .info-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2rem;color:var(--gold);}
+    .info-label{font-size:.72rem;color:rgba(255,255,255,.35);letter-spacing:.08em;margin-top:4px;}
+    .cloudinary-warn{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:.83rem;color:#FDE68A;line-height:1.6;}
+    .step{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;}
+    .step-num{width:24px;height:24px;background:rgba(201,168,76,.2);color:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;flex-shrink:0;margin-top:2px;}
+    .step-text{font-size:.83rem;color:rgba(255,255,255,.6);line-height:1.5;}
+    .step-text code{background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px;font-size:.78rem;color:rgba(255,255,255,.8);}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0D1F12;border:1px solid rgba(34,197,94,.3);color:#86EFAC;padding:12px 20px;border-radius:10px;font-size:.85rem;z-index:999;display:none;}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div style="max-width:800px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="brand">KEYTRACK</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="/admin" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;padding:6px 12px;">← ADMIN</a>
+      <a href="/listings" target="_blank" style="color:var(--gold);text-decoration:none;font-size:.82rem;padding:6px 12px;border:1px solid rgba(201,168,76,.2);border-radius:6px;">🌐 VIEW LISTINGS</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div style="margin-bottom:28px;">
+    <h1 style="font-family:'Rajdhani',sans-serif;font-size:1.9rem;font-weight:700;">Marketplace <span style="color:var(--gold)">Feeds</span></h1>
+    <p style="color:rgba(255,255,255,.4);margin-top:6px;">Auto-sync your inventory to external platforms. Feeds update every time vehicles are added or changed.</p>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-box"><div class="info-num">{{ vehicle_count }}</div><div class="info-label">LIVE VEHICLES</div></div>
+    <div class="info-box"><div class="info-num">4</div><div class="info-label">FEED FORMATS</div></div>
+    <div class="info-box"><div class="info-num">15m</div><div class="info-label">CACHE TIME</div></div>
+  </div>
+
+  {% if not has_cloudinary %}
+  <div class="cloudinary-warn">
+    ⚠ <strong>Photos won't appear in feeds</strong> until you add Cloudinary credentials. Vehicle data will sync — photos need Cloudinary for external URLs.
+    <br><br>Add to Railway environment: <code>CLOUDINARY_CLOUD_NAME</code> · <code>CLOUDINARY_API_KEY</code> · <code>CLOUDINARY_API_SECRET</code>
+    <br>Free at <strong>cloudinary.com</strong> — 25GB storage included.
+  </div>
+  {% endif %}
+
+  <!-- Carsales -->
+  <div class="feed-card">
+    <div class="feed-header">
+      <div class="feed-name">
+        <div class="feed-icon" style="background:rgba(255,100,0,.1);">🔶</div>
+        <div>
+          <div class="feed-title">Carsales.com.au</div>
+          <div class="feed-desc">XML inventory feed · Upload to Carsales Dealer Portal</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="status-pill status-live">LIVE</span>
+        <a href="{{ base_url }}/feed/carsales.xml" target="_blank" class="open-btn">↗ OPEN FEED</a>
+      </div>
+    </div>
+    <div class="feed-url">
+      <span id="url-carsales">{{ base_url }}/feed/carsales.xml</span>
+      <button class="copy-btn" onclick="copyUrl('url-carsales')">COPY</button>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Log in to <strong>dealer.carsales.com.au</strong> → Inventory → Feed Settings</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Paste the feed URL above into the "XML Feed URL" field</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Set refresh to every <code>15 minutes</code> — your listings will auto-update</div></div>
+    </div>
+  </div>
+
+  <!-- AutoTrader -->
+  <div class="feed-card">
+    <div class="feed-header">
+      <div class="feed-name">
+        <div class="feed-icon" style="background:rgba(0,150,255,.1);">🔵</div>
+        <div>
+          <div class="feed-title">AutoTrader AU</div>
+          <div class="feed-desc">STARX XML format · Compatible with AutoTrader dealer portal</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="status-pill status-live">LIVE</span>
+        <a href="{{ base_url }}/feed/autotrader.xml" target="_blank" class="open-btn">↗ OPEN FEED</a>
+      </div>
+    </div>
+    <div class="feed-url">
+      <span id="url-autotrader">{{ base_url }}/feed/autotrader.xml</span>
+      <button class="copy-btn" onclick="copyUrl('url-autotrader')">COPY</button>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Contact your AutoTrader account manager and provide the feed URL</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">They will configure automatic ingestion on their end (usually 24h setup)</div></div>
+    </div>
+  </div>
+
+  <!-- Facebook -->
+  <div class="feed-card">
+    <div class="feed-header">
+      <div class="feed-name">
+        <div class="feed-icon" style="background:rgba(66,103,178,.15);">📘</div>
+        <div>
+          <div class="feed-title">Facebook / Instagram Catalogue</div>
+          <div class="feed-desc">JSON Product Catalogue · For Facebook Marketplace & Instagram Shopping ads</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="status-pill status-live">LIVE</span>
+        <a href="{{ base_url }}/feed/facebook.json" target="_blank" class="open-btn">↗ OPEN FEED</a>
+      </div>
+    </div>
+    <div class="feed-url">
+      <span id="url-facebook">{{ base_url }}/feed/facebook.json</span>
+      <button class="copy-btn" onclick="copyUrl('url-facebook')">COPY</button>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Go to <strong>business.facebook.com</strong> → Commerce Manager → Catalogues → Add Catalogue</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Choose "Vehicles" type → "Use a data feed" → paste the JSON URL above</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Set schedule to <code>Hourly</code>. Facebook will pull updates automatically.</div></div>
+    </div>
+  </div>
+
+  <!-- Gumtree -->
+  <div class="feed-card">
+    <div class="feed-header">
+      <div class="feed-name">
+        <div class="feed-icon" style="background:rgba(0,180,0,.1);">🟢</div>
+        <div>
+          <div class="feed-title">Gumtree Motors</div>
+          <div class="feed-desc">CSV bulk upload · Download and upload to Gumtree dealer portal</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="status-pill status-live">LIVE</span>
+        <a href="{{ base_url }}/feed/gumtree.csv" class="open-btn">⬇ DOWNLOAD CSV</a>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Click Download CSV to get the current inventory file</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Log in to <strong>gumtree.com.au</strong> → My Ads → Bulk Upload → Upload the CSV</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Re-download and re-upload weekly to keep listings fresh</div></div>
+    </div>
+  </div>
+
+  <!-- Your own website -->
+  <div class="feed-card" style="border-color:rgba(201,168,76,.2);">
+    <div class="feed-header">
+      <div class="feed-name">
+        <div class="feed-icon" style="background:rgba(201,168,76,.1);">🌐</div>
+        <div>
+          <div class="feed-title">Your Public Listings Page</div>
+          <div class="feed-desc">Built-in buyer-facing website — share this URL on Google, Facebook & your business cards</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="status-pill status-live">LIVE</span>
+        <a href="{{ base_url }}/listings" target="_blank" class="open-btn">🌐 VIEW SITE</a>
+      </div>
+    </div>
+    <div class="feed-url">
+      <span id="url-listings">{{ base_url }}/listings</span>
+      <button class="copy-btn" onclick="copyUrl('url-listings')">COPY</button>
+    </div>
+    <p style="font-size:.78rem;color:rgba(255,255,255,.3);margin-top:12px;">Each vehicle also has its own shareable page at <code style="color:rgba(255,255,255,.5);">/listing/STOCK-NUMBER</code> — perfect for WhatsApp sharing and Google indexing.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  function copyUrl(id){
+    navigator.clipboard.writeText(document.getElementById(id).textContent.trim())
+      .then(()=>{ const t=document.getElementById('toast'); t.textContent='✓ URL copied!'; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); });
+  }
+</script>
+</body>
+</html>

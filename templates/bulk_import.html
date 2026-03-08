@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Bulk Import — {{ dealership }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#0a0a0f;--card:#111118;--border:rgba(255,255,255,.08);
+    --gold:#C9A84C;--gold2:#e6c96a;--red:#EF4444;--green:#22c55e;
+    --amber:#f59e0b;--blue:#3b82f6;--text:rgba(255,255,255,.88);
+    --muted:rgba(255,255,255,.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+
+  /* NAV */
+  .nav{background:rgba(10,10,15,.96);border-bottom:1px solid var(--border);
+       padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;
+       position:sticky;top:0;z-index:100;}
+  .nav-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;
+            letter-spacing:.1em;color:var(--gold);text-decoration:none;white-space:nowrap;}
+  .nav-sep{color:var(--border);font-size:1.2rem;}
+  .nav-title{font-size:.85rem;color:var(--muted);}
+  .nav-back{margin-left:auto;font-size:.8rem;color:var(--muted);text-decoration:none;
+            padding:6px 14px;border:1px solid var(--border);border-radius:6px;
+            transition:all .2s;}
+  .nav-back:hover{color:#fff;border-color:var(--gold);}
+
+  /* LAYOUT */
+  .page{max-width:1100px;margin:0 auto;padding:32px 20px;}
+  .page-header{margin-bottom:28px;}
+  .page-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;
+              letter-spacing:.06em;color:#fff;}
+  .page-sub{font-size:.85rem;color:var(--muted);margin-top:6px;}
+
+  /* CARD */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+  .card-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;
+              letter-spacing:.12em;color:var(--gold);margin-bottom:18px;
+              padding-bottom:10px;border-bottom:1px solid var(--border);}
+
+  /* DROP ZONE */
+  .drop-zone{border:2px dashed rgba(201,168,76,.3);border-radius:12px;
+             padding:48px 24px;text-align:center;cursor:pointer;
+             transition:all .25s;position:relative;}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--gold);background:rgba(201,168,76,.04);}
+  .drop-icon{font-size:2.5rem;margin-bottom:12px;}
+  .drop-text{font-size:1rem;color:#fff;margin-bottom:6px;font-weight:500;}
+  .drop-sub{font-size:.8rem;color:var(--muted);}
+  .drop-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .file-chosen{margin-top:12px;font-size:.82rem;color:var(--gold);display:none;}
+
+  /* OPTIONS ROW */
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+  .opt-group label{display:block;font-size:.72rem;color:var(--muted);
+                   letter-spacing:.08em;margin-bottom:6px;}
+  .opt-group select,.opt-group input{width:100%;background:rgba(255,255,255,.04);
+    border:1px solid var(--border);border-radius:8px;color:#fff;
+    padding:9px 12px;font-size:.85rem;outline:none;}
+  .opt-group select:focus,.opt-group input:focus{border-color:var(--gold);}
+  .opt-group select option{background:#1a1a2e;}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;
+       border:none;border-radius:8px;font-family:'Rajdhani',sans-serif;
+       font-weight:700;font-size:.9rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;}
+  .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a0f;}
+  .btn-gold:hover{opacity:.9;transform:translateY(-1px);}
+  .btn-ghost{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border);}
+  .btn-ghost:hover{color:#fff;border-color:var(--gold);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important;}
+
+  /* PROGRESS */
+  .progress-wrap{display:none;margin-top:20px;}
+  .progress-bar-bg{height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-bottom:8px;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));
+                     border-radius:99px;transition:width .3s;width:0%;}
+  .progress-label{font-size:.78rem;color:var(--muted);}
+
+  /* STATS ROW */
+  .stats-row{display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  .stat-box{background:rgba(255,255,255,.03);border:1px solid var(--border);
+            border-radius:10px;padding:14px 16px;text-align:center;}
+  .stat-num{font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;}
+  .stat-lbl{font-size:.72rem;color:var(--muted);margin-top:2px;}
+  .stat-green .stat-num{color:var(--green);}
+  .stat-amber .stat-num{color:var(--amber);}
+  .stat-red   .stat-num{color:var(--red);}
+  .stat-blue  .stat-num{color:var(--blue);}
+
+  /* RESULTS TABLE */
+  .results-wrap{display:none;}
+  .results-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+  .results-table th{text-align:left;padding:10px 12px;font-family:'Rajdhani',sans-serif;
+                    font-size:.72rem;letter-spacing:.1em;color:var(--muted);
+                    border-bottom:1px solid var(--border);white-space:nowrap;}
+  .results-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);
+                    vertical-align:top;}
+  .results-table tr:last-child td{border-bottom:none;}
+  .results-table tr:hover td{background:rgba(255,255,255,.02);}
+
+  /* STATUS BADGES */
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;
+         border-radius:99px;font-size:.7rem;font-weight:600;white-space:nowrap;}
+  .badge-green{background:rgba(34,197,94,.15);color:var(--green);}
+  .badge-blue {background:rgba(59,130,246,.15);color:var(--blue);}
+  .badge-red  {background:rgba(239,68,68,.15); color:var(--red);}
+  .badge-amber{background:rgba(245,158,11,.15);color:var(--amber);}
+
+  /* ISSUE PILLS */
+  .issues{display:flex;flex-direction:column;gap:3px;margin-top:4px;}
+  .issue{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;padding:2px 0;}
+  .issue-error{color:var(--red);}
+  .issue-warn {color:var(--amber);}
+  .issue-info {color:var(--blue);}
+
+  /* COLUMN MAP PREVIEW */
+  .col-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+           gap:8px;margin-top:12px;}
+  .col-item{background:rgba(255,255,255,.03);border:1px solid var(--border);
+            border-radius:6px;padding:8px 12px;font-size:.75rem;}
+  .col-from{color:var(--muted);}
+  .col-arrow{color:var(--gold);margin:0 6px;}
+  .col-to{color:#fff;font-weight:500;}
+  .col-skip{color:rgba(255,255,255,.2);}
+
+  /* TEMPLATE DOWNLOAD */
+  .template-note{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);
+                 border-radius:10px;padding:14px 18px;font-size:.82rem;color:var(--muted);
+                 line-height:1.7;}
+  .template-note strong{color:var(--gold);}
+
+  /* FILTER BAR */
+  .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .filter-btn{padding:6px 14px;border-radius:99px;font-size:.78rem;font-weight:600;
+              border:1px solid var(--border);background:transparent;color:var(--muted);
+              cursor:pointer;transition:all .2s;}
+  .filter-btn.active,.filter-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+  @media(max-width:640px){
+    .opts{grid-template-columns:1fr 1fr;}
+    .stats-row{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="/admin">⬡ KeyTrack</a>
+  <span class="nav-sep">|</span>
+  <span class="nav-title">Bulk Import</span>
+  <a class="nav-back" href="/admin">← Back to Inventory</a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-title">📦 BULK IMPORT VEHICLES</div>
+    <div class="page-sub">Upload your dealer export CSV or Excel file — we map columns, extract engine data, and flag issues automatically.</div>
+  </div>
+
+  <!-- Template hint -->
+  <div class="template-note" style="margin-bottom:20px;">
+    <strong>Your export format is supported.</strong>
+    Columns automatically mapped: <strong>Stock #, VIN, Year, Make, Model, Variant, Series, Category, Mileage, Price, Status, Description, Listing Creation Date.</strong>
+    Engine size, transmission and fuel are extracted from the <em>Series</em> field automatically.
+    Trim values of "OTHER" are blanked. Marketplace boilerplate is removed from descriptions.
+  </div>
+
+  <!-- Upload Card -->
+  <div class="card">
+    <div class="card-title">STEP 1 — SELECT FILE</div>
+
+    <div class="drop-zone" id="dropZone">
+      <input type="file" class="drop-input" id="fileInput" accept=".csv,.xlsx,.xls"/>
+      <div class="drop-icon">📂</div>
+      <div class="drop-text">Drop your CSV or Excel file here</div>
+      <div class="drop-sub">or click to browse &nbsp;·&nbsp; .csv / .xlsx / .xls</div>
+      <div class="file-chosen" id="fileChosen"></div>
+    </div>
+  </div>
+
+  <!-- Options -->
+  <div class="card">
+    <div class="card-title">STEP 2 — IMPORT OPTIONS</div>
+    <div class="opts">
+      <div class="opt-group">
+        <label>STOCK # PREFIX (if no Stock # column)</label>
+        <input type="text" id="optPrefix" value="ASR" maxlength="6" placeholder="e.g. ASR"/>
+      </div>
+      <div class="opt-group">
+        <label>DEFAULT STATUS</label>
+        <select id="optStatus">
+          <option value="Available" selected>Available</option>
+          <option value="Pending">Pending</option>
+          <option value="Hold">Hold</option>
+        </select>
+      </div>
+      <div class="opt-group">
+        <label>IF STOCK # ALREADY EXISTS</label>
+        <select id="optResolve">
+          <option value="skip" selected>Skip (keep existing)</option>
+          <option value="overwrite">Overwrite with new data</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-gold" id="importBtn" onclick="startImport()" disabled>
+        ⬆ IMPORT TO INVENTORY
+      </button>
+      <button class="btn btn-ghost" onclick="resetAll()">✕ Reset</button>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">Uploading and processing…</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-box stat-green"><div class="stat-num" id="statCreated">0</div><div class="stat-lbl">IMPORTED</div></div>
+    <div class="stat-box stat-blue"> <div class="stat-num" id="statUpdated">0</div><div class="stat-lbl">UPDATED</div></div>
+    <div class="stat-box stat-red">  <div class="stat-num" id="statFailed">0</div> <div class="stat-lbl">SKIPPED / ERRORS</div></div>
+    <div class="stat-box stat-amber"><div class="stat-num" id="statWarns">0</div>  <div class="stat-lbl">WARNINGS</div></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-wrap" id="resultsWrap">
+    <div class="card">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>IMPORT RESULTS</span>
+        <div class="filter-bar" style="margin:0;border-bottom:none;">
+          <button class="filter-btn active" onclick="filterResults('all',this)">All</button>
+          <button class="filter-btn" onclick="filterResults('ok',this)">✅ Imported</button>
+          <button class="filter-btn" onclick="filterResults('warn',this)">⚠️ Warnings</button>
+          <button class="filter-btn" onclick="filterResults('error',this)">❌ Errors</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="results-table" id="resultsTable">
+          <thead>
+            <tr>
+              <th>STATUS</th>
+              <th>STOCK #</th>
+              <th>VEHICLE</th>
+              <th>VIN</th>
+              <th>ISSUES FOUND</th>
+              <th>MESSAGE</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+var selectedFile = null;
+var allResults   = [];
+
+// ── Drag & Drop ──────────────────────────────────────────────────────────────
+var dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', function(){ dz.classList.remove('drag-over'); });
+dz.addEventListener('drop', function(e){
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  var f = e.dataTransfer.files[0];
+  if(f) setFile(f);
+});
+
+document.getElementById('fileInput').addEventListener('change', function(){
+  if(this.files[0]) setFile(this.files[0]);
+});
+
+function setFile(f){
+  selectedFile = f;
+  var fc = document.getElementById('fileChosen');
+  fc.textContent = '📄 ' + f.name + ' (' + (f.size/1024).toFixed(1) + ' KB)';
+  fc.style.display = 'block';
+  document.getElementById('importBtn').disabled = false;
+}
+
+// ── Import ────────────────────────────────────────────────────────────────────
+function startImport(){
+  if(!selectedFile){ alert('Select a file first.'); return; }
+
+  var btn = document.getElementById('importBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Importing…';
+
+  var pw = document.getElementById('progressWrap');
+  pw.style.display = 'block';
+  animateProgress();
+
+  var fd = new FormData();
+  fd.append('file',   selectedFile);
+  fd.append('prefix', document.getElementById('optPrefix').value.trim().toUpperCase() || 'ASR');
+  fd.append('status', document.getElementById('optStatus').value);
+  fd.append('resolve',document.getElementById('optResolve').value);
+
+  fetch('/api/bulk-import-excel', {
+    method: 'POST',
+    headers: {'X-Requested-With':'XMLHttpRequest'},
+    body: fd
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    btn.disabled = false;
+    btn.innerHTML = '⬆ IMPORT TO INVENTORY';
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressLabel').textContent = 'Done!';
+
+    if(!data.ok){
+      alert('Error: ' + data.message);
+      return;
+    }
+    showResults(data);
+  })
+  .catch(function(err){
+    btn.disabled = false;
+    btn.innerHTML = '⬆ IMPORT TO INVENTORY';
+    alert('Upload failed: ' + err);
+  });
+}
+
+var _progInterval = null;
+function animateProgress(){
+  var fill  = document.getElementById('progressFill');
+  var label = document.getElementById('progressLabel');
+  var pct   = 5;
+  clearInterval(_progInterval);
+  _progInterval = setInterval(function(){
+    pct = Math.min(pct + Math.random()*8, 90);
+    fill.style.width = pct + '%';
+    if(pct < 30)      label.textContent = 'Uploading file…';
+    else if(pct < 60) label.textContent = 'Decoding VINs via NHTSA…';
+    else if(pct < 80) label.textContent = 'Validating records…';
+    else              label.textContent = 'Writing to Airtable…';
+  }, 400);
+}
+
+function showResults(data){
+  clearInterval(_progInterval);
+  allResults = data.results || [];
+
+  // Stats
+  var warns = allResults.filter(function(r){
+    return r.issues && r.issues.some(function(i){ return i.level === 'warn'; });
+  }).length;
+
+  document.getElementById('statCreated').textContent = data.created || 0;
+  document.getElementById('statUpdated').textContent = data.updated || 0;
+  document.getElementById('statFailed').textContent  = data.failed  || 0;
+  document.getElementById('statWarns').textContent   = warns;
+  document.getElementById('statsRow').style.display  = 'grid';
+
+  renderTable(allResults);
+  document.getElementById('resultsWrap').style.display = 'block';
+  document.getElementById('resultsWrap').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderTable(rows){
+  var tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = '';
+  rows.forEach(function(r){
+    var hasError = r.issues && r.issues.some(function(i){ return i.level === 'error'; });
+    var hasWarn  = r.issues && r.issues.some(function(i){ return i.level === 'warn';  });
+
+    var badge = '';
+    if(r.ok && r.updated) badge = '<span class="badge badge-blue">✎ Updated</span>';
+    else if(r.ok)         badge = '<span class="badge badge-green">✓ Imported</span>';
+    else if(hasError)     badge = '<span class="badge badge-red">✕ Error</span>';
+    else                  badge = '<span class="badge badge-amber">⊘ Skipped</span>';
+
+    var issHtml = '';
+    if(r.issues && r.issues.length){
+      issHtml = '<div class="issues">';
+      r.issues.forEach(function(iss){
+        var cls = iss.level === 'error' ? 'issue-error' : iss.level === 'warn' ? 'issue-warn' : 'issue-info';
+        var icon = iss.level === 'error' ? '❌' : iss.level === 'warn' ? '⚠️' : 'ℹ️';
+        issHtml += '<span class="issue ' + cls + '">' + icon + ' ' + esc(iss.msg) + '</span>';
+      });
+      issHtml += '</div>';
+    } else {
+      issHtml = '<span style="color:rgba(255,255,255,.2);font-size:.75rem;">None</span>';
+    }
+
+    var tr = document.createElement('tr');
+    tr.dataset.ok    = r.ok ? '1' : '0';
+    tr.dataset.warn  = hasWarn  ? '1' : '0';
+    tr.dataset.error = hasError ? '1' : '0';
+    tr.innerHTML =
+      '<td>' + badge + '</td>' +
+      '<td style="font-family:monospace;font-size:.8rem;color:var(--gold);">' + esc(r.internal_id||'—') + '</td>' +
+      '<td style="font-weight:500;">' + esc(r.name||'Unknown') + '</td>' +
+      '<td style="font-family:monospace;font-size:.75rem;color:rgba(255,255,255,.5);">' + esc(r.vin||'—') + '</td>' +
+      '<td>' + issHtml + '</td>' +
+      '<td style="color:rgba(255,255,255,.5);font-size:.78rem;">' + esc(r.message||'') + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function filterResults(type, btn){
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  var rows = document.querySelectorAll('#resultsBody tr');
+  rows.forEach(function(tr){
+    var show = true;
+    if(type === 'ok')    show = tr.dataset.ok === '1';
+    if(type === 'warn')  show = tr.dataset.warn === '1';
+    if(type === 'error') show = tr.dataset.error === '1' || tr.dataset.ok === '0';
+    tr.style.display = show ? '' : 'none';
+  });
+}
+
+function resetAll(){
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileChosen').style.display = 'none';
+  document.getElementById('importBtn').disabled = true;
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('statsRow').style.display = 'none';
+  document.getElementById('resultsWrap').style.display = 'none';
+  document.getElementById('resultsBody').innerHTML = '';
+  allResults = [];
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

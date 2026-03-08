@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Deal Pipeline — {{ dealership }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:rgba(255,255,255,.07);--gold:#C9A84C;--gold2:#e6c97a;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b;--text:rgba(255,255,255,.87);--muted:rgba(255,255,255,.4);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:auto;}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:200;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold);letter-spacing:.06em;}
+.nav-back{color:var(--muted);font-size:.8rem;text-decoration:none;}
+.nav-back:hover{color:var(--gold);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;cursor:pointer;border:none;transition:all .2s;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{background:rgba(255,255,255,.1);}
+.btn-sm{padding:5px 10px;font-size:.72rem;}
+
+/* BOARD */
+.board-header{padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.board-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.5rem;letter-spacing:.05em;}
+.board-scroll{overflow-x:auto;padding:0 24px 32px;display:flex;gap:16px;min-height:calc(100vh - 130px);align-items:flex-start;}
+.column{flex:0 0 240px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.col-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.col-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;}
+.col-count{background:rgba(255,255,255,.08);border-radius:99px;padding:1px 8px;font-size:.68rem;color:var(--muted);}
+.col-cards{padding:10px;min-height:120px;display:flex;flex-direction:column;gap:8px;}
+.col-cards.drag-over{background:rgba(201,168,76,.05);border-radius:8px;}
+
+/* CARD */
+.deal-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:grab;transition:all .2s;user-select:none;}
+.deal-card:active{cursor:grabbing;}
+.deal-card:hover{border-color:rgba(201,168,76,.3);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.3);}
+.deal-card.dragging{opacity:.4;}
+.card-vehicle{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;color:var(--gold);margin-bottom:4px;}
+.card-customer{font-size:.75rem;color:var(--text);margin-bottom:2px;}
+.card-phone{font-size:.7rem;color:var(--muted);margin-bottom:6px;}
+.card-notes{font-size:.68rem;color:var(--muted);line-height:1.4;border-top:1px solid rgba(255,255,255,.05);padding-top:6px;margin-top:2px;}
+.card-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.card-date{font-size:.62rem;color:rgba(255,255,255,.2);}
+.card-actions{display:flex;gap:4px;}
+.card-btn{background:rgba(255,255,255,.06);border:none;border-radius:5px;padding:3px 7px;font-size:.65rem;color:var(--muted);cursor:pointer;transition:all .15s;}
+.card-btn:hover{background:rgba(255,255,255,.12);color:var(--text);}
+
+/* STAGE COLOURS */
+.stage-Lead      .col-title{color:#94a3b8;}
+.stage-Contacted .col-title{color:#60a5fa;}
+.stage-Test\ Drive .col-title{color:#a78bfa;}
+.stage-Negotiation .col-title{color:var(--amber);}
+.stage-Deposit   .col-title{color:var(--gold);}
+.stage-Sold      .col-title{color:var(--green);}
+.stage-Lost      .col-title{color:var(--red);}
+.stage-Lead      .col-header{border-left:3px solid #94a3b8;}
+.stage-Contacted .col-header{border-left:3px solid #60a5fa;}
+.stage-Negotiation .col-header{border-left:3px solid var(--amber);}
+.stage-Deposit   .col-header{border-left:3px solid var(--gold);}
+.stage-Sold      .col-header{border-left:3px solid var(--green);}
+.stage-Lost      .col-header{border-left:3px solid var(--red);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:#1a1a28;border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:.05em;color:var(--gold);margin-bottom:18px;}
+.field-label{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.field-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-size:.85rem;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;}
+.field-input:focus{border-color:var(--gold);}
+select.field-input option{background:#1a1a28;}
+.toast{position:fixed;bottom:24px;right:24px;background:#1c1c28;border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-size:.82rem;opacity:0;transform:translateY(10px);transition:all .3s;z-index:999;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="nav-logo">🎯 DEAL PIPELINE</span>
+  <span style="color:var(--border)">|</span>
+  <a class="nav-back" href="/dashboard">← Dashboard</a>
+  <div style="margin-left:auto;display:flex;gap:8px;">
+    <button class="btn btn-gold" onclick="openAddModal()">+ ADD DEAL</button>
+  </div>
+</nav>
+
+<div class="board-header">
+  <div class="board-title">Sales Pipeline</div>
+  <div style="font-size:.78rem;color:var(--muted);">Drag cards between stages to update deals</div>
+</div>
+
+<div class="board-scroll" id="board">
+  {% for stage in stages %}
+  <div class="column stage-{{ stage }}" id="col-{{ stage|replace(' ','-') }}" data-stage="{{ stage }}"
+       ondragover="dragOver(event)" ondrop="drop(event,this)" ondragleave="dragLeave(event)">
+    <div class="col-header">
+      <span class="col-title">{{ stage }}</span>
+      <span class="col-count" id="count-{{ stage|replace(' ','-') }}">{{ board[stage]|length }}</span>
+    </div>
+    <div class="col-cards" id="cards-{{ stage|replace(' ','-') }}">
+      {% for card in board[stage] %}
+      {% set v = card._vehicle %}
+      <div class="deal-card" id="card-{{ card.id }}" draggable="true"
+           ondragstart="dragStart(event,'{{ card.id }}')"
+           ondragend="dragEnd(event)">
+        <div class="card-vehicle">
+          {{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') or card.vid }}
+        </div>
+        {% if card.customer %}
+        <div class="card-customer">👤 {{ card.customer }}</div>
+        {% endif %}
+        {% if card.phone %}
+        <div class="card-phone">📞 {{ card.phone }}</div>
+        {% endif %}
+        {% if card.notes %}
+        <div class="card-notes">{{ card.notes[:80] }}{% if card.notes|length > 80 %}…{% endif %}</div>
+        {% endif %}
+        <div class="card-meta">
+          <span class="card-date">{{ card.updated }}</span>
+          <div class="card-actions">
+            <button class="card-btn" onclick="editCard('{{ card.id }}','{{ card.vid }}','{{ card.customer|replace("'","") }}','{{ card.phone }}','{{ card.notes|replace("'","")|replace(chr(10)," ") }}','{{ stage }}')">✏</button>
+            <button class="card-btn" onclick="removeCard('{{ card.id }}')">✕</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Add Deal Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title">+ Add Deal to Pipeline</div>
+    <label class="field-label">Vehicle</label>
+    <select class="field-input" id="addVid">
+      <option value="">— Select vehicle —</option>
+      {% for v in vehicles %}
+      {% if v.Status not in ('Sold','Archived') %}
+      <option value="{{ v.Internal_ID }}">{{ v.Year }} {{ v.Make }} {{ v.Model }} — {{ v.Internal_ID }}</option>
+      {% endif %}
+      {% endfor %}
+    </select>
+    <label class="field-label">Stage</label>
+    <select class="field-input" id="addStage">
+      {% for s in stages %}{% if s != 'Sold' and s != 'Lost' %}
+      <option value="{{ s }}">{{ s }}</option>{% endif %}{% endfor %}
+    </select>
+    <label class="field-label">Customer Name</label>
+    <input class="field-input" id="addCustomer" placeholder="e.g. John Smith"/>
+    <label class="field-label">Phone</label>
+    <input class="field-input" id="addPhone" placeholder="e.g. 0411 234 567"/>
+    <label class="field-label">Notes</label>
+    <textarea class="field-input" id="addNotes" rows="2" placeholder="Any relevant notes…" style="resize:vertical;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-gold" style="flex:1" onclick="addDeal()">ADD DEAL</button>
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Card Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">Edit Deal</div>
+    <input type="hidden" id="editCardId"/>
+    <label class="field-label">Stage</label>
+    <select class="field-input" id="editStage">
+      {% for s in stages %}
+      <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+    <label class="field-label">Customer Name</label>
+    <input class="field-input" id="editCustomer" placeholder="Customer name"/>
+    <label class="field-label">Phone</label>
+    <input class="field-input" id="editPhone" placeholder="Phone number"/>
+    <label class="field-label">Notes</label>
+    <textarea class="field-input" id="editNotes" rows="3" style="resize:vertical;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-gold" style="flex:1" onclick="saveEdit()">SAVE</button>
+      <button class="btn btn-ghost" onclick="closeModal('editModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Drag & Drop ───────────────────────────────────────────────────────────────
+let dragId = null;
+
+function dragStart(e, id) {
+  dragId = id;
+  setTimeout(() => document.getElementById('card-'+id).classList.add('dragging'), 0);
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragEnd(e) {
+  if (dragId) document.getElementById('card-'+dragId)?.classList.remove('dragging');
+}
+function dragOver(e) {
+  e.preventDefault();
+  e.currentTarget.querySelector('.col-cards').classList.add('drag-over');
+}
+function dragLeave(e) {
+  e.currentTarget.querySelector('.col-cards').classList.remove('drag-over');
+}
+async function drop(e, col) {
+  e.preventDefault();
+  col.querySelector('.col-cards').classList.remove('drag-over');
+  const stage = col.dataset.stage;
+  if (!dragId) return;
+  const r = await fetch('/api/pipeline/move', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id: dragId, stage: stage})
+  });
+  const data = await r.json();
+  if (data.ok) { showToast('Moved to ' + stage, 'var(--gold)'); location.reload(); }
+  else showToast(data.message, 'var(--red)');
+  dragId = null;
+}
+
+// ── Add Deal ─────────────────────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('addVid').value = '';
+  document.getElementById('addCustomer').value = '';
+  document.getElementById('addPhone').value = '';
+  document.getElementById('addNotes').value = '';
+  document.getElementById('addModal').classList.add('open');
+}
+
+async function addDeal() {
+  const vid = document.getElementById('addVid').value;
+  if (!vid) { showToast('Select a vehicle', 'var(--red)'); return; }
+  const r = await fetch('/api/pipeline/add', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      vid: vid,
+      stage: document.getElementById('addStage').value,
+      customer: document.getElementById('addCustomer').value,
+      phone: document.getElementById('addPhone').value,
+      notes: document.getElementById('addNotes').value,
+    })
+  });
+  const data = await r.json();
+  if (data.ok) { showToast('Deal added!', 'var(--green)'); setTimeout(()=>location.reload(),800); }
+  else showToast(data.message, 'var(--red)');
+}
+
+// ── Edit Card ────────────────────────────────────────────────────────────────
+function editCard(id, vid, customer, phone, notes, stage) {
+  document.getElementById('editCardId').value = id;
+  document.getElementById('editStage').value = stage;
+  document.getElementById('editCustomer').value = customer;
+  document.getElementById('editPhone').value = phone;
+  document.getElementById('editNotes').value = notes;
+  document.getElementById('editModal').classList.add('open');
+}
+async function saveEdit() {
+  const id = document.getElementById('editCardId').value;
+  const r = await fetch('/api/pipeline/update', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      id: id, stage: document.getElementById('editStage').value,
+      customer: document.getElementById('editCustomer').value,
+      phone: document.getElementById('editPhone').value,
+      notes: document.getElementById('editNotes').value,
+    })
+  });
+  const data = await r.json();
+  if (data.ok) { showToast('Saved', 'var(--green)'); setTimeout(()=>location.reload(),600); }
+  else showToast(data.message, 'var(--red)');
+}
+
+async function removeCard(id) {
+  if (!confirm('Remove this deal from pipeline?')) return;
+  const r = await fetch('/api/pipeline/remove', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id: id})
+  });
+  const data = await r.json();
+  if (data.ok) { showToast('Removed', 'var(--amber)'); document.getElementById('card-'+id).remove(); }
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.borderColor = color||'var(--border)'; t.style.color = color||'#fff';
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000);
+}
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     KEYTRACK GLOBAL — Command Palette · Keyboard Shortcuts · Inline Edit
+     Inject before </body> in dashboard.html, vehicle.html, admin.html
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- CMD PALETTE OVERLAY -->
+<div id="cmdOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;">
+  <div id="cmdBox" style="width:100%;max-width:560px;background:#16161f;border:1px solid rgba(201,168,76,.3);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <span style="font-size:1.1rem;opacity:.5;">⌘</span>
+      <input id="cmdInput" placeholder="Search pages, vehicles, actions…"
+        style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:.95rem;font-family:'Inter',sans-serif;"
+        autocomplete="off" spellcheck="false"/>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">ESC</span>
+    </div>
+    <div id="cmdResults" style="max-height:360px;overflow-y:auto;padding:6px;"></div>
+    <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:16px;font-size:.68rem;color:rgba(255,255,255,.25);">
+      <span>↑↓ navigate</span><span>↵ open</span><span>ESC close</span><span>⌘K / Ctrl+K open</span>
+    </div>
+  </div>
+</div>
+
+<!-- INLINE EDIT POPOVER -->
+<div id="inlinePopover" style="position:fixed;z-index:8000;display:none;background:#1a1a28;border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);min-width:240px;max-width:320px;">
+  <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;" id="inlinePopLabel">Edit Field</div>
+  <div id="inlinePopInput"></div>
+  <div style="display:flex;gap:6px;margin-top:10px;">
+    <button onclick="saveInlineEdit()" style="flex:1;padding:7px;background:linear-gradient(135deg,#C9A84C,#e6c97a);color:#000;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;cursor:pointer;">SAVE</button>
+    <button onclick="closeInlinePop()" style="padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;cursor:pointer;font-size:.8rem;">✕</button>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUT TOAST -->
+<div id="kbToast" style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);background:#1c1c28;border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:8px 20px;font-size:.78rem;color:rgba(255,255,255,.7);opacity:0;transition:all .3s;pointer-events:none;z-index:7000;white-space:nowrap;"></div>
+
+<!-- SHORTCUT HELP OVERLAY -->
+<div id="shortcutHelp" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8500;display:none;align-items:center;justify-content:center;">
+  <div style="background:#16161f;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;max-width:480px;width:100%;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.08em;color:#C9A84C;margin-bottom:16px;">⌨ KEYBOARD SHORTCUTS</div>
+    <div id="shortcutList" style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;"></div>
+    <button onclick="document.getElementById('shortcutHelp').style.display='none'" style="margin-top:18px;padding:8px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;">CLOSE</button>
+  </div>
+</div>
+
+<style>
+.cmd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.cmd-item:hover,.cmd-item.active{background:rgba(201,168,76,.1);}
+.cmd-icon{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.cmd-label{font-size:.85rem;font-weight:500;color:#fff;}
+.cmd-sub{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:1px;}
+.kb-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;font-size:.7rem;font-family:monospace;color:rgba(255,255,255,.6);}
+.ie-enabled{cursor:pointer;transition:background .15s;}
+.ie-enabled:hover{background:rgba(201,168,76,.08);border-radius:4px;}
+.ie-enabled::after{content:' ✏';font-size:.6rem;opacity:0;transition:opacity .15s;}
+.ie-enabled:hover::after{opacity:.5;}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMAND PALETTE
+// ═══════════════════════════════════════════════════════════════════════════
+var _cmdOpen = false;
+var _cmdIdx = -1;
+var _cmdItems = [];
+var _cmdTimer = null;
+
+function openCmd() {
+  document.getElementById('cmdOverlay').style.display = 'flex';
+  document.getElementById('cmdInput').value = '';
+  _cmdOpen = true; _cmdIdx = -1;
+  setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+  loadCmdResults('');
+}
+function closeCmd() {
+  document.getElementById('cmdOverlay').style.display = 'none';
+  _cmdOpen = false;
+}
+document.getElementById('cmdOverlay').addEventListener('click', function(e){
+  if (e.target === this) closeCmd();
+});
+document.getElementById('cmdInput').addEventListener('input', function(){
+  clearTimeout(_cmdTimer);
+  _cmdTimer = setTimeout(() => loadCmdResults(this.value), 180);
+});
+document.getElementById('cmdInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveCmdIdx(1); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); moveCmdIdx(-1); }
+  if (e.key === 'Enter')     { e.preventDefault(); selectCmd(); }
+});
+
+async function loadCmdResults(q) {
+  const r = await fetch('/api/cmd-palette?q=' + encodeURIComponent(q));
+  const data = await r.json();
+  if (!data.ok) return;
+  _cmdItems = data.results;
+  _cmdIdx = -1;
+  renderCmdResults();
+}
+
+function renderCmdResults() {
+  const el = document.getElementById('cmdResults');
+  if (!_cmdItems.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:.8rem;color:rgba(255,255,255,.3);">No results</div>';
+    return;
+  }
+  el.innerHTML = _cmdItems.map((item, i) =>
+    `<div class="cmd-item${i===_cmdIdx?' active':''}" onclick="goCmd(${i})">
+      <div class="cmd-icon">${item.icon||'📄'}</div>
+      <div>
+        <div class="cmd-label">${item.label}</div>
+        ${item.sublabel ? `<div class="cmd-sub">${item.sublabel}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+function moveCmdIdx(dir) {
+  _cmdIdx = Math.max(-1, Math.min(_cmdItems.length-1, _cmdIdx + dir));
+  renderCmdResults();
+  const items = document.querySelectorAll('.cmd-item');
+  if (items[_cmdIdx]) items[_cmdIdx].scrollIntoView({block:'nearest'});
+}
+function selectCmd() {
+  if (_cmdIdx >= 0 && _cmdItems[_cmdIdx]) goCmd(_cmdIdx);
+  else if (_cmdItems[0]) goCmd(0);
+}
+function goCmd(i) {
+  const item = _cmdItems[i];
+  if (item) { closeCmd(); window.location.href = item.url; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════════════
+var SHORTCUTS = [
+  {key:'k', mod:'ctrl/cmd', label:'Command Palette',     action: openCmd},
+  {key:'/', mod:'',         label:'Global Search',       action: () => window.location.href='/search'},
+  {key:'d', mod:'',         label:'Dashboard',            action: () => goShortcut('/dashboard')},
+  {key:'p', mod:'',         label:'Pipeline',             action: () => goShortcut('/pipeline')},
+  {key:'f', mod:'',         label:'Finance Calculator',   action: () => goShortcut('/finance')},
+  {key:'h', mod:'',         label:'Inventory Health',     action: () => goShortcut('/inventory-health')},
+  {key:'a', mod:'',         label:'Analytics',            action: () => goShortcut('/analytics')},
+  {key:'t', mod:'',         label:'Trade-Ins',            action: () => goShortcut('/trade-ins')},
+  {key:'n', mod:'',         label:'New Vehicle (Admin)',  action: () => goShortcut('/admin')},
+  {key:'?', mod:'',         label:'Show shortcuts',       action: showShortcutHelp},
+  {key:'Escape', mod:'',    label:'Close / Back',         action: closeAll},
+];
+
+function goShortcut(url) {
+  showKbToast('→ ' + url);
+  setTimeout(() => window.location.href = url, 300);
+}
+function showKbToast(msg) {
+  const t = document.getElementById('kbToast');
+  t.textContent = msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)';}, 1800);
+}
+function closeAll() {
+  closeCmd();
+  document.getElementById('shortcutHelp').style.display = 'none';
+  closeInlinePop();
+}
+function showShortcutHelp() {
+  const list = document.getElementById('shortcutList');
+  list.innerHTML = SHORTCUTS.map(s =>
+    `<div><kbd class="kb-badge">${s.mod ? s.mod+'+' : ''}${s.key === 'Escape' ? 'ESC' : s.key.toUpperCase()}</kbd></div><div style="color:rgba(255,255,255,.7)">${s.label}</div>`
+  ).join('');
+  document.getElementById('shortcutHelp').style.display = 'flex';
+}
+
+document.addEventListener('keydown', function(e) {
+  // Don't fire if typing in an input
+  const tag = document.activeElement.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+  // CMD/Ctrl+K — always open palette
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if (_cmdOpen) closeCmd(); else openCmd();
+    return;
+  }
+  if (_cmdOpen) return; // let palette handle all keys
+  if (isInput) return;
+
+  // Single-key shortcuts
+  switch(e.key) {
+    case '/': e.preventDefault(); window.location.href='/search'; break;
+    case 'd': case 'D': goShortcut('/dashboard'); break;
+    case 'p': case 'P': goShortcut('/pipeline'); break;
+    case 'f': case 'F': goShortcut('/finance'); break;
+    case 'h': case 'H': goShortcut('/inventory-health'); break;
+    case 'a': case 'A': goShortcut('/analytics'); break;
+    case 't': case 'T': goShortcut('/trade-ins'); break;
+    case 'n': case 'N': goShortcut('/admin'); break;
+    case '?': showShortcutHelp(); break;
+    case 'Escape': closeAll(); break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INLINE EDIT
+// ═══════════════════════════════════════════════════════════════════════════
+var _inlineVid = null;
+var _inlineField = null;
+var _inlineFields = null;
+var _inlineTriggerEl = null;
+
+async function initInlineEdit() {
+  const r = await fetch('/api/inline-editable-fields');
+  const data = await r.json();
+  if (data.ok) _inlineFields = data.fields;
+}
+
+// Safe guard - inline edit only works on pages with VEHICLE_ID
+function openInlineEdit(el, vid, field, currentValue) {
+  if (!_inlineFields) return;
+  if (!vid) return;
+  var meta = _inlineFields[field];
+  if (!meta) return;
+  _inlineVid = vid;
+  _inlineField = field;
+  _inlineTriggerEl = el;
+
+  document.getElementById('inlinePopLabel').textContent = 'Edit: ' + meta.label;
+  var inp = document.getElementById('inlinePopInput');
+
+  if (meta.type === 'select') {
+    inp.innerHTML = '<select id="inlineVal" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;">' +
+      meta.options.map(function(o){ return '<option value="' + o + '"' + (o===currentValue?' selected':'') + '>' + o + '</option>'; }).join('') +
+      '</select>';
+  } else if (meta.type === 'textarea') {
+    inp.innerHTML = '<textarea id="inlineVal" rows="3" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;resize:vertical;outline:none;">' + (currentValue||'') + '</textarea>';
+  } else {
+    inp.innerHTML = '<input id="inlineVal" type="text" value="' + (currentValue||'').replace(/"/g,'&quot;') + '" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;"/>';
+  }
+
+  var rect = el.getBoundingClientRect();
+  var pop = document.getElementById('inlinePopover');
+  pop.style.display = 'block';
+  var top = rect.bottom + window.scrollY + 6;
+  var left = rect.left + window.scrollX;
+  if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+  if (top + 160 > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - 165;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+
+  setTimeout(function(){
+    var v = document.getElementById('inlineVal');
+    if (v) { v.focus(); if (v.select) v.select(); }
+  }, 50);
+
+  document.getElementById('inlineVal').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') saveInlineEdit();
+    if (e.key === 'Escape') closeInlinePop();
+  });
+}
+
+
+async function saveInlineEdit() {
+  const val = document.getElementById('inlineVal')?.value;
+  if (val === undefined) return;
+  const r = await fetch('/api/inline-edit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({vid: _inlineVid, field: _inlineField, value: val})
+  });
+  const data = await r.json();
+  if (data.ok) {
+    showKbToast('✅ ' + _inlineField + ' updated');
+    // Update the element text
+    if (_inlineTriggerEl) {
+      _inlineTriggerEl.textContent = val;
+      _inlineTriggerEl.dataset.val = val;
+    }
+    closeInlinePop();
+  } else {
+    showKbToast('❌ ' + (data.message || 'Error'));
+  }
+}
+function closeInlinePop() {
+  document.getElementById('inlinePopover').style.display = 'none';
+  _inlineVid = null; _inlineField = null;
+}
+// Close on outside click
+document.addEventListener('click', function(e){
+  const pop = document.getElementById('inlinePopover');
+  if (pop.style.display !== 'none' && !pop.contains(e.target)) {
+    if (!e.target.classList.contains('ie-enabled')) closeInlinePop();
+  }
+});
+
+// ── Add ⌘K button to all pages ───────────────────────────────────────────────
+(function(){
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  const btn = document.createElement('button');
+  btn.innerHTML = '⌘K';
+  btn.title = 'Command Palette (Ctrl+K / ⌘K)';
+  btn.onclick = openCmd;
+  btn.style.cssText = 'margin-left:auto;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:4px 10px;color:#C9A84C;font-family:\'Rajdhani\',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;';
+  btn.onmouseenter = () => btn.style.background = 'rgba(201,168,76,.2)';
+  btn.onmouseleave = () => btn.style.background = 'rgba(201,168,76,.1)';
+  // Insert before last nav child (scanner button usually)
+  const existing = nav.querySelector('[style*="margin-left:auto"]');
+  if (existing) {
+    existing.style.marginLeft = '0';
+    nav.insertBefore(btn, existing);
+  } else {
+    nav.appendChild(btn);
+  }
+})();
+
+// Init inline edit on pages that support it
+try { initInlineEdit(); } catch(e) {}
+</script>
+</body>
+</html>

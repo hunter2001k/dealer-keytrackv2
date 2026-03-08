@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dealer Portal — {{ dealer.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold2:#F0CB6E;--ink:#06080D;--ink2:#0E1118;--ink3:#161C28;--border:rgba(255,255,255,.07);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--ink);color:#fff;min-height:100vh;}
+    .sidebar{width:220px;background:var(--ink2);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;padding:20px 0;z-index:50;}
+    .sidebar-brand{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+    .brand-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+    .brand-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.12em;color:var(--gold);}
+    .brand-dealer{font-size:.75rem;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;transition:all .15s;border-left:2px solid transparent;}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.03);}
+    .nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,.05);}
+    .nav-icon{font-size:1rem;width:18px;text-align:center;}
+    .nav-divider{height:1px;background:var(--border);margin:10px 20px;}
+    .sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);}
+    .main{margin-left:220px;padding:28px 28px;}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);}.main{margin-left:0;padding:16px;}}
+    /* Stats */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+    @media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+    .stat-card{background:var(--ink2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+    .stat-num{font-family:'Syne',sans-serif;font-weight:700;font-size:2rem;color:var(--gold);}
+    .stat-label{font-size:.7rem;color:rgba(255,255,255,.3);letter-spacing:.08em;margin-top:4px;text-transform:uppercase;}
+    /* Add vehicle form */
+    .add-vehicle-panel{background:var(--ink2);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;}
+    .panel-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+    .toggle-btn{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);padding:5px 14px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.08em;cursor:pointer;}
+    .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+    @media(max-width:700px){.form-grid{grid-template-columns:1fr 1fr;}}
+    .field{margin-bottom:0;}
+    label{font-size:.7rem;color:rgba(255,255,255,.35);letter-spacing:.07em;display:block;margin-bottom:4px;text-transform:uppercase;}
+    input,select,textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:9px 12px;color:#fff;font-size:.85rem;font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);}
+    input::placeholder{color:rgba(255,255,255,.2);}
+    select option{background:var(--ink2);}
+    .vin-row{display:flex;gap:8px;}
+    .vin-row input{flex:1;}
+    .decode-btn{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);padding:9px 14px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.72rem;cursor:pointer;white-space:nowrap;}
+    .ai-desc-row{display:flex;gap:8px;align-items:flex-end;}
+    .ai-desc-row textarea{flex:1;min-height:60px;resize:vertical;}
+    .ai-btn{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;padding:9px 14px;border-radius:8px;font-size:.72rem;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;white-space:nowrap;align-self:flex-end;}
+    .submit-row{display:flex;gap:10px;margin-top:16px;align-items:center;}
+    .submit-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:10px;padding:11px 28px;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;cursor:pointer;}
+    .plan-limit{font-size:.75rem;color:rgba(255,255,255,.3);}
+    /* Vehicle table */
+    .vehicles-panel{background:var(--ink2);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+    .vehicle-row-item{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;}
+    .vehicle-row-item:hover{background:rgba(255,255,255,.02);}
+    .veh-photo{width:60px;height:44px;border-radius:6px;background:var(--ink);overflow:hidden;flex-shrink:0;}
+    .veh-photo img{width:100%;height:100%;object-fit:cover;}
+    .veh-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:rgba(255,255,255,.1);}
+    .veh-info{flex:1;min-width:0;}
+    .veh-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .veh-meta{font-size:.72rem;color:rgba(255,255,255,.3);margin-top:2px;}
+    .veh-price{font-family:'Syne',sans-serif;font-weight:700;color:var(--gold);font-size:.95rem;}
+    .veh-actions{display:flex;gap:6px;}
+    .veh-btn{padding:5px 12px;border-radius:6px;font-size:.7rem;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;border:none;transition:opacity .15s;text-decoration:none;display:inline-block;}
+    .veh-btn:hover{opacity:.8;}
+    .btn-view{background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);}
+    .btn-photos{background:rgba(201,168,76,.1);color:var(--gold);}
+    .btn-del{background:rgba(239,68,68,.1);color:#FCA5A5;}
+    .status-pill{padding:3px 8px;border-radius:10px;font-size:.65rem;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.06em;}
+    .status-Available{background:rgba(34,197,94,.1);color:#86EFAC;border:1px solid rgba(34,197,94,.15);}
+    .status-Sold{background:rgba(239,68,68,.1);color:#FCA5A5;border:1px solid rgba(239,68,68,.15);}
+    .status-Hold{background:rgba(251,191,36,.1);color:#FDE68A;border:1px solid rgba(251,191,36,.15);}
+    .empty-state{text-align:center;padding:40px;color:rgba(255,255,255,.25);}
+    .toast{position:fixed;bottom:20px;right:20px;background:var(--ink2);border:1px solid rgba(201,168,76,.3);color:#fff;padding:12px 18px;border-radius:10px;font-size:.85rem;z-index:999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+    .form-collapsed{display:none;}
+    .plan-badge{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);padding:3px 10px;border-radius:6px;font-size:.68rem;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.08em;}
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <div class="brand-name">DEALER PORTAL</div>
+    <div class="brand-dealer" title="{{ dealer.name }}">{{ dealer.name }}</div>
+  </div>
+  <a href="/dealer-portal/{{ dealer.id }}/dashboard" class="nav-item active"><span class="nav-icon">📊</span>Dashboard</a>
+  <a href="/dealer/{{ dealer.slug }}" target="_blank" class="nav-item"><span class="nav-icon">🌐</span>My Public Page</a>
+  <a href="/dealer-portal/{{ dealer.id }}/profile" class="nav-item"><span class="nav-icon">⚙️</span>Profile</a>
+  <a href="/dealer-portal/{{ dealer.id }}/upgrade" class="nav-item"><span class="nav-icon">⬆️</span>Upgrade Plan</a>
+  <div class="nav-divider"></div>
+  <a href="/listings" target="_blank" class="nav-item"><span class="nav-icon">🚗</span>Browse All Listings</a>
+  <a href="/scoreboard" target="_blank" class="nav-item"><span class="nav-icon">🏆</span>Sales Board</a>
+  <div class="sidebar-footer">
+    <div style="font-size:.72rem;color:rgba(255,255,255,.3);margin-bottom:8px;">Current plan</div>
+    <span class="plan-badge">{{ plan.name.upper() }} — ${{ plan.price }}/mo</span>
+    <a href="/dealer-portal/logout" style="display:block;margin-top:12px;font-size:.75rem;color:rgba(255,255,255,.25);text-decoration:none;">Sign out</a>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+  <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;">Good day, <span style="color:var(--gold);">{{ dealer.name }}</span></h1>
+      <p style="color:rgba(255,255,255,.35);font-size:.85rem;margin-top:3px;">{{ dealer.suburb }}, {{ dealer.state }} · <a href="/dealer/{{ dealer.slug }}" target="_blank" style="color:var(--gold);text-decoration:none;">View public page →</a></p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="{{ base_url }}/feed/carsales.xml" target="_blank" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:rgba(255,255,255,.5);padding:8px 14px;border-radius:8px;font-size:.75rem;text-decoration:none;">📡 Feeds</a>
+      <a href="/admin/feeds" style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);padding:8px 14px;border-radius:8px;font-size:.75rem;text-decoration:none;">⚙️ Admin</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">{{ available|length }}</div><div class="stat-label">Available</div></div>
+    <div class="stat-card"><div class="stat-num">{{ sold|length }}</div><div class="stat-label">Sold</div></div>
+    <div class="stat-card"><div class="stat-num">${{ "{:,.0f}".format(stock_value) }}</div><div class="stat-label">Stock Value</div></div>
+    <div class="stat-card"><div class="stat-num">{{ plan.max_listings }}</div><div class="stat-label">Listing Limit</div></div>
+  </div>
+
+  <!-- Add Vehicle -->
+  <div class="add-vehicle-panel">
+    <div class="panel-title">
+      ADD NEW VEHICLE
+      <button class="toggle-btn" onclick="toggleForm()">+ ADD VEHICLE</button>
+    </div>
+    <div class="form-collapsed" id="addForm">
+      <!-- VIN decode -->
+      <div style="margin-bottom:16px;">
+        <label>VIN DECODE (Auto-fill from VIN)</label>
+        <div class="vin-row">
+          <input id="f-vin" placeholder="Enter 17-character VIN and click decode…" maxlength="17" oninput="this.value=this.value.toUpperCase()">
+          <button class="decode-btn" onclick="decodeVin()">🔍 DECODE VIN</button>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>Make *</label><input id="f-make" placeholder="Toyota"></div>
+        <div class="field"><label>Model *</label><input id="f-model" placeholder="HiLux"></div>
+        <div class="field"><label>Year *</label><input id="f-year" type="number" placeholder="2020" min="1990" max="2030"></div>
+        <div class="field"><label>Trim</label><input id="f-trim" placeholder="SR5"></div>
+        <div class="field"><label>Body</label>
+          <select id="f-body"><option value="">Select…</option><option>Ute</option><option>SUV</option><option>Wagon</option><option>Sedan</option><option>Hatchback</option><option>Van</option><option>Cab Chassis</option><option>People Mover</option><option>Coupe</option><option>Convertible</option></select>
+        </div>
+        <div class="field"><label>Engine</label><input id="f-engine" placeholder="2.8L 4cyl Diesel"></div>
+        <div class="field"><label>Transmission</label>
+          <select id="f-trans"><option value="">Select…</option><option>Automatic</option><option>Manual</option><option>CVT</option><option>DCT</option></select>
+        </div>
+        <div class="field"><label>Fuel</label>
+          <select id="f-fuel"><option value="">Select…</option><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option><option>LPG</option></select>
+        </div>
+        <div class="field"><label>Colour</label><input id="f-color" placeholder="White"></div>
+        <div class="field"><label>Mileage (km)</label><input id="f-mileage" placeholder="85000"></div>
+        <div class="field"><label>Price ($)</label><input id="f-price" type="number" placeholder="35000"></div>
+        <div class="field"><label>Stock #</label><input id="f-id" placeholder="Auto-generated if blank"></div>
+      </div>
+      <!-- AI Description -->
+      <div style="margin-top:14px;">
+        <label>DESCRIPTION</label>
+        <div class="ai-desc-row">
+          <textarea id="f-notes" placeholder="Describe the vehicle or click AI to auto-generate…"></textarea>
+          <button class="ai-btn" onclick="aiDescribe()">🤖 AI WRITE</button>
+        </div>
+      </div>
+      <div class="submit-row">
+        <button class="submit-btn" onclick="addVehicle()">ADD LISTING →</button>
+        <span class="plan-limit">{{ available|length }}/{{ plan.max_listings }} listings used</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vehicle list -->
+  <div class="vehicles-panel">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.1em;color:rgba(255,255,255,.4);">MY VEHICLES ({{ vehicles|length }})</span>
+    </div>
+    {% if not vehicles %}
+    <div class="empty-state">
+      <p style="font-size:2rem;margin-bottom:8px;">🚗</p>
+      <p>No vehicles listed yet. Add your first vehicle above!</p>
+    </div>
+    {% endif %}
+    {% for v in vehicles %}
+    {% set vid = v.get('Internal_ID','') %}
+    {% set status = v.get('Status','Available') %}
+    <div class="vehicle-row-item" id="row-{{ vid }}">
+      <div class="veh-photo">
+        {% if v._primary_photo %}<img src="{{ v._primary_photo }}" alt="">
+        {% else %}<div class="veh-ph">🚗</div>{% endif %}
+      </div>
+      <div class="veh-info">
+        <div class="veh-name">{{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') }}{% if v.get('Trim') %} {{ v.Trim }}{% endif %}</div>
+        <div class="veh-meta">{{ vid }} · {{ v.get('Mileage','') }}{% if v.get('Color') %} · {{ v.Color }}{% endif %} · 📷 {{ v._photo_count }} photos</div>
+      </div>
+      <span class="status-pill status-{{ status }}">{{ status.upper() }}</span>
+      <div class="veh-price">{{ v.get('Price','—') }}</div>
+      <div class="veh-actions">
+        <a href="/listing/{{ vid }}" target="_blank" class="veh-btn btn-view">VIEW</a>
+        <a href="/photos/{{ vid }}" class="veh-btn btn-photos">📷</a>
+        <button class="veh-btn btn-del" onclick="deleteVehicle('{{ vid }}')">✕</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEALER_ID='{{ dealer.id }}';
+
+function toggleForm(){
+  const f=document.getElementById('addForm');
+  f.style.display=f.style.display==='block'?'none':'block';
+}
+
+function toast(msg,ok=true){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.style.borderColor=ok?'rgba(34,197,94,.3)':'rgba(239,68,68,.3)';
+  t.style.display='block';setTimeout(()=>t.style.display='none',3000);
+}
+
+async function decodeVin(){
+  const vin=document.getElementById('f-vin').value.trim();
+  if(vin.length!==17){toast('VIN must be 17 characters',false);return;}
+  const r=await fetch('/api/dealer-portal/decode-vin',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({vin})});
+  const d=await r.json();
+  if(!d.ok){toast('VIN decode failed — fill in manually',false);return;}
+  const data=d.data;
+  if(data.make)document.getElementById('f-make').value=data.make;
+  if(data.model)document.getElementById('f-model').value=data.model;
+  if(data.year)document.getElementById('f-year').value=data.year;
+  if(data.body)document.getElementById('f-body').value=data.body||'';
+  if(data.engine)document.getElementById('f-engine').value=data.engine;
+  if(data.transmission){const s=document.getElementById('f-trans');[...s.options].forEach(o=>{if(o.value.toLowerCase().includes(data.transmission.toLowerCase()))s.value=o.value;});}
+  if(data.fuel){const s=document.getElementById('f-fuel');[...s.options].forEach(o=>{if(o.value.toLowerCase().includes(data.fuel.toLowerCase()))s.value=o.value;});}
+  if(data.trim)document.getElementById('f-trim').value=data.trim;
+  toast('✓ VIN decoded — review and confirm details');
+}
+
+async function aiDescribe(){
+  const btn=event.currentTarget; btn.textContent='⏳ WRITING…'; btn.disabled=true;
+  const r=await fetch('/api/dealer-portal/ai-describe',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      year:document.getElementById('f-year').value,make:document.getElementById('f-make').value,
+      model:document.getElementById('f-model').value,trim:document.getElementById('f-trim').value,
+      body:document.getElementById('f-body').value,engine:document.getElementById('f-engine').value,
+      transmission:document.getElementById('f-trans').value,fuel:document.getElementById('f-fuel').value,
+      color:document.getElementById('f-color').value,mileage:document.getElementById('f-mileage').value,
+      price:document.getElementById('f-price').value,
+    })});
+  const d=await r.json();
+  btn.textContent='🤖 AI WRITE'; btn.disabled=false;
+  if(d.ok)document.getElementById('f-notes').value=d.description;
+  else toast(d.message||'AI error',false);
+}
+
+async function addVehicle(){
+  const make=document.getElementById('f-make').value.trim();
+  const model=document.getElementById('f-model').value.trim();
+  const year=document.getElementById('f-year').value.trim();
+  if(!make||!model||!year){toast('Make, model and year are required',false);return;}
+  const r=await fetch(`/dealer-portal/${DEALER_ID}/add-vehicle`,{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      make,model,year:parseInt(year)||0,
+      trim:document.getElementById('f-trim').value,
+      body:document.getElementById('f-body').value,
+      engine:document.getElementById('f-engine').value,
+      transmission:document.getElementById('f-trans').value,
+      fuel:document.getElementById('f-fuel').value,
+      color:document.getElementById('f-color').value,
+      mileage:document.getElementById('f-mileage').value,
+      price:document.getElementById('f-price').value,
+      vin:document.getElementById('f-vin').value,
+      notes:document.getElementById('f-notes').value,
+      internal_id:document.getElementById('f-id').value,
+    })});
+  const d=await r.json();
+  if(d.ok){toast('✓ Vehicle listed!');setTimeout(()=>location.reload(),1200);}
+  else toast(d.message||'Error adding vehicle',false);
+}
+
+async function deleteVehicle(vid){
+  if(!confirm('Remove this listing?')) return;
+  const r=await fetch(`/dealer-portal/${DEALER_ID}/delete-vehicle`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({vid})});
+  const d=await r.json();
+  if(d.ok){toast('Vehicle removed');document.getElementById('row-'+vid)?.remove();}
+  else toast(d.message||'Error',false);
+}
+</script>
+</body>
+</html>

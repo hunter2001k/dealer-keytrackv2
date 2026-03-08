@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ vehicle.get('Year','') }} {{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }} — KeyTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--panel2:#161B26;--border:rgba(201,168,76,0.18);}
+    *{box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:100;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;}
+    .content{max-width:680px;margin:0 auto;padding:24px 16px 80px;}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,0.07);border-radius:16px;margin-bottom:16px;overflow:hidden;}
+    .card-header{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px;}
+    .card-title{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;font-size:.95rem;}
+    .card-body{padding:18px;}
+    .sbadge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;font-weight:500;}
+    .s-available{background:rgba(34,197,94,.12);color:#86EFAC;border:1px solid rgba(34,197,94,.2);}
+    .s-sold{background:rgba(239,68,68,.12);color:#FCA5A5;border:1px solid rgba(239,68,68,.2);}
+    .s-in-service{background:rgba(251,191,36,.12);color:#FDE68A;border:1px solid rgba(251,191,36,.2);}
+    .s-demo{background:rgba(139,92,246,.12);color:#C4B5FD;border:1px solid rgba(139,92,246,.2);}
+    .s-hold{background:rgba(59,130,246,.12);color:#93C5FD;border:1px solid rgba(59,130,246,.2);}
+    .s-pending{background:rgba(245,158,11,.12);color:#FCD34D;border:1px solid rgba(245,158,11,.2);}
+    .s-archived{background:rgba(100,116,139,.12);color:#94A3B8;border:1px solid rgba(100,116,139,.2);}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:9px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;border:none;cursor:pointer;transition:opacity .15s;text-decoration:none;}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;}
+    .btn-ghost{background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);}
+    .btn-green{background:rgba(34,197,94,.12);color:#86EFAC;border:1px solid rgba(34,197,94,.2);}
+    .btn-blue{background:rgba(59,130,246,.12);color:#93C5FD;border:1px solid rgba(59,130,246,.2);}
+    .btn-red{background:rgba(239,68,68,.12);color:#FCA5A5;border:1px solid rgba(239,68,68,.2);}
+    .btn:hover{opacity:.8;}
+    .btn:disabled{opacity:.45;cursor:not-allowed;}
+    .btn-sm{padding:6px 12px;font-size:.73rem;}
+    .spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .spec-item{background:rgba(255,255,255,.03);border-radius:9px;padding:10px 13px;}
+    .spec-label{color:rgba(255,255,255,.35);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+    .spec-val{font-size:.9rem;font-weight:500;}
+    .pitch-text{font-size:.95rem;line-height:1.7;color:rgba(255,255,255,.85);}
+    .obj-card{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:.85rem;line-height:1.5;}
+    .status-select{background:#161B26;border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:8px;padding:8px 12px;font-size:.85rem;outline:none;font-family:'DM Sans',sans-serif;}
+    .status-select:focus{border-color:var(--gold);}
+    .dot-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:500;}
+    .dot-green{background:rgba(34,197,94,.1);color:#86EFAC;border:1px solid rgba(34,197,94,.2);}
+    .dot-yellow{background:rgba(251,191,36,.1);color:#FDE68A;border:1px solid rgba(251,191,36,.2);}
+    .dot-amber{background:rgba(245,158,11,.1);color:#FCD34D;border:1px solid rgba(245,158,11,.2);}
+    .dot-red{background:rgba(239,68,68,.1);color:#FCA5A5;border:1px solid rgba(239,68,68,.2);}
+    .recall-item{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+    .tab-bar{display:flex;gap:4px;background:rgba(255,255,255,.04);border-radius:10px;padding:4px;margin-bottom:16px;}
+    .tab-btn{flex:1;padding:7px;border:none;background:none;color:rgba(255,255,255,.4);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.08em;cursor:pointer;border-radius:7px;transition:.15s;}
+    .tab-btn.active{background:var(--panel2);color:var(--gold);}
+    .tab-pane{display:none;}
+    .tab-pane.active{display:block;}
+    .field-input{width:100%;background:#161B26;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#fff;padding:9px 12px;font-size:.875rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
+    .field-input:focus{border-color:var(--gold);}
+    textarea.field-input{resize:vertical;min-height:70px;}
+    .field-label{display:block;color:rgba(255,255,255,.35);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;}
+    .enq-item{background:rgba(255,255,255,.03);border-radius:10px;padding:11px 14px;margin-bottom:8px;}
+    .td-item{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:11px 14px;margin-bottom:8px;}
+    .svc-item{background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.12);border-radius:10px;padding:11px 14px;margin-bottom:8px;}
+    .ph-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:16px;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:var(--panel);border:1px solid var(--border);border-radius:18px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+    .modal-header{padding:18px 22px 14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--panel);z-index:1;}
+    .modal-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;}
+    .modal-body{padding:18px 22px 22px;}
+    .close-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3);font-size:1.4rem;line-height:1;}
+    .profit-pos{color:#86EFAC;}
+    .profit-neg{color:#FCA5A5;}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--panel);border:1px solid var(--border);color:#fff;padding:11px 22px;border-radius:10px;font-size:.875rem;opacity:0;transition:opacity .3s,transform .3s;z-index:500;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    .key-out{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;}
+    .key-in{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;}
+
+  /* ── SALE CAPTURE MODAL ───────────────────────────────────────────────── */
+  .sale-modal-overlay{display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 12px;}
+  .sale-modal-overlay.open{display:flex;}
+  .sale-modal{background:#111318;border:1.5px solid rgba(201,168,76,.28);border-radius:18px;width:100%;max-width:600px;overflow:hidden;margin:auto;}
+  .sale-modal-header{background:linear-gradient(135deg,rgba(201,168,76,.14),rgba(201,168,76,.04));padding:18px 22px;border-bottom:1px solid rgba(201,168,76,.15);display:flex;align-items:center;justify-content:space-between;}
+  .sale-modal-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.15rem;letter-spacing:.1em;color:var(--gold);}
+  .sale-modal-close{background:transparent;border:none;color:rgba(255,255,255,.4);font-size:1.4rem;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px;}
+  .sale-modal-close:hover{color:#fff;background:rgba(255,255,255,.08);}
+  .sale-modal-body{padding:20px 22px;}
+  .sale-section{margin-bottom:18px;}
+  .sale-section-label{font-size:.65rem;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .sale-section-label::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.06);}
+  .sale-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:480px){.sale-grid{grid-template-columns:1fr;}}
+  .sale-field label{font-size:.65rem;color:rgba(255,255,255,.3);letter-spacing:.08em;display:block;margin-bottom:4px;text-transform:uppercase;}
+  .sale-field label .req{color:var(--gold);}
+  .sale-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:10px 13px;color:#fff;font-size:.88rem;font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+  .sale-input:focus{outline:none;border-color:var(--gold);}
+  .sale-input::placeholder{color:rgba(255,255,255,.2);}
+  .sale-input.error{border-color:rgba(239,68,68,.5);}
+  /* Photo capture */
+  .photo-zone{border:2px dashed rgba(201,168,76,.25);border-radius:12px;background:rgba(255,255,255,.02);padding:16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+  .photo-zone:hover{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.04);}
+  .photo-zone.has-photo{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.04);}
+  .photo-preview{width:100%;max-height:180px;border-radius:8px;object-fit:cover;display:none;margin-bottom:8px;}
+  .photo-preview.show{display:block;}
+  .photo-label{font-size:.8rem;color:rgba(255,255,255,.35);margin-top:6px;}
+  .photo-label span{color:var(--gold);}
+  #cameraVideo{width:100%;border-radius:8px;display:none;}
+  #cameraVideo.show{display:block;}
+  /* Submit */
+  .sale-submit-row{display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);}
+  .sale-submit-btn{flex:1;padding:13px;border-radius:11px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:.12em;border:none;cursor:pointer;transition:opacity .15s;}
+  .sale-submit-btn:hover{opacity:.88;}
+  .btn-confirm-sold{background:linear-gradient(135deg,#C9A84C,#F0CB6E);color:#0A0C10;}
+  .btn-cancel-sale{background:rgba(255,255,255,.06);color:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.1);}
+  .sale-vehicle-preview{display:flex;align-items:center;gap:12px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:12px 14px;margin-bottom:16px;}
+  .svp-badge{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.2);color:#FCA5A5;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.1em;padding:3px 10px;border-radius:6px;}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div style="max-width:680px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:28px;height:28px;background:linear-gradient(135deg,#C9A84C,#F0CB6E);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><path d="m21 2-9 9"/><path d="M8 8a3 3 0 0 0 0 6h4l1 1 1-1 1 1 1-1 3 3 2-2-3-3 1-1V8a3 3 0 0 0-3-3H8z"/></svg>
+      </div>
+      <span class="brand" style="color:var(--gold)">KEYTRACK</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-sm">← FLEET</a>
+      {% if is_admin %}<a href="{{ url_for('admin_panel') }}" class="btn btn-ghost btn-sm">ADMIN</a>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Header -->
+  <div style="margin-bottom:20px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;line-height:1.1;">
+          {% if vehicle.get('Year') %}{{ vehicle.Year }} {% endif %}{{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }}
+        </div>
+        {% if vehicle.get('Trim') %}<div style="color:rgba(255,255,255,.45);font-size:.9rem;margin-top:2px;">{{ vehicle.Trim }}</div>{% endif %}
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <span class="sbadge s-{{ vehicle.get('Status','available').lower().replace(' ','-') }} ie-enabled"
+            data-val="{{ vehicle.get('Status','') }}" title="Click to edit status"
+            onclick="openInlineEdit(this, VEHICLE_ID, 'Status', this.dataset.val)">{{ vehicle.get('Status','—') }}</span>
+          <span style="color:rgba(255,255,255,.3);font-size:.8rem;">{{ internal_id }}</span>
+          {% if days_on_lot is not none %}
+          <span class="dot-badge {{ dot_flag }}">{{ days_on_lot }}d on lot</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if vehicle.get('Price') %}
+      <div style="text-align:right;">
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;color:var(--gold);">
+          <span class="ie-enabled" data-val="{{ vehicle.Price }}" title="Click to edit price"
+            onclick="openInlineEdit(this, VEHICLE_ID, 'Price', this.dataset.val)">{{ vehicle.Price or '—' }}</span>
+        </div>
+        {% if profit.has_data %}
+        <div style="font-size:.75rem;{{ 'color:#86EFAC' if profit.profit >= 0 else 'color:#FCA5A5' }}">
+          {{ '+' if profit.profit >= 0 else '' }}${{ '{:,}'.format(profit.profit) }} margin ({{ profit.margin_pct }}%)
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Specs -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">VEHICLE SPECS</span>
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <a href="{{ url_for('window_sticker', internal_id=internal_id) }}" class="btn btn-ghost btn-sm" target="_blank">STICKER</a>
+        <button class="btn btn-ghost btn-sm" onclick="copyShareLink()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          SHARE
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="openListingDraft()">AI LISTING</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSalespersonMode()" style="background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.3);color:var(--gold);">🎯 SELL MODE</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="spec-grid">
+        {% for label, key, mono in [
+          ('Color',        'Color',        False),
+          ('Engine',       'Engine',       False),
+          ('Mileage',      'Mileage',      False),
+          ('Transmission', 'Transmission', False),
+          ('Body Style',   'Body',         False),
+          ('Drive Type',   'Drive',        False),
+          ('Fuel Type',    'Fuel',         False),
+          ('Key Tag',      'Key_Tag_ID',   True),
+        ] %}
+        {% if vehicle.get(key) %}
+        <div class="spec-item">
+          <div class="spec-label">{{ label }}</div>
+          <div class="spec-val" style="{% if mono %}font-family:monospace;font-size:.82rem;{% endif %}">{{ vehicle[key] }}</div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% if vehicle.get('VIN') %}
+        <div class="spec-item" style="grid-column:1/-1;">
+          <div class="spec-label">VIN</div>
+          <div class="spec-val" style="font-family:monospace;font-size:.78rem;letter-spacing:.04em;">{{ vehicle.VIN }}</div>
+        </div>
+        {% endif %}
+        {% if vehicle.get('Deep_Link_URL') %}
+        <div class="spec-item">
+          <div class="spec-label">Tracker Link</div>
+          <div class="spec-val"><a href="{{ vehicle.Deep_Link_URL }}" target="_blank" style="color:var(--gold);">Open Tracker ↗</a></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Tag Checkout -->
+  {% if vehicle.get('Key_Tag_ID') %}
+  <div class="card">
+    <div class="card-header">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><path d="m21 2-9 9"/><path d="M8 8a3 3 0 0 0 0 6h4l1 1 1-1 1 1 1-1 3 3 2-2-3-3 1-1V8a3 3 0 0 0-3-3H8z"/></svg>
+      <span class="card-title">KEY CHECKOUT — {{ vehicle.Key_Tag_ID }}</span>
+    </div>
+    <div class="card-body">
+      <div id="keyStatusBox">
+        {% if key_status %}
+        <div class="key-out">
+          <div style="color:#FCA5A5;font-size:.8rem;font-weight:500;">⚠ KEY IS OUT</div>
+          <div style="color:rgba(255,255,255,.6);font-size:.82rem;margin-top:4px;">Checked out by <strong style="color:#fff;">{{ key_status.staff }}</strong> at {{ key_status.time }}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="keyAction('checkin')">RETURN KEY</button>
+        {% else %}
+        <div class="key-in"><div style="color:#86EFAC;font-size:.8rem;font-weight:500;">✓ KEY AVAILABLE</div></div>
+        <button class="btn btn-gold btn-sm" style="margin-top:10px;" onclick="keyAction('checkout')">CHECK OUT KEY</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Status Change -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">UPDATE STATUS</span></div>
+    <div class="card-body" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <select class="status-select" id="statusSelect" onchange="onStatusSelectChange(this.value)">
+        {% for s in statuses %}<option value="{{ s }}" {% if s==vehicle.get('Status') %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-gold" id="saveStatusBtn" onclick="updateStatus()">SAVE STATUS</button>
+      <span id="soldQuickHint" style="display:none;font-size:.72rem;color:var(--gold);opacity:.7;">
+        ↑ Click to open sale form
+      </span>
+    </div>
+  </div>
+
+  <!-- AI Pitch -->
+  <div class="card">
+    <div class="card-header">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12 9 9"/><circle cx="19" cy="5" r="3"/></svg>
+      <span class="card-title">AI SALES PITCH</span>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="regenPitch()" id="regenBtn">REGENERATE</button>
+    </div>
+    <div class="card-body">
+      <div class="pitch-text" id="pitchText">{{ pitch }}</div>
+      {% if objections %}
+      <div style="margin-top:16px;margin-bottom:8px;color:rgba(255,255,255,.35);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;">Objection Handlers</div>
+      {% for obj in objections %}
+      <div class="obj-card">{{ obj }}</div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Tabs: Enquiries / Test Drives / Service / Notes / Recalls / Price History -->
+  <div class="card">
+    <div class="card-body" style="padding-bottom:10px;">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('enquiries',this)">ENQUIRIES<span id="enqBadge" style="margin-left:4px;background:rgba(201,168,76,.2);color:var(--gold);border-radius:20px;padding:0 6px;font-size:.65rem;">{{ enquiries|length }}</span></button>
+        <button class="tab-btn" onclick="switchTab('testdrives',this)">TEST DRIVES<span id="tdBadge" style="margin-left:4px;background:rgba(59,130,246,.2);color:#93C5FD;border-radius:20px;padding:0 6px;font-size:.65rem;">{{ test_drives|length }}</span></button>
+        <button class="tab-btn" onclick="switchTab('service',this)">SERVICE<span id="svcBadge" style="margin-left:4px;background:rgba(34,197,94,.2);color:#86EFAC;border-radius:20px;padding:0 6px;font-size:.65rem;">{{ service_log|length }}</span></button>
+        <button class="tab-btn" onclick="switchTab('notes',this)">NOTES</button>
+        <button class="tab-btn" onclick="switchTab('recalls',this)">RECALLS{% if recalls %}<span style="margin-left:4px;background:rgba(239,68,68,.2);color:#FCA5A5;border-radius:20px;padding:0 6px;font-size:.65rem;">{{ recalls|length }}</span>{% endif %}</button>
+        <button class="tab-btn" onclick="switchTab('prices',this)">PRICES</button>
+      </div>
+
+      <!-- ENQUIRIES TAB -->
+      <div class="tab-pane active" id="tab-enquiries">
+        <button class="btn btn-gold btn-sm" style="margin-bottom:12px;" onclick="openModal('enquiryModal')">+ LOG ENQUIRY</button>
+        {% if enquiries %}
+          {% for e in enquiries %}
+          <div class="enq-item">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div style="font-weight:500;">{{ e.name }}{% if e.phone %} · <span style="color:var(--gold);">{{ e.phone }}</span>{% endif %}</div>
+              <div style="color:rgba(255,255,255,.3);font-size:.72rem;">{{ e.timestamp }}</div>
+            </div>
+            {% if e.email %}<div style="color:rgba(255,255,255,.4);font-size:.8rem;">{{ e.email }}</div>{% endif %}
+            {% if e.notes %}<div style="color:rgba(255,255,255,.6);font-size:.82rem;margin-top:4px;">{{ e.notes }}</div>{% endif %}
+            <div style="color:rgba(255,255,255,.25);font-size:.7rem;margin-top:4px;">Logged by {{ e.staff }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="color:rgba(255,255,255,.2);font-size:.85rem;padding:16px 0;">No enquiries logged yet.</div>
+        {% endif %}
+      </div>
+
+      <!-- TEST DRIVES TAB -->
+      <div class="tab-pane" id="tab-testdrives">
+        <button class="btn btn-blue btn-sm" style="margin-bottom:12px;" onclick="openModal('tdModal')">+ BOOK TEST DRIVE</button>
+        <div id="tdList">
+          {% if test_drives %}
+            {% for td in test_drives %}
+            <div class="td-item">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="font-weight:500;">{{ td.customer_name }}{% if td.phone %} · <span style="color:#93C5FD;">{{ td.phone }}</span>{% endif %}</div>
+                <span style="font-size:.7rem;padding:2px 8px;border-radius:20px;{% if td.status=='scheduled' %}background:rgba(34,197,94,.15);color:#86EFAC;{% elif td.status=='completed' %}background:rgba(100,116,139,.15);color:#94A3B8;{% else %}background:rgba(239,68,68,.15);color:#FCA5A5;{% endif %}">{{ td.status }}</span>
+              </div>
+              <div style="color:rgba(255,255,255,.5);font-size:.8rem;margin-top:3px;">📅 {{ td.datetime }}</div>
+              {% if td.notes %}<div style="color:rgba(255,255,255,.5);font-size:.8rem;">{{ td.notes }}</div>{% endif %}
+              {% if td.status=='scheduled' %}
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="btn btn-green btn-sm" onclick="updateTD('{{ td.id }}','completed')">COMPLETED</button>
+                <button class="btn btn-red btn-sm" onclick="updateTD('{{ td.id }}','cancelled')">CANCEL</button>
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="color:rgba(255,255,255,.2);font-size:.85rem;padding:16px 0;">No test drives booked.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- SERVICE TAB -->
+      <div class="tab-pane" id="tab-service">
+        <button class="btn btn-green btn-sm" style="margin-bottom:12px;" onclick="openModal('svcModal')">+ ADD SERVICE ENTRY</button>
+        {% if service_log %}
+          {% for s in service_log %}
+          <div class="svc-item">
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-weight:500;text-transform:capitalize;">{{ s.type }}</span>
+              <span style="color:rgba(255,255,255,.3);font-size:.72rem;">{{ s.date }}</span>
+            </div>
+            <div style="font-size:.85rem;margin-top:3px;">{{ s.description }}</div>
+            {% if s.cost %}<div style="color:var(--gold);font-size:.8rem;margin-top:2px;">Cost: {{ s.cost }}</div>{% endif %}
+            {% if s.technician %}<div style="color:rgba(255,255,255,.3);font-size:.72rem;">Tech: {{ s.technician }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="color:rgba(255,255,255,.2);font-size:.85rem;padding:16px 0;">No service records.</div>
+        {% endif %}
+      </div>
+
+      <!-- NOTES TAB -->
+      <div class="tab-pane" id="tab-notes">
+        <div id="notesDisplay" style="white-space:pre-wrap;font-size:.85rem;line-height:1.7;color:rgba(255,255,255,.7);margin-bottom:14px;">{{ vehicle.get('Notes','No notes yet.') }}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label class="field-label">Add a note</label>
+          <textarea class="field-input" id="newNoteText" placeholder="e.g. Customer came back twice — very interested. Offered $28k." rows="3"></textarea>
+          <button class="btn btn-gold btn-sm" onclick="addNote()" style="align-self:flex-start;">SAVE NOTE</button>
+        </div>
+      </div>
+
+      <!-- RECALLS TAB -->
+      <div class="tab-pane" id="tab-recalls">
+        {% if recalls %}
+          {% for recall in recalls %}
+          <div class="recall-item">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+              <div style="font-size:.75rem;font-family:monospace;color:#FCA5A5;">{{ recall.campaign }}</div>
+              <div style="font-size:.72rem;color:rgba(255,255,255,.3);">{{ recall.date }}</div>
+            </div>
+            {% if recall.component %}<div style="font-weight:500;font-size:.85rem;margin-top:4px;">{{ recall.component }}</div>{% endif %}
+            {% if recall.summary %}<div style="font-size:.82rem;color:rgba(255,255,255,.6);margin-top:4px;">{{ recall.summary }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="color:#86EFAC;font-size:.85rem;padding:16px 0;">✓ No open recalls found for this vehicle.</div>
+        {% endif %}
+      </div>
+
+      <!-- PRICE HISTORY TAB -->
+      <div class="tab-pane" id="tab-prices">
+        {% if price_history %}
+          {% for ph in price_history %}
+          <div class="ph-item">
+            <div style="font-weight:500;color:var(--gold);">{{ ph.price }}</div>
+            <div style="color:rgba(255,255,255,.35);font-size:.78rem;">{{ ph.date }} by {{ ph.user }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="color:rgba(255,255,255,.2);font-size:.85rem;padding:16px 0;">No price changes recorded yet.</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- ENQUIRY MODAL -->
+<div class="modal-overlay" id="enquiryModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Log Customer Enquiry</span><button class="close-btn" onclick="closeModal('enquiryModal')">×</button></div>
+    <div class="modal-body">
+      <div style="display:grid;gap:12px;">
+        <div><label class="field-label">Customer Name *</label><input class="field-input" id="enq_name" placeholder="Jane Smith"/></div>
+        <div><label class="field-label">Phone</label><input class="field-input" id="enq_phone" type="tel" placeholder="+64 21 123 4567"/></div>
+        <div><label class="field-label">Email</label><input class="field-input" id="enq_email" type="email" placeholder="jane@email.com"/></div>
+        <div><label class="field-label">Notes</label><textarea class="field-input" id="enq_notes" placeholder="What they asked about, follow-up needed..."></textarea></div>
+        <div><label class="field-label">Follow-up Date (optional)</label><input class="field-input" id="enq_followup" type="date"/></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn btn-gold" onclick="submitEnquiry()">SAVE ENQUIRY</button>
+        <button class="btn btn-ghost" onclick="closeModal('enquiryModal')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEST DRIVE MODAL -->
+<div class="modal-overlay" id="tdModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Book Test Drive</span><button class="close-btn" onclick="closeModal('tdModal')">×</button></div>
+    <div class="modal-body">
+      <div style="display:grid;gap:12px;">
+        <div><label class="field-label">Customer Name *</label><input class="field-input" id="td_name" placeholder="John Smith"/></div>
+        <div><label class="field-label">Phone</label><input class="field-input" id="td_phone" type="tel" placeholder="+64 21 999 8888"/></div>
+        <div><label class="field-label">Date & Time *</label><input class="field-input" id="td_datetime" type="datetime-local"/></div>
+        <div><label class="field-label">Notes</label><textarea class="field-input" id="td_notes" placeholder="Any special requests..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn btn-gold" onclick="submitTD()">BOOK TEST DRIVE</button>
+        <button class="btn btn-ghost" onclick="closeModal('tdModal')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICE MODAL -->
+<div class="modal-overlay" id="svcModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Add Service Entry</span><button class="close-btn" onclick="closeModal('svcModal')">×</button></div>
+    <div class="modal-body">
+      <div style="display:grid;gap:12px;">
+        <div>
+          <label class="field-label">Type</label>
+          <select class="field-input" id="svc_type">
+            <option value="service">Service</option>
+            <option value="recon">Reconditioning</option>
+            <option value="inspection">Inspection</option>
+            <option value="detail">Detail/Valet</option>
+            <option value="repair">Repair</option>
+            <option value="wof">WOF/Registration</option>
+          </select>
+        </div>
+        <div><label class="field-label">Description *</label><textarea class="field-input" id="svc_desc" placeholder="e.g. Full service — oil, filters, brakes checked"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label class="field-label">Cost</label><input class="field-input" id="svc_cost" placeholder="$350"/></div>
+          <div><label class="field-label">Date</label><input class="field-input" id="svc_date" type="date"/></div>
+        </div>
+        <div><label class="field-label">Technician</label><input class="field-input" id="svc_tech" placeholder="Mike's Auto"/></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn btn-gold" onclick="submitService()">SAVE ENTRY</button>
+        <button class="btn btn-ghost" onclick="closeModal('svcModal')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LISTING MODAL -->
+<div class="modal-overlay" id="listingModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header"><span class="modal-title">AI Listing Draft</span><button class="close-btn" onclick="closeModal('listingModal')">×</button></div>
+    <div class="modal-body">
+      <div id="listingContent" style="white-space:pre-wrap;font-size:.875rem;line-height:1.7;color:rgba(255,255,255,.8);min-height:100px;"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn btn-gold btn-sm" onclick="copyListing()">COPY TEXT</button>
+        <button class="btn btn-ghost btn-sm" onclick="openListingDraft()">REGENERATE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const VEHICLE_ID = '{{ internal_id }}';
+
+  function showToast(msg, color) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.style.borderColor = color||'var(--border)'; t.style.color = color||'#fff';
+    t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000);
+  }
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if(e.target===el) closeModal(el.id); });
+  });
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  async function xfetch(url, body) {
+    try {
+      var r = await fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+        body: JSON.stringify(body)
+      });
+      if (r.status===401) { showToast('Session expired','#EF4444'); return null; }
+      return await r.json();
+    } catch(e) { showToast('Network error','#EF4444'); return null; }
+  }
+
+  /* ─── Sale capture modal ─── */
+  function onStatusSelectChange(val) {
+    var hint = document.getElementById('soldQuickHint');
+    var btn  = document.getElementById('saveStatusBtn');
+    if (val === 'Sold') {
+      if(hint) hint.style.display = 'inline';
+      if(btn){ btn.textContent = 'OPEN SALE FORM'; btn.style.cssText += ';background:linear-gradient(135deg,#C9A84C,#F0CB6E)!important;color:#0A0C10!important;'; }
+    } else {
+      if(hint) hint.style.display = 'none';
+      if(btn){ btn.textContent = 'SAVE STATUS'; btn.style.background = ''; btn.style.color = ''; }
+    }
+  }
+
+  async function updateStatus() {
+    var s   = document.getElementById('statusSelect').value;
+    var btn = document.getElementById('saveStatusBtn');
+    if (s === 'Sold') { openSaleModal(); return; }
+    var orig = btn.textContent;
+    btn.textContent = 'SAVING…'; btn.disabled = true;
+    var d = await xfetch('/api/update-status', {internal_id:VEHICLE_ID, status:s});
+    btn.textContent = orig; btn.disabled = false;
+    if(d && d.ok) {
+      showToast('✓ Status updated to ' + s, 'var(--gold)');
+      var badge = document.querySelector('.sbadge');
+      if(badge){ badge.textContent=s; badge.className='sbadge s-'+s.toLowerCase().replace(/ /g,'-')+' ie-enabled'; }
+    } else if(d) {
+      showToast('⚠ ' + (d.message||d.error||'Update failed'), '#EF4444');
+    }
+  }
+
+  function openSaleModal() {
+    document.getElementById('saleModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(()=>document.getElementById('sf_buyer_name').focus(), 120);
+  }
+  function closeSaleModal() {
+    document.getElementById('saleModal').classList.remove('open');
+    document.body.style.overflow = '';
+    stopCamera();
+    var sel = document.getElementById('statusSelect');
+    sel.value = '{{ vehicle.get("Status","Available") }}';
+    onStatusSelectChange(sel.value);
+  }
+
+  function formatExpiry(input) {
+    var v = input.value.replace(/\D/g,'');
+    if(v.length >= 2) v = v.slice(0,2)+'/'+v.slice(2,4);
+    input.value = v;
+  }
+
+  var _stream = null;
+  var _photoData = null;
+
+  async function activateCamera() {
+    if(_photoData) return;
+    var video=document.getElementById('cameraVideo'), cta=document.getElementById('photoCta'), ctrl=document.getElementById('cameraControls');
+    try {
+      _stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:false});
+      video.srcObject = _stream;
+      video.classList.add('show');
+      cta.style.display='none'; ctrl.style.display='block';
+    } catch(e) { showToast('Camera unavailable — skip photo or use upload','#C9A84C'); }
+  }
+  function capturePhoto(e) {
+    e.stopPropagation();
+    var video=document.getElementById('cameraVideo'), canvas=document.getElementById('photoCanvas'), preview=document.getElementById('photoPreview');
+    canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
+    canvas.getContext('2d').drawImage(video,0,0);
+    _photoData=canvas.toDataURL('image/jpeg',0.82);
+    preview.src=_photoData; preview.classList.add('show');
+    video.classList.remove('show');
+    document.getElementById('cameraControls').style.display='none';
+    document.getElementById('photoCta').style.display='none';
+    document.getElementById('photoRetakeRow').style.display='block';
+    document.getElementById('photoZone').classList.add('has-photo');
+    stopCamera();
+  }
+  function stopCamera(e) {
+    if(e) e.stopPropagation();
+    if(_stream){ _stream.getTracks().forEach(t=>t.stop()); _stream=null; }
+    var video=document.getElementById('cameraVideo');
+    if(video){ video.classList.remove('show'); video.srcObject=null; }
+    var ctrl=document.getElementById('cameraControls');
+    if(ctrl) ctrl.style.display='none';
+    if(!_photoData){ var cta=document.getElementById('photoCta'); if(cta) cta.style.display=''; var pz=document.getElementById('photoZone'); if(pz) pz.classList.remove('has-photo'); }
+  }
+  function retakePhoto() {
+    _photoData=null;
+    var prev=document.getElementById('photoPreview'); prev.classList.remove('show'); prev.src='';
+    document.getElementById('photoRetakeRow').style.display='none';
+    document.getElementById('photoZone').classList.remove('has-photo');
+    document.getElementById('photoCta').style.display='';
+    activateCamera();
+  }
+
+  async function confirmSold() {
+    var name=document.getElementById('sf_buyer_name').value.trim();
+    var phone=document.getElementById('sf_buyer_phone').value.trim();
+    var valid=true;
+    ['sf_buyer_name','sf_buyer_phone'].forEach(id=>{
+      var el=document.getElementById(id);
+      if(!el.value.trim()){ el.classList.add('error'); valid=false; } else el.classList.remove('error');
+    });
+    if(!valid){ showToast('Buyer name and phone are required','#EF4444'); return; }
+    var btn=document.getElementById('confirmSoldBtn');
+    btn.textContent='SAVING…'; btn.disabled=true;
+    var d = await xfetch('/api/update-status', {
+      internal_id:       VEHICLE_ID,
+      status:            'Sold',
+      buyer_name:        name,
+      buyer_phone:       phone,
+      buyer_dob:         document.getElementById('sf_buyer_dob').value,
+      buyer_licence:     document.getElementById('sf_buyer_licence').value.trim(),
+      buyer_card_last4:  document.getElementById('sf_card_last4').value.trim(),
+      buyer_card_expiry: document.getElementById('sf_card_expiry').value.trim(),
+      sale_price:        document.getElementById('sf_sale_price').value.trim(),
+      sale_notes:        document.getElementById('sf_sale_notes').value.trim(),
+      buyer_photo:       _photoData||'',
+    });
+    btn.textContent='✓ CONFIRM SALE'; btn.disabled=false;
+    if(d && d.ok) {
+      closeSaleModal(); stopCamera();
+      showToast('🏆 Vehicle marked as Sold!','#86EFAC');
+      var badge=document.querySelector('.sbadge');
+      if(badge){ badge.textContent='Sold'; badge.className='sbadge s-sold ie-enabled'; }
+      document.getElementById('statusSelect').value='Sold';
+      onStatusSelectChange('Sold');
+      setTimeout(()=>location.reload(), 1800);
+    } else {
+      showToast('⚠ '+(d&&d.message?d.message:'Failed — check connection'),'#EF4444');
+    }
+  }
+
+  async function regenPitch() {
+    var btn = document.getElementById('regenBtn');
+    btn.textContent='LOADING...'; btn.disabled=true;
+    var d = await xfetch('/api/regenerate-pitch', {internal_id:VEHICLE_ID});
+    btn.textContent='REGENERATE'; btn.disabled=false;
+    if(d && d.ok) { document.getElementById('pitchText').textContent = d.pitch; showToast('✓ New pitch ready','var(--gold)'); }
+    else if(d) showToast('⚠ ' + (d.message || 'Could not regenerate pitch'), '#EF4444');
+  }
+
+  async function keyAction(action) {
+    var d = await xfetch('/api/key-checkout', {tag_id:'{{ vehicle.get("Key_Tag_ID","") }}', internal_id:VEHICLE_ID, action:action});
+    if(d && d.ok) { showToast('✓ '+d.message,'#86EFAC'); setTimeout(()=>location.reload(),1200); }
+    else if(d) showToast('⚠ '+d.message,'#EF4444');
+  }
+
+  async function submitEnquiry() {
+    var d = await xfetch('/api/add-enquiry', {
+      internal_id:VEHICLE_ID,
+      name:document.getElementById('enq_name').value,
+      phone:document.getElementById('enq_phone').value,
+      email:document.getElementById('enq_email').value,
+      notes:document.getElementById('enq_notes').value,
+      follow_up_date:document.getElementById('enq_followup').value,
+    });
+    if(d && d.ok) { closeModal('enquiryModal'); showToast('✓ Enquiry logged','var(--gold)'); setTimeout(()=>location.reload(),1200); }
+    else if(d) showToast('⚠ '+d.message,'#EF4444');
+  }
+
+  async function submitTD() {
+    var d = await xfetch('/api/book-test-drive', {
+      internal_id:VEHICLE_ID,
+      customer_name:document.getElementById('td_name').value,
+      phone:document.getElementById('td_phone').value,
+      datetime:document.getElementById('td_datetime').value,
+      notes:document.getElementById('td_notes').value,
+    });
+    if(d && d.ok) { closeModal('tdModal'); showToast('✓ Test drive booked','#93C5FD'); setTimeout(()=>location.reload(),1200); }
+    else if(d) showToast('⚠ '+d.message,'#EF4444');
+  }
+
+  async function submitService() {
+    var d = await xfetch('/api/add-service', {
+      internal_id:VEHICLE_ID,
+      type:document.getElementById('svc_type').value,
+      description:document.getElementById('svc_desc').value,
+      cost:document.getElementById('svc_cost').value,
+      date:document.getElementById('svc_date').value,
+      technician:document.getElementById('svc_tech').value,
+    });
+    if(d && d.ok) { closeModal('svcModal'); showToast('✓ Service entry added','#86EFAC'); setTimeout(()=>location.reload(),1200); }
+    else if(d) showToast('⚠ '+d.message,'#EF4444');
+  }
+
+  async function addNote() {
+    var note = document.getElementById('newNoteText').value.trim();
+    if(!note) return;
+    var d = await xfetch('/api/add-note', {internal_id:VEHICLE_ID, note:note});
+    if(d && d.ok) {
+      document.getElementById('notesDisplay').textContent = d.notes;
+      document.getElementById('newNoteText').value='';
+      showToast('✓ Note saved','var(--gold)');
+    } else if(d) showToast('⚠ '+d.message,'#EF4444');
+  }
+
+  async function updateTD(id, status) {
+    var d = await xfetch('/api/test-drives/update', {id:id, status:status});
+    if(d && d.ok) { showToast('✓ Updated','var(--gold)'); setTimeout(()=>location.reload(),1000); }
+    else if(d) showToast('⚠ ' + (d.message || 'Update failed'), '#EF4444');
+  }
+
+  var _listingDraft = '';
+  async function openListingDraft() {
+    openModal('listingModal');
+    document.getElementById('listingContent').textContent = 'Generating AI listing draft...';
+    var d = await xfetch('/api/listing-draft', {internal_id:VEHICLE_ID});
+    if(d && d.ok) { _listingDraft=d.draft; document.getElementById('listingContent').textContent=d.draft; }
+    else document.getElementById('listingContent').textContent = 'Failed to generate — check OpenAI key.';
+  }
+
+  function copyListing() {
+    if(!_listingDraft) { showToast('Generate a listing first','#EF4444'); return; }
+    navigator.clipboard.writeText(_listingDraft)
+      .then(()=>showToast('✓ Copied to clipboard','var(--gold)'))
+      .catch(()=>{
+        // Fallback: select a textarea
+        var ta = document.createElement('textarea');
+        ta.value = _listingDraft;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('✓ Copied to clipboard','var(--gold)');
+      });
+  }
+
+  // Set today as default for service date
+  document.getElementById('svc_date').value = new Date().toISOString().split('T')[0];
+
+  function copyShareLink() {
+    // Personalised share link — includes ?ref=username so the spec sheet shows THIS staff member's number
+    var staffRef = {{ ('"' ~ session.get('username','') ~ '"') | safe if session else '""' }};
+    var url = window.location.origin + '/share/' + VEHICLE_ID + (staffRef ? '?ref=' + staffRef : '');
+    navigator.clipboard.writeText(url)
+      .then(function(){ showToast('\u2713 Your personal share link copied!', 'var(--gold)'); })
+      .catch(function(){
+        var ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('\u2713 Share link copied!', 'var(--gold)');
+      });
+  }
+</script>
+
+<!-- ── SALESPERSON MODE MODAL ───────────────────────────────────── -->
+<div class="modal-overlay" id="sellModeModal" style="z-index:600;">
+  <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(201,168,76,.15),transparent);border-bottom:1px solid rgba(201,168,76,.2);">
+      <span class="modal-title" style="color:var(--gold);">🎯 Salesperson Mode</span>
+      <button class="close-btn" onclick="closeModal('sellModeModal')">×</button>
+    </div>
+    <div class="modal-body" id="sellModeBody" style="min-height:200px;">
+      <div style="text-align:center;padding:30px;color:rgba(255,255,255,.4);">
+        <div style="font-size:2rem;margin-bottom:10px;">🎯</div>
+        <div>Loading sales brief…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.sell-section{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sell-section:last-child{border-bottom:none;margin-bottom:0;}
+.sell-section-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.sell-pitch{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:14px;font-size:.85rem;line-height:1.6;color:rgba(255,255,255,.85);}
+.talking-point{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:.8rem;line-height:1.5;}
+.tp-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:6px;}
+.objection-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.obj-q{font-size:.75rem;color:rgba(255,255,255,.4);margin-bottom:4px;}
+.obj-a{font-size:.82rem;color:var(--text);}
+.finance-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.fin-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:10px;text-align:center;}
+.fin-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold);}
+.fin-lbl{font-size:.62rem;color:var(--muted);margin-top:2px;}
+.urgency-box{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px 14px;font-size:.82rem;color:rgba(34,197,94,.9);}
+</style>
+
+<script>
+var _sellModeLoaded = false;
+
+async function openSalespersonMode() {
+  document.getElementById('sellModeModal').classList.add('open');
+  if (_sellModeLoaded) return;
+  var r = await xfetch('/api/salesperson-brief/' + VEHICLE_ID);
+  if (!r || !r.ok) {
+    document.getElementById('sellModeBody').innerHTML =
+      '<div style="color:var(--red);padding:20px;">Could not load brief. Check OPENAI_API_KEY.</div>';
+    return;
+  }
+  _sellModeLoaded = true;
+  var b = r.brief;
+  var f = r.finance;
+  var html = '';
+
+  // Pitch
+  html += '<div class="sell-section"><div class="sell-section-title">🎤 Your Opening Pitch</div>';
+  html += '<div class="sell-pitch">' + (b.pitch || '') + '</div></div>';
+
+  // Urgency
+  if (b.why_buy_today) {
+    html += '<div class="sell-section"><div class="sell-section-title">⚡ Why Buy Today</div>';
+    html += '<div class="urgency-box">' + b.why_buy_today + '</div></div>';
+  }
+
+  // Talking points
+  if (b.talking_points && b.talking_points.length) {
+    html += '<div class="sell-section"><div class="sell-section-title">✅ Key Talking Points</div>';
+    b.talking_points.forEach(function(p) {
+      html += '<div class="talking-point"><div class="tp-dot"></div><span>' + p + '</span></div>';
+    });
+    html += '</div>';
+  }
+
+  // Objections
+  if (b.objections && b.objections.length) {
+    html += '<div class="sell-section"><div class="sell-section-title">💬 Objection Handling</div>';
+    b.objections.forEach(function(o) {
+      html += '<div class="objection-item"><div class="obj-q">Customer: "' + (o.q||o) + '"</div>';
+      html += '<div class="obj-a">You: "' + (o.a||'') + '"</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // Competitor angle
+  if (b.competitor_angle) {
+    html += '<div class="sell-section"><div class="sell-section-title">🆚 vs Competitors</div>';
+    html += '<div style="font-size:.82rem;line-height:1.6;color:rgba(255,255,255,.7);">' + b.competitor_angle + '</div></div>';
+  }
+
+  // Finance
+  if (f && f.rates) {
+    html += '<div class="sell-section"><div class="sell-section-title">💰 Finance Snapshot (5yr, avg rate)</div>';
+    var avg = f.rates["Avg (9.9%)"];
+    if (avg) {
+      html += '<div class="finance-mini">';
+      html += '<div class="fin-box"><div class="fin-num">$' + avg.weekly.toFixed(0) + '</div><div class="fin-lbl">Weekly</div></div>';
+      html += '<div class="fin-box"><div class="fin-num">$' + avg.fortnightly.toFixed(0) + '</div><div class="fin-lbl">Fortnightly</div></div>';
+      html += '<div class="fin-box"><div class="fin-num">$' + avg.monthly.toFixed(0) + '</div><div class="fin-lbl">Monthly</div></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  document.getElementById('sellModeBody').innerHTML = html;
+}
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     KEYTRACK GLOBAL — Command Palette · Keyboard Shortcuts · Inline Edit
+     Inject before </body> in dashboard.html, vehicle.html, admin.html
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- CMD PALETTE OVERLAY -->
+<div id="cmdOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;">
+  <div id="cmdBox" style="width:100%;max-width:560px;background:#16161f;border:1px solid rgba(201,168,76,.3);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <span style="font-size:1.1rem;opacity:.5;">⌘</span>
+      <input id="cmdInput" placeholder="Search pages, vehicles, actions…"
+        style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:.95rem;font-family:'Inter',sans-serif;"
+        autocomplete="off" spellcheck="false"/>
+      <span style="font-size:.72rem;color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;">ESC</span>
+    </div>
+    <div id="cmdResults" style="max-height:360px;overflow-y:auto;padding:6px;"></div>
+    <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,.04);display:flex;gap:16px;font-size:.68rem;color:rgba(255,255,255,.25);">
+      <span>↑↓ navigate</span><span>↵ open</span><span>ESC close</span><span>⌘K / Ctrl+K open</span>
+    </div>
+  </div>
+</div>
+
+<!-- INLINE EDIT POPOVER -->
+<div id="inlinePopover" style="position:fixed;z-index:8000;display:none;background:#1a1a28;border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.6);min-width:240px;max-width:320px;">
+  <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;" id="inlinePopLabel">Edit Field</div>
+  <div id="inlinePopInput"></div>
+  <div style="display:flex;gap:6px;margin-top:10px;">
+    <button onclick="saveInlineEdit()" style="flex:1;padding:7px;background:linear-gradient(135deg,#C9A84C,#e6c97a);color:#000;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.08em;cursor:pointer;">SAVE</button>
+    <button onclick="closeInlinePop()" style="padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;cursor:pointer;font-size:.8rem;">✕</button>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUT TOAST -->
+<div id="kbToast" style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);background:#1c1c28;border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:8px 20px;font-size:.78rem;color:rgba(255,255,255,.7);opacity:0;transition:all .3s;pointer-events:none;z-index:7000;white-space:nowrap;"></div>
+
+<!-- SHORTCUT HELP OVERLAY -->
+<div id="shortcutHelp" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:8500;display:none;align-items:center;justify-content:center;">
+  <div style="background:#16161f;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;max-width:480px;width:100%;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.08em;color:#C9A84C;margin-bottom:16px;">⌨ KEYBOARD SHORTCUTS</div>
+    <div id="shortcutList" style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;"></div>
+    <button onclick="document.getElementById('shortcutHelp').style.display='none'" style="margin-top:18px;padding:8px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;">CLOSE</button>
+  </div>
+</div>
+
+<style>
+.cmd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.cmd-item:hover,.cmd-item.active{background:rgba(201,168,76,.1);}
+.cmd-icon{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.cmd-label{font-size:.85rem;font-weight:500;color:#fff;}
+.cmd-sub{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:1px;}
+.kb-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;font-size:.7rem;font-family:monospace;color:rgba(255,255,255,.6);}
+.ie-enabled{cursor:pointer;transition:background .15s;}
+.ie-enabled:hover{background:rgba(201,168,76,.08);border-radius:4px;}
+.ie-enabled::after{content:' ✏';font-size:.6rem;opacity:0;transition:opacity .15s;}
+.ie-enabled:hover::after{opacity:.5;}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMAND PALETTE
+// ═══════════════════════════════════════════════════════════════════════════
+var _cmdOpen = false;
+var _cmdIdx = -1;
+var _cmdItems = [];
+var _cmdTimer = null;
+
+function openCmd() {
+  document.getElementById('cmdOverlay').style.display = 'flex';
+  document.getElementById('cmdInput').value = '';
+  _cmdOpen = true; _cmdIdx = -1;
+  setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+  loadCmdResults('');
+}
+function closeCmd() {
+  document.getElementById('cmdOverlay').style.display = 'none';
+  _cmdOpen = false;
+}
+document.getElementById('cmdOverlay').addEventListener('click', function(e){
+  if (e.target === this) closeCmd();
+});
+document.getElementById('cmdInput').addEventListener('input', function(){
+  clearTimeout(_cmdTimer);
+  _cmdTimer = setTimeout(() => loadCmdResults(this.value), 180);
+});
+document.getElementById('cmdInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveCmdIdx(1); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); moveCmdIdx(-1); }
+  if (e.key === 'Enter')     { e.preventDefault(); selectCmd(); }
+});
+
+async function loadCmdResults(q) {
+  const r = await fetch('/api/cmd-palette?q=' + encodeURIComponent(q));
+  const data = await r.json();
+  if (!data.ok) return;
+  _cmdItems = data.results;
+  _cmdIdx = -1;
+  renderCmdResults();
+}
+
+function renderCmdResults() {
+  const el = document.getElementById('cmdResults');
+  if (!_cmdItems.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:.8rem;color:rgba(255,255,255,.3);">No results</div>';
+    return;
+  }
+  el.innerHTML = _cmdItems.map((item, i) =>
+    `<div class="cmd-item${i===_cmdIdx?' active':''}" onclick="goCmd(${i})">
+      <div class="cmd-icon">${item.icon||'📄'}</div>
+      <div>
+        <div class="cmd-label">${item.label}</div>
+        ${item.sublabel ? `<div class="cmd-sub">${item.sublabel}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+function moveCmdIdx(dir) {
+  _cmdIdx = Math.max(-1, Math.min(_cmdItems.length-1, _cmdIdx + dir));
+  renderCmdResults();
+  const items = document.querySelectorAll('.cmd-item');
+  if (items[_cmdIdx]) items[_cmdIdx].scrollIntoView({block:'nearest'});
+}
+function selectCmd() {
+  if (_cmdIdx >= 0 && _cmdItems[_cmdIdx]) goCmd(_cmdIdx);
+  else if (_cmdItems[0]) goCmd(0);
+}
+function goCmd(i) {
+  const item = _cmdItems[i];
+  if (item) { closeCmd(); window.location.href = item.url; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════════════════
+var SHORTCUTS = [
+  {key:'k', mod:'ctrl/cmd', label:'Command Palette',     action: openCmd},
+  {key:'/', mod:'',         label:'Global Search',       action: () => window.location.href='/search'},
+  {key:'d', mod:'',         label:'Dashboard',            action: () => goShortcut('/dashboard')},
+  {key:'p', mod:'',         label:'Pipeline',             action: () => goShortcut('/pipeline')},
+  {key:'f', mod:'',         label:'Finance Calculator',   action: () => goShortcut('/finance')},
+  {key:'h', mod:'',         label:'Inventory Health',     action: () => goShortcut('/inventory-health')},
+  {key:'a', mod:'',         label:'Analytics',            action: () => goShortcut('/analytics')},
+  {key:'t', mod:'',         label:'Trade-Ins',            action: () => goShortcut('/trade-ins')},
+  {key:'n', mod:'',         label:'New Vehicle (Admin)',  action: () => goShortcut('/admin')},
+  {key:'?', mod:'',         label:'Show shortcuts',       action: showShortcutHelp},
+  {key:'Escape', mod:'',    label:'Close / Back',         action: closeAll},
+];
+
+function goShortcut(url) {
+  showKbToast('→ ' + url);
+  setTimeout(() => window.location.href = url, 300);
+}
+function showKbToast(msg) {
+  const t = document.getElementById('kbToast');
+  t.textContent = msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)';}, 1800);
+}
+function closeAll() {
+  closeCmd();
+  document.getElementById('shortcutHelp').style.display = 'none';
+  closeInlinePop();
+}
+function showShortcutHelp() {
+  const list = document.getElementById('shortcutList');
+  list.innerHTML = SHORTCUTS.map(s =>
+    `<div><kbd class="kb-badge">${s.mod ? s.mod+'+' : ''}${s.key === 'Escape' ? 'ESC' : s.key.toUpperCase()}</kbd></div><div style="color:rgba(255,255,255,.7)">${s.label}</div>`
+  ).join('');
+  document.getElementById('shortcutHelp').style.display = 'flex';
+}
+
+document.addEventListener('keydown', function(e) {
+  // Don't fire if typing in an input
+  const tag = document.activeElement.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+  // CMD/Ctrl+K — always open palette
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if (_cmdOpen) closeCmd(); else openCmd();
+    return;
+  }
+  if (_cmdOpen) return; // let palette handle all keys
+  if (isInput) return;
+
+  // Single-key shortcuts
+  switch(e.key) {
+    case '/': e.preventDefault(); window.location.href='/search'; break;
+    case 'd': case 'D': goShortcut('/dashboard'); break;
+    case 'p': case 'P': goShortcut('/pipeline'); break;
+    case 'f': case 'F': goShortcut('/finance'); break;
+    case 'h': case 'H': goShortcut('/inventory-health'); break;
+    case 'a': case 'A': goShortcut('/analytics'); break;
+    case 't': case 'T': goShortcut('/trade-ins'); break;
+    case 'n': case 'N': goShortcut('/admin'); break;
+    case '?': showShortcutHelp(); break;
+    case 'Escape': closeAll(); break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INLINE EDIT
+// ═══════════════════════════════════════════════════════════════════════════
+var _inlineVid = null;
+var _inlineField = null;
+var _inlineFields = null;
+var _inlineTriggerEl = null;
+
+async function initInlineEdit() {
+  const r = await fetch('/api/inline-editable-fields');
+  const data = await r.json();
+  if (data.ok) _inlineFields = data.fields;
+}
+
+// Safe guard - inline edit only works on pages with VEHICLE_ID
+function openInlineEdit(el, vid, field, currentValue) {
+  if (!_inlineFields) return;
+  if (!vid) return;
+  var meta = _inlineFields[field];
+  if (!meta) return;
+  _inlineVid = vid;
+  _inlineField = field;
+  _inlineTriggerEl = el;
+
+  document.getElementById('inlinePopLabel').textContent = 'Edit: ' + meta.label;
+  var inp = document.getElementById('inlinePopInput');
+
+  if (meta.type === 'select') {
+    inp.innerHTML = '<select id="inlineVal" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;">' +
+      meta.options.map(function(o){ return '<option value="' + o + '"' + (o===currentValue?' selected':'') + '>' + o + '</option>'; }).join('') +
+      '</select>';
+  } else if (meta.type === 'textarea') {
+    inp.innerHTML = '<textarea id="inlineVal" rows="3" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;resize:vertical;outline:none;">' + (currentValue||'') + '</textarea>';
+  } else {
+    inp.innerHTML = '<input id="inlineVal" type="text" value="' + (currentValue||'').replace(/"/g,'&quot;') + '" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;outline:none;"/>';
+  }
+
+  var rect = el.getBoundingClientRect();
+  var pop = document.getElementById('inlinePopover');
+  pop.style.display = 'block';
+  var top = rect.bottom + window.scrollY + 6;
+  var left = rect.left + window.scrollX;
+  if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+  if (top + 160 > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - 165;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+
+  setTimeout(function(){
+    var v = document.getElementById('inlineVal');
+    if (v) { v.focus(); if (v.select) v.select(); }
+  }, 50);
+
+  document.getElementById('inlineVal').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') saveInlineEdit();
+    if (e.key === 'Escape') closeInlinePop();
+  });
+}
+
+
+async function saveInlineEdit() {
+  const val = document.getElementById('inlineVal')?.value;
+  if (val === undefined) return;
+  const r = await fetch('/api/inline-edit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({vid: _inlineVid, field: _inlineField, value: val})
+  });
+  const data = await r.json();
+  if (data.ok) {
+    showKbToast('✅ ' + _inlineField + ' updated');
+    // Update the element text
+    if (_inlineTriggerEl) {
+      _inlineTriggerEl.textContent = val;
+      _inlineTriggerEl.dataset.val = val;
+    }
+    closeInlinePop();
+  } else {
+    showKbToast('❌ ' + (data.message || 'Error'));
+  }
+}
+function closeInlinePop() {
+  document.getElementById('inlinePopover').style.display = 'none';
+  _inlineVid = null; _inlineField = null;
+}
+// Close on outside click
+document.addEventListener('click', function(e){
+  const pop = document.getElementById('inlinePopover');
+  if (pop.style.display !== 'none' && !pop.contains(e.target)) {
+    if (!e.target.classList.contains('ie-enabled')) closeInlinePop();
+  }
+});
+
+// ── Add ⌘K button to all pages ───────────────────────────────────────────────
+(function(){
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  const btn = document.createElement('button');
+  btn.innerHTML = '⌘K';
+  btn.title = 'Command Palette (Ctrl+K / ⌘K)';
+  btn.onclick = openCmd;
+  btn.style.cssText = 'margin-left:auto;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:4px 10px;color:#C9A84C;font-family:\'Rajdhani\',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;';
+  btn.onmouseenter = () => btn.style.background = 'rgba(201,168,76,.2)';
+  btn.onmouseleave = () => btn.style.background = 'rgba(201,168,76,.1)';
+  // Insert before last nav child (scanner button usually)
+  const existing = nav.querySelector('[style*="margin-left:auto"]');
+  if (existing) {
+    existing.style.marginLeft = '0';
+    nav.insertBefore(btn, existing);
+  } else {
+    nav.appendChild(btn);
+  }
+})();
+
+// Init inline edit on pages that support it
+try { initInlineEdit(); } catch(e) {}
+</script>
+
+<!-- ════════════════════════════════════════════════════════
+     SALE CAPTURE MODAL
+     Triggered when staff selects "Sold" from status dropdown.
+     Captures: name, phone, DOB, licence, card last 4 + expiry,
+     optional live photo. All fields sent to /api/update-status.
+═══════════════════════════════════════════════════════════ -->
+<div class="sale-modal-overlay" id="saleModal">
+  <div class="sale-modal">
+
+    <div class="sale-modal-header">
+      <div class="sale-modal-title">🏆 MARK AS SOLD</div>
+      <button class="sale-modal-close" onclick="closeSaleModal()">✕</button>
+    </div>
+
+    <div class="sale-modal-body">
+
+      <!-- Vehicle being sold -->
+      <div class="sale-vehicle-preview">
+        <div style="flex:1;">
+          <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;">
+            {{ vehicle.get('Year','') }} {{ vehicle.get('Make','') }} {{ vehicle.get('Model','') }}
+          </div>
+          <div style="font-size:.75rem;color:rgba(255,255,255,.35);margin-top:2px;">
+            Stock #{{ internal_id }} · {{ vehicle.get('Price','') }}
+          </div>
+        </div>
+        <span class="svp-badge">MARKING SOLD</span>
+      </div>
+
+      <!-- ① BUYER DETAILS -->
+      <div class="sale-section">
+        <div class="sale-section-label">👤 Buyer Details</div>
+        <div class="sale-grid">
+          <div class="sale-field" style="grid-column:1/-1;">
+            <label>Full Name <span class="req">*</span></label>
+            <input class="sale-input" id="sf_buyer_name" placeholder="e.g. John Smith" autocomplete="off">
+          </div>
+          <div class="sale-field">
+            <label>Phone Number <span class="req">*</span></label>
+            <input class="sale-input" id="sf_buyer_phone" type="tel" placeholder="+61 4xx xxx xxx">
+          </div>
+          <div class="sale-field">
+            <label>Date of Birth</label>
+            <input class="sale-input" id="sf_buyer_dob" type="date">
+          </div>
+        </div>
+      </div>
+
+      <!-- ② ID / LICENCE -->
+      <div class="sale-section">
+        <div class="sale-section-label">🪪 Identification</div>
+        <div class="sale-grid">
+          <div class="sale-field" style="grid-column:1/-1;">
+            <label>Licence / ID Number</label>
+            <input class="sale-input" id="sf_buyer_licence" placeholder="e.g. 12345678" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ PAYMENT CARD -->
+      <div class="sale-section">
+        <div class="sale-section-label">💳 Payment Card (last 4 digits only — never store full number)</div>
+        <div class="sale-grid">
+          <div class="sale-field">
+            <label>Card Last 4 Digits</label>
+            <input class="sale-input" id="sf_card_last4" placeholder="e.g. 4242" maxlength="4"
+                   inputmode="numeric" pattern="[0-9]{4}"
+                   onkeypress="return event.charCode>=48&&event.charCode<=57">
+          </div>
+          <div class="sale-field">
+            <label>Card Expiry (MM/YY)</label>
+            <input class="sale-input" id="sf_card_expiry" placeholder="e.g. 08/27" maxlength="5"
+                   oninput="formatExpiry(this)">
+          </div>
+        </div>
+        <p style="font-size:.68rem;color:rgba(255,255,255,.2);margin-top:8px;line-height:1.5;">
+          ⚠️ Only record last 4 digits + expiry. Never write down full card numbers. This is for reference only.
+        </p>
+      </div>
+
+      <!-- ④ SALE PRICE CONFIRMATION -->
+      <div class="sale-section">
+        <div class="sale-section-label">💰 Sale Details</div>
+        <div class="sale-grid">
+          <div class="sale-field">
+            <label>Final Sale Price</label>
+            <input class="sale-input" id="sf_sale_price" type="number" placeholder="{{ vehicle.get('Price','') | replace('$','') | replace(',','') }}" min="0">
+          </div>
+          <div class="sale-field">
+            <label>Sold By</label>
+            <input class="sale-input" id="sf_sold_by" value="{{ session.get('display_name', '') }}" readonly style="opacity:.5;cursor:not-allowed;">
+          </div>
+          <div class="sale-field" style="grid-column:1/-1;">
+            <label>Sale Notes</label>
+            <input class="sale-input" id="sf_sale_notes" placeholder="Finance, trade-in, special conditions…">
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ LIVE PHOTO -->
+      <div class="sale-section">
+        <div class="sale-section-label">📸 Customer Photo (optional — for your records)</div>
+        <div class="photo-zone" id="photoZone" onclick="activateCamera()">
+          <video id="cameraVideo" autoplay playsinline></video>
+          <img id="photoPreview" class="photo-preview" src="" alt="Captured photo">
+          <div id="photoCta">
+            <div style="font-size:1.8rem;margin-bottom:6px;">📷</div>
+            <div class="photo-label">Tap to open camera · <span>Take live photo</span></div>
+            <div style="font-size:.68rem;color:rgba(255,255,255,.2);margin-top:4px;">Photo is stored privately and never shared publicly</div>
+          </div>
+          <div id="cameraControls" style="display:none;margin-top:10px;">
+            <button type="button" onclick="capturePhoto(event)"
+              style="background:linear-gradient(135deg,#C9A84C,#F0CB6E);color:#0A0C10;border:none;border-radius:8px;padding:9px 20px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;margin-right:8px;">
+              📸 CAPTURE
+            </button>
+            <button type="button" onclick="stopCamera(event)"
+              style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);border-radius:8px;padding:9px 16px;font-size:.8rem;cursor:pointer;">
+              Cancel
+            </button>
+          </div>
+        </div>
+        <canvas id="photoCanvas" style="display:none;"></canvas>
+        <div id="photoRetakeRow" style="display:none;margin-top:8px;text-align:center;">
+          <button type="button" onclick="retakePhoto()"
+            style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);border-radius:7px;padding:6px 16px;font-size:.75rem;cursor:pointer;">
+            🔄 Retake Photo
+          </button>
+          <span style="font-size:.68rem;color:rgba(34,197,94,.6);margin-left:10px;">✓ Photo captured</span>
+        </div>
+      </div>
+
+      <!-- Submit row -->
+      <div class="sale-submit-row">
+        <button class="sale-submit-btn btn-cancel-sale" onclick="closeSaleModal()">CANCEL</button>
+        <button class="sale-submit-btn btn-confirm-sold" id="confirmSoldBtn" onclick="confirmSold()">
+          ✓ CONFIRM SALE
+        </button>
+      </div>
+
+    </div><!-- /modal-body -->
+  </div><!-- /modal -->
+</div>
+
+</body>
+</html>

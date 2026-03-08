@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>My Account — {{ dealership }}</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#C9A84C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{ pwa_name }}">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold-light:#F0CB6E;--dark:#0A0C10;--panel:#10141C;--panel2:#161B26;--border:rgba(201,168,76,.18);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#fff;min-height:100vh;}
+    .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:12px 20px;position:sticky;top:0;z-index:50;}
+    .topbar-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+    .brand{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.15em;color:var(--gold);}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 16px;}
+    .greeting{font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:4px;}
+    .greeting span{color:var(--gold);}
+    /* Tabs */
+    .tabs{display:flex;gap:4px;margin:24px 0 20px;background:var(--panel);border-radius:10px;padding:4px;width:fit-content;}
+    .tab{padding:8px 18px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.1em;cursor:pointer;transition:all .15s;color:rgba(255,255,255,.4);border:none;background:transparent;}
+    .tab.active{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.2);}
+    .panel-section{display:none;}
+    .panel-section.active{display:block;}
+    /* Vehicle cards */
+    .saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+    .vcard{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;display:block;transition:border-color .2s;}
+    .vcard:hover{border-color:rgba(201,168,76,.3);}
+    .vcard-photo{height:150px;background:#080A0E;position:relative;overflow:hidden;}
+    .vcard-photo img{width:100%;height:100%;object-fit:cover;}
+    .vcard-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:rgba(255,255,255,.1);}
+    .vcard-body{padding:12px 14px;}
+    .vcard-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;}
+    .vcard-price{color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.15rem;margin-top:4px;}
+    .vcard-meta{font-size:.75rem;color:rgba(255,255,255,.35);margin-top:3px;}
+    .unsave-btn{display:block;width:100%;margin-top:8px;padding:7px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.15);color:rgba(239,68,68,.6);border-radius:6px;font-size:.72rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.06em;cursor:pointer;text-align:center;transition:all .15s;}
+    .unsave-btn:hover{background:rgba(239,68,68,.15);color:#FCA5A5;}
+    /* Alerts */
+    .alert-card{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+    .alert-info{flex:1;}
+    .alert-label{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;}
+    .alert-desc{font-size:.78rem;color:rgba(255,255,255,.35);margin-top:3px;}
+    .delete-btn{background:transparent;border:1px solid rgba(239,68,68,.2);color:rgba(239,68,68,.5);padding:6px 12px;border-radius:6px;font-size:.72rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;transition:all .15s;}
+    .delete-btn:hover{border-color:rgba(239,68,68,.5);color:#FCA5A5;}
+    /* Add alert form */
+    .add-alert-form{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+    .form-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;color:#fff;font-size:.85rem;font-family:'DM Sans',sans-serif;width:100%;}
+    .form-input:focus{outline:none;border-color:var(--gold);}
+    .form-input::placeholder{color:rgba(255,255,255,.25);}
+    .save-btn{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0A0C10;border:none;border-radius:8px;padding:10px 20px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.1em;cursor:pointer;}
+    /* Notifications */
+    .notif-card{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;}
+    .notif-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+    .notif-drop .notif-icon{background:rgba(239,68,68,.1);}
+    .notif-new .notif-icon{background:rgba(34,197,94,.1);}
+    .notif-msg{font-size:.85rem;color:rgba(255,255,255,.7);line-height:1.4;}
+    .notif-date{font-size:.72rem;color:rgba(255,255,255,.25);margin-top:4px;}
+    .notif-link{color:var(--gold);text-decoration:none;font-size:.78rem;margin-top:4px;display:inline-block;}
+    .empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,.25);}
+    .badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#ef4444;border-radius:50%;font-size:.65rem;font-weight:700;margin-left:4px;}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:28px;height:28px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0A0C10" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <span class="brand">{{ dealership }}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <a href="/listings" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;">Browse Cars</a>
+      <a href="/search-ai" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;">🤖 AI Search</a>
+      <a href="/buyer/logout" style="color:rgba(255,255,255,.3);text-decoration:none;font-size:.78rem;">Sign Out</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="greeting">Hey, <span>{{ buyer.name }}</span> 👋</div>
+  <p style="color:rgba(255,255,255,.35);font-size:.88rem;margin-bottom:4px;">{{ buyer.email }}</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('saved',this)">❤️ SAVED ({{ saved_vehicles|length }})</button>
+    <button class="tab" onclick="showTab('alerts',this)">🔔 ALERTS ({{ buyer.alerts|length }})</button>
+    <button class="tab" onclick="showTab('notifications',this)">
+      📬 INBOX {% if unread > 0 %}<span class="badge">{{ unread }}</span>{% endif %}
+    </button>
+  </div>
+
+  <!-- Saved vehicles -->
+  <div class="panel-section active" id="tab-saved">
+    {% if not saved_vehicles %}
+    <div class="empty">
+      <p style="font-size:2rem;margin-bottom:10px;">❤️</p>
+      <p>No saved vehicles yet</p>
+      <a href="/listings" style="color:var(--gold);text-decoration:none;display:inline-block;margin-top:10px;">Browse vehicles →</a>
+    </div>
+    {% endif %}
+    <div class="saved-grid">
+      {% for v in saved_vehicles %}
+      {% set vid = v.get('Internal_ID','') %}
+      <div class="vcard-wrap">
+        <a href="/listing/{{ vid }}" class="vcard">
+          <div class="vcard-photo">
+            {% if v._primary_photo %}<img src="{{ v._primary_photo }}" alt="" loading="lazy">
+            {% else %}<div class="vcard-placeholder">🚗</div>{% endif %}
+          </div>
+          <div class="vcard-body">
+            <div class="vcard-name">{{ v.get('Year','') }} {{ v.get('Make','') }} {{ v.get('Model','') }}</div>
+            <div class="vcard-meta">{{ v.get('Mileage','') }} · {{ v.get('Color','') }}</div>
+            <div class="vcard-price">{{ v.get('Price','') }}</div>
+          </div>
+        </a>
+        <button class="unsave-btn" onclick="unsave('{{ vid }}', this)">✕ Remove from saved</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="panel-section" id="tab-alerts">
+    <div class="add-alert-form">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:14px;">CREATE NEW ALERT</div>
+      <div class="form-row">
+        <input class="form-input" id="al-make" placeholder="Make (e.g. Toyota)">
+        <input class="form-input" id="al-model" placeholder="Model (e.g. Hilux)">
+      </div>
+      <div class="form-row">
+        <input class="form-input" id="al-body" placeholder="Body type (e.g. Ute)">
+        <input class="form-input" id="al-price" placeholder="Max price (e.g. 30000)" type="number">
+      </div>
+      <button class="save-btn" onclick="addAlert()">+ CREATE ALERT</button>
+    </div>
+
+    <div id="alertList">
+      {% if not buyer.alerts %}
+      <div class="empty"><p>No alerts yet — create one above to get notified of new listings</p></div>
+      {% endif %}
+      {% for a in buyer.alerts %}
+      <div class="alert-card" id="alert-{{ a.id }}">
+        <div class="alert-info">
+          <div class="alert-label">
+            {% if a.make %}{{ a.make }}{% endif %}
+            {% if a.model %} {{ a.model }}{% endif %}
+            {% if a.body %} · {{ a.body }}{% endif %}
+            {% if not a.make and not a.model and not a.body %}Any Vehicle{% endif %}
+          </div>
+          <div class="alert-desc">
+            {% if a.max_price %}Under ${{ "{:,.0f}".format(a.max_price|float) }} · {% endif %}
+            Created {{ a.created }} · {% if a.active %}🟢 Active{% else %}⏸ Paused{% endif %}
+          </div>
+        </div>
+        <button class="delete-btn" onclick="deleteAlert('{{ a.id }}')">DELETE</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="panel-section" id="tab-notifications">
+    <div id="notifList">
+      <div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:.85rem;">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel-section').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='notifications') loadNotifs();
+}
+
+async function unsave(vid, btn){
+  const r = await fetch('/api/buyer/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vid})});
+  const d = await r.json();
+  if(d.ok && !d.saved) btn.closest('.vcard-wrap').remove();
+}
+
+async function addAlert(){
+  const make=document.getElementById('al-make').value.trim();
+  const model=document.getElementById('al-model').value.trim();
+  const body=document.getElementById('al-body').value.trim();
+  const max_price=document.getElementById('al-price').value.trim();
+  const label = [make,model,body].filter(Boolean).join(' ') || 'Any vehicle';
+  const r=await fetch('/api/buyer/alerts/add',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({make,model,body,max_price,label})});
+  const d=await r.json();
+  if(d.ok){ location.reload(); }
+}
+
+async function deleteAlert(id){
+  if(!confirm('Delete this alert?')) return;
+  const r=await fetch('/api/buyer/alerts/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+  const d=await r.json();
+  if(d.ok) document.getElementById('alert-'+id)?.remove();
+}
+
+async function loadNotifs(){
+  const r=await fetch('/api/buyer/notifications');
+  const d=await r.json();
+  const el=document.getElementById('notifList');
+  if(!d.notifications||!d.notifications.length){
+    el.innerHTML='<div class="empty"><p style="font-size:1.5rem;margin-bottom:8px;">📬</p><p>No notifications yet</p></div>';
+    return;
+  }
+  el.innerHTML=d.notifications.map(n=>`
+    <div class="notif-card notif-${n.type==='price_drop'?'drop':'new'}">
+      <div class="notif-icon">${n.type==='price_drop'?'💰':'🆕'}</div>
+      <div>
+        <div class="notif-msg">${n.message}</div>
+        <div class="notif-date">${n.date}</div>
+        ${n.vid?`<a href="/listing/${n.vid}" class="notif-link">View vehicle →</a>`:''}
+      </div>
+    </div>`).join('');
+}
+</script>
+  <!-- PWA Service Worker -->
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js',{scope:'/'})
+        .then(()=>console.log('SW registered'))
+        .catch(e=>console.log('SW error',e));
+    }
+  </script>
+</body>
+</html>

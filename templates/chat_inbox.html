@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Chat Inbox — {{ dealership }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--gold:#C9A84C;--gold2:#F0CB6E;--ink:#06080D;--ink2:#0E1118;--ink3:#161C28;--border:rgba(255,255,255,.07);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--ink);color:#fff;height:100vh;display:flex;flex-direction:column;}
+    .topbar{background:var(--ink2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .brand{font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.12em;color:var(--gold);font-size:.9rem;}
+    .inbox-layout{display:flex;flex:1;overflow:hidden;}
+    /* Sidebar */
+    .chat-list{width:300px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;}
+    .chat-list-head{padding:14px 16px;font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.14em;color:rgba(255,255,255,.3);border-bottom:1px solid var(--border);}
+    .chat-item{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;position:relative;}
+    .chat-item:hover{background:rgba(255,255,255,.03);}
+    .chat-item.active{background:rgba(201,168,76,.07);border-left:2px solid var(--gold);}
+    .chat-item-name{font-weight:500;font-size:.85rem;margin-bottom:3px;}
+    .chat-item-vehicle{font-size:.72rem;color:rgba(255,255,255,.35);}
+    .chat-item-preview{font-size:.75rem;color:rgba(255,255,255,.3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .chat-item-time{font-size:.68rem;color:rgba(255,255,255,.2);position:absolute;top:14px;right:14px;}
+    .unread-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;background:#ef4444;border-radius:9px;font-size:.62rem;font-weight:700;margin-left:6px;}
+    .empty-list{text-align:center;padding:40px 20px;color:rgba(255,255,255,.25);}
+    /* Chat pane */
+    .chat-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+    .chat-header{padding:16px 20px;border-bottom:1px solid var(--border);background:var(--ink2);flex-shrink:0;}
+    .chat-vehicle{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;}
+    .chat-buyer{font-size:.75rem;color:rgba(255,255,255,.35);margin-top:3px;}
+    .chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
+    .msg{max-width:70%;display:flex;flex-direction:column;gap:4px;}
+    .msg-bubble{padding:10px 14px;border-radius:14px;font-size:.85rem;line-height:1.5;}
+    .msg-time{font-size:.68rem;color:rgba(255,255,255,.25);}
+    .msg.buyer{align-self:flex-start;}
+    .msg.buyer .msg-bubble{background:var(--ink3);border-bottom-left-radius:4px;}
+    .msg.dealer{align-self:flex-end;}
+    .msg.dealer .msg-bubble{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.2);border-bottom-right-radius:4px;}
+    .msg-sender{font-size:.68rem;color:rgba(255,255,255,.3);margin-bottom:2px;}
+    .msg.dealer .msg-sender{text-align:right;}
+    .chat-input-area{border-top:1px solid var(--border);padding:14px 16px;background:var(--ink2);flex-shrink:0;}
+    .input-row{display:flex;gap:10px;align-items:flex-end;}
+    textarea.chat-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;color:#fff;font-size:.88rem;font-family:'DM Sans',sans-serif;resize:none;min-height:42px;max-height:120px;line-height:1.4;}
+    textarea.chat-input:focus{outline:none;border-color:var(--gold);}
+    .send-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:10px;padding:10px 18px;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.08em;cursor:pointer;flex-shrink:0;transition:opacity .15s;}
+    .send-btn:hover{opacity:.88;}
+    .no-chat{flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);text-align:center;padding:40px;}
+    .loading{text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:.82rem;}
+    @media(max-width:640px){.chat-list{width:80px;}.chat-item-name,.chat-item-vehicle,.chat-item-preview,.chat-item-time{display:none;}.chat-item{display:flex;align-items:center;justify-content:center;height:60px;font-size:1.4rem;}}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:7px;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <span class="brand">{{ dealership }} — Chat Inbox</span>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <span id="unreadCount" style="font-size:.75rem;color:rgba(255,255,255,.35);"></span>
+    <a href="/dashboard" style="color:rgba(255,255,255,.35);text-decoration:none;font-size:.82rem;">← Dashboard</a>
+  </div>
+</div>
+
+<div class="inbox-layout">
+  <!-- Chat list -->
+  <div class="chat-list">
+    <div class="chat-list-head">CONVERSATIONS</div>
+    <div id="chatList"><div class="loading">Loading…</div></div>
+  </div>
+
+  <!-- Chat pane -->
+  <div class="chat-pane" id="chatPane">
+    <div class="no-chat">
+      <div>
+        <div style="font-size:2.5rem;margin-bottom:12px;">💬</div>
+        <p>Select a conversation to view messages</p>
+        <p style="font-size:.75rem;margin-top:6px;color:rgba(255,255,255,.2);">Auto-refreshes every 10 seconds</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let activeChatId = null;
+let allChats = [];
+let pollTimer = null;
+
+async function loadInbox(){
+  const r = await fetch('/api/chat/dealer-inbox');
+  const d = await r.json();
+  if(!d.ok) return;
+  allChats = d.chats || [];
+  const total = d.unread_total || 0;
+  document.getElementById('unreadCount').textContent = total > 0 ? `${total} unread` : 'All caught up ✓';
+  const list = document.getElementById('chatList');
+  if(!allChats.length){
+    list.innerHTML='<div class="empty-list"><p style="font-size:1.5rem;margin-bottom:8px;">💬</p><p>No chats yet</p><p style="font-size:.72rem;margin-top:4px;">Buyers can message you from any listing page</p></div>';
+    return;
+  }
+  list.innerHTML = allChats.map(c=>{
+    const lastMsg = c.messages?.[c.messages.length-1];
+    const buyer = c.buyer_email?.split('@')[0] || 'Buyer';
+    const time = lastMsg ? lastMsg.time : '';
+    return `<div class="chat-item ${activeChatId===c.id?'active':''}" onclick="openChat('${c.id}')">
+      <div class="chat-item-name">${buyer}${c.unread_dealer>0?`<span class="unread-badge">${c.unread_dealer}</span>`:''}</div>
+      <div class="chat-item-vehicle">🚗 ${c.vehicle_name||'General enquiry'}</div>
+      ${lastMsg?`<div class="chat-item-preview">${lastMsg.text||''}</div>`:''}
+      <div class="chat-item-time">${time}</div>
+    </div>`;
+  }).join('');
+}
+
+async function openChat(chatId){
+  activeChatId = chatId;
+  clearInterval(pollTimer);
+  await loadInbox();
+  await loadMessages(chatId);
+  pollTimer = setInterval(()=>loadMessages(chatId),8000);
+}
+
+async function loadMessages(chatId){
+  const r = await fetch(`/api/chat/${chatId}/messages`);
+  const d = await r.json();
+  if(!d.ok) return;
+  const chat = d.chat || {};
+  const msgs = d.messages || [];
+  const pane = document.getElementById('chatPane');
+  const wasAtBottom = pane.scrollHeight - pane.scrollTop - pane.clientHeight < 60;
+  pane.innerHTML = `
+    <div class="chat-header">
+      <div class="chat-vehicle">🚗 ${chat.vehicle_name||'General Enquiry'}</div>
+      <div class="chat-buyer">Buyer conversation · ${msgs.length} messages</div>
+    </div>
+    <div class="chat-messages" id="msgList">
+      ${msgs.length===0?'<div style="text-align:center;padding:20px;color:rgba(255,255,255,.2);">No messages yet</div>':
+        msgs.map(m=>`
+          <div class="msg ${m.sender}">
+            <div class="msg-sender">${m.sender==='buyer'?'Buyer':'You'}</div>
+            <div class="msg-bubble">${m.text}</div>
+            <div class="msg-time">${m.time}</div>
+          </div>`).join('')}
+    </div>
+    <div class="chat-input-area">
+      <div class="input-row">
+        <textarea class="chat-input" id="replyInput" placeholder="Type your reply…" rows="1" onkeydown="handleKey(event)"></textarea>
+        <button class="send-btn" onclick="sendReply()">SEND</button>
+      </div>
+    </div>`;
+  const msgList = document.getElementById('msgList');
+  if(msgList && wasAtBottom) msgList.scrollTop = msgList.scrollHeight;
+  else if(msgList && msgs.length > 0) msgList.scrollTop = msgList.scrollHeight;
+}
+
+async function sendReply(){
+  const input = document.getElementById('replyInput');
+  const text = input?.value.trim();
+  if(!text || !activeChatId) return;
+  input.value = '';
+  const r = await fetch(`/api/chat/${activeChatId}/send`,{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,sender:'dealer'})});
+  const d = await r.json();
+  if(d.ok) loadMessages(activeChatId);
+}
+
+function handleKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendReply();}
+}
+
+// Initial load + polling
+loadInbox();
+setInterval(loadInbox, 10000);
+</script>
+</body>
+</html>
